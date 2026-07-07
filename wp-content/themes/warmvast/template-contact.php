@@ -17,7 +17,7 @@ get_header();
 		</nav>
 		<p class="kicker">Contact</p>
 		<h1 class="page-hero__title">Persoonlijk contact met Warmvast</h1>
-		<p class="page-hero__sub">Liever direct de scan doen? Dat gaat het snelst. Wilt u ons spreken? Bel of mail — we reageren binnen 24 uur op werkdagen.</p>
+		<p class="page-hero__sub">Liever direct de scan doen? Dat gaat het snelst. Wilt u ons spreken? Bel of mail: we reageren binnen 24 uur op werkdagen.</p>
 	</div>
 </header>
 

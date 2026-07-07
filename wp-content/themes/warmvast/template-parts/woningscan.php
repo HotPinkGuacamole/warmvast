@@ -57,7 +57,7 @@ $rates = warmvast_isde_rates();
 		</div>
 
 		<div class="ws-details">
-			<h3>Woningdetails <span class="ws-hint">(indicatie — bij te stellen)</span></h3>
+			<h3>Woningdetails <span class="ws-hint">(indicatie, bij te stellen)</span></h3>
 			<div class="ws-surfaces">
 				<label>Vloer <span class="ws-suffix"><input type="number" id="wsVloer" min="0" step="1"> m²</span></label>
 				<label>Dak <span class="ws-suffix"><input type="number" id="wsDak" min="0" step="1"> m²</span></label>

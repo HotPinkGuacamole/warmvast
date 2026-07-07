@@ -30,6 +30,7 @@ while ( have_posts() ) :
 
 	<article <?php post_class( 'page-body' ); ?>>
 		<div class="container prose">
+			<?php warmvast_the_article_visual( get_post_field( 'post_name', get_the_ID() ) ); ?>
 			<?php the_content(); ?>
 		</div>
 

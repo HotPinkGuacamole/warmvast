@@ -17,7 +17,7 @@ $services = warmvast_services();
 		<div>
 			<p class="kicker kicker--light">Klaar om te beginnen?</p>
 			<h2>Weet binnen 2 minuten wat isoleren u oplevert.</h2>
-			<p class="cta-band__sub">Gratis isolatiescan met directe ISDE-indicatie. Reactie binnen 24 uur. Heel Nederland.</p>
+			<p class="cta-band__sub">Gratis isolatiescan met directe ISDE-indicatie, op basis van uw eigen adres.</p>
 		</div>
 		<div class="cta-band__actions">
 			<a class="btn btn--accent btn--lg" href="<?php echo esc_url( home_url( '/gratis-isolatiescan/' ) ); ?>" data-track="cta_click">

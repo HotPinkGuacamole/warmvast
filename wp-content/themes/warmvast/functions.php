@@ -17,6 +17,7 @@ require_once WARMVAST_DIR . '/inc/config.php';
 require_once WARMVAST_DIR . '/inc/template-tags.php';
 require_once WARMVAST_DIR . '/inc/service-content.php';
 require_once WARMVAST_DIR . '/inc/woningscan.php';
+require_once WARMVAST_DIR . '/inc/article-visuals.php';
 require_once WARMVAST_DIR . '/inc/seo.php';
 
 /**
@@ -157,10 +158,11 @@ add_filter(
  */
 function warmvast_primary_menu_fallback() {
 	$items = array(
-		'Isolatie'   => home_url( '/isolatie/' ),
-		'Subsidie'   => home_url( '/subsidie-service/' ),
+		'Isolatie' => home_url( '/isolatie/' ),
+		'Subsidie' => home_url( '/subsidie-service/' ),
+		'Over ons' => home_url( '/over-warmvast/' ),
+		// Kennisbank lives under "Over ons" in the hand-built menu; kept flat here since this fallback has no dropdown support.
 		'Kennisbank' => home_url( '/kennisbank/' ),
-		'Over ons'   => home_url( '/over-warmvast/' ),
 		'Contact'    => home_url( '/contact/' ),
 	);
 	echo '<ul id="primary-menu" class="nav__list">';

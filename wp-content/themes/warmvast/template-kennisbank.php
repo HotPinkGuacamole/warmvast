@@ -41,7 +41,10 @@ get_header();
 					$q->the_post();
 					?>
 					<article <?php post_class( 'card card--link card--post' ); ?>>
-						<?php if ( has_post_thumbnail() ) : ?>
+						<?php $slug = get_post_field( 'post_name', get_the_ID() ); ?>
+						<?php if ( warmvast_has_article_visual( $slug ) ) : ?>
+							<a class="card--post__media" href="<?php the_permalink(); ?>"><?php warmvast_the_article_visual( $slug, 'article-visual--card' ); ?></a>
+						<?php elseif ( has_post_thumbnail() ) : ?>
 							<a class="card--post__media" href="<?php the_permalink(); ?>"><?php the_post_thumbnail( 'warmvast_card' ); ?></a>
 						<?php endif; ?>
 						<div class="card--post__body">

@@ -24,7 +24,7 @@ $trust = array(
 		<div class="scan-landing__head">
 			<span class="hero__eyebrow"><?php warmvast_the_icon( 'thermo', 'wv-icon--sm' ); ?> Gratis &amp; vrijblijvend</span>
 			<h1>Bereken in 2 minuten wat isoleren u oplevert</h1>
-			<p>Vul uw woninggegevens in en zie direct een ISDE-indicatie. Geen verplichtingen — pas op het laatste moment vragen we uw contactgegevens.</p>
+			<p>Vul uw woninggegevens in en zie direct een ISDE-indicatie. Geen verplichtingen. Pas op het laatste moment vragen we uw contactgegevens.</p>
 			<ul class="scan-landing__trust">
 				<?php foreach ( $trust as $t ) : ?>
 					<li><?php warmvast_the_icon( $t[0], 'wv-icon--sm' ); ?> <?php echo esc_html( $t[1] ); ?></li>

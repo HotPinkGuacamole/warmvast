@@ -35,7 +35,7 @@ $faqs = array(
 		</nav>
 		<p class="kicker">ISDE-subsidie</p>
 		<h1 class="page-hero__title">ISDE-subsidie voor isolatie, helder uitgelegd</h1>
-		<p class="page-hero__sub">De ISDE beloont woningeigenaren die isoleren. Warmvast legt de systematiek eerlijk uit en zorgt voor een compleet subsidiedossier — zonder loze garanties.</p>
+		<p class="page-hero__sub">De ISDE beloont woningeigenaren die isoleren. Warmvast legt de systematiek eerlijk uit en zorgt voor een compleet subsidiedossier, zonder loze garanties.</p>
 		<div class="service-hero__actions">
 			<a class="btn btn--accent btn--lg" href="<?php echo esc_url( home_url( '/gratis-isolatiescan/' ) ); ?>" data-track="cta_click">Bereken mijn indicatie <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
 		</div>

@@ -172,7 +172,7 @@
 		var meta = [];
 		if (d.bouwjaar) meta.push("Bouwjaar " + d.bouwjaar);
 		if (d.footprint) meta.push("Grondoppervlak ± " + Math.round(d.footprint) + " m²");
-		if (d.complex) meta.push("meergezinswoning — m² worden bij de opname bepaald");
+		if (d.complex) meta.push("meergezinswoning: m² wordt bij de opname bepaald");
 		$("wsMeta").textContent = meta.join(" · ");
 
 		renderLabel(d.energielabel || { index: 4, letter: "?" });

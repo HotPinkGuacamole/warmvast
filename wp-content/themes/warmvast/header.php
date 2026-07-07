@@ -16,6 +16,7 @@ $services = warmvast_services();
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<script>document.documentElement.className += " wv-js";</script>
+	<link rel="preload" href="<?php echo esc_url( WARMVAST_URI . '/assets/fonts/inter-latin-var.woff2' ); ?>" as="font" type="font/woff2" crossorigin>
 	<link rel="preload" href="<?php echo esc_url( WARMVAST_URI . '/assets/fonts/space-grotesk-latin-var.woff2' ); ?>" as="font" type="font/woff2" crossorigin>
 
 	<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b6b5b'/%3E%3Cpath d='M8 22 16 9l8 13' stroke='%23fed03d' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
@@ -91,8 +92,23 @@ $services = warmvast_services();
 						</div>
 					</li>
 					<li class="menu-item"><a href="<?php echo esc_url( home_url( '/subsidie-service/' ) ); ?>">Subsidie</a></li>
-					<li class="menu-item"><a href="<?php echo esc_url( home_url( '/kennisbank/' ) ); ?>">Kennisbank</a></li>
-					<li class="menu-item"><a href="<?php echo esc_url( home_url( '/over-warmvast/' ) ); ?>">Over ons</a></li>
+					<li class="menu-item menu-item--has-children" data-dropdown>
+						<a href="<?php echo esc_url( home_url( '/over-warmvast/' ) ); ?>" aria-haspopup="true" aria-expanded="false">
+							Over ons <?php warmvast_the_icon( 'chevron', 'wv-icon--sm nav__caret' ); ?>
+						</a>
+						<div class="dropdown dropdown--simple">
+							<div class="dropdown__grid dropdown__grid--single">
+								<a class="dropdown__item" href="<?php echo esc_url( home_url( '/over-warmvast/' ) ); ?>">
+									<span class="dropdown__icon"><?php warmvast_the_icon( 'shield' ); ?></span>
+									<span><strong>Over ons</strong><em>Wie is Warmvast</em></span>
+								</a>
+								<a class="dropdown__item" href="<?php echo esc_url( home_url( '/kennisbank/' ) ); ?>">
+									<span class="dropdown__icon"><?php warmvast_the_icon( 'doc' ); ?></span>
+									<span><strong>Kennisbank</strong><em>Uitleg over subsidie en isolatie</em></span>
+								</a>
+							</div>
+						</div>
+					</li>
 					<li class="menu-item"><a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>">Contact</a></li>
 				</ul>
 				<?php

@@ -180,7 +180,7 @@ function warmvast_stars( $rating ) {
  * @return string Euro string.
  */
 function warmvast_preview_amount() {
-	// Default preview: spouw 65 m2 + vloer 55 m2 (doubled) — a realistic terraced house.
+	// Default preview: spouw 65 m2 + vloer 55 m2 (doubled), a realistic terraced house.
 	$rates = warmvast_isde_rates();
 	$total = ( 65 * $rates['spouw']['baseRate'] * 2 ) + ( 55 * $rates['vloer']['baseRate'] * 2 );
 	return warmvast_euro( $total );

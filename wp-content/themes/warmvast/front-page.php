@@ -31,12 +31,10 @@ $werkwijze = array(
 );
 
 $trust = array(
-	array( 'ruler', 'Technische opname vóór uitvoering' ),
-	array( 'euro', 'Heldere m²-berekening' ),
 	array( 'wall', 'Materiaalkeuze op basis van uw woning' ),
-	array( 'camera', 'Fotobewijs voor uw subsidie' ),
-	array( 'clock', 'Reactie binnen 24 uur' ),
-	array( 'map', 'Werkzaam in heel Nederland' ),
+	array( 'doc', 'Vaste offerte na de opname, geen verrassingen achteraf' ),
+	array( 'shield', 'Ervaren monteurs voeren de uitvoering uit' ),
+	array( 'check', 'Onafhankelijk advies per maatregel' ),
 );
 
 $faqs = array(
@@ -92,14 +90,13 @@ $faqs = array(
 		<div class="hero__copy">
 			<span class="hero__eyebrow"><?php warmvast_the_icon( 'thermo', 'wv-icon--sm' ); ?> Comfortabel &amp; energiezuinig wonen</span>
 			<h1 class="hero__title">Zit je er warmpjes bij? <em>Wij houden die warmte vast.</em></h1>
-			<p class="hero__sub">Ontdek waar uw woning warmte verliest en welke isolatie het meeste oplevert — met een directe ISDE-indicatie en besparing, op basis van úw adres.</p>
+			<p class="hero__sub">Ontdek waar uw woning warmte verliest en welke isolatie het meeste oplevert, met een directe ISDE-indicatie en besparing op basis van úw adres.</p>
 			<div class="hero__actions">
-				<a class="btn btn--accent btn--lg" href="#warmvast-woningscan" data-track="cta_click">Start gratis isolatiescan <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
+				<a class="btn btn--accent btn--lg btn--sheen" href="#warmvast-woningscan" data-track="cta_click">Start gratis isolatiescan <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
 				<a class="btn btn--ghost btn--lg" href="<?php echo esc_url( home_url( '/subsidie-service/' ) ); ?>" data-track="cta_click">Bekijk subsidievoordeel</a>
 			</div>
 			<div class="hero__trust">
-				<span><?php warmvast_the_icon( 'clock', 'wv-icon--sm' ); ?> Binnen 24 uur reactie</span>
-				<span><?php warmvast_the_icon( 'map', 'wv-icon--sm' ); ?> Heel Nederland</span>
+				<span><?php warmvast_the_icon( 'check', 'wv-icon--sm' ); ?> Gratis, 2 minuten, geen verplichtingen</span>
 				<span><?php warmvast_the_icon( 'check', 'wv-icon--sm' ); ?> Spouw, vloer, glas &amp; dak</span>
 			</div>
 		</div>
@@ -182,7 +179,7 @@ $combo      = $spouw_dub + $vloer_dub;
 		<div class="verdub__copy" data-reveal="left">
 			<span class="verdub__badge"><?php warmvast_the_icon( 'spark', 'wv-icon--sm' ); ?> De grootste hefboom</span>
 			<h2>Twee maatregelen? Dan verdubbelt uw ISDE-tarief per m².</h2>
-			<p>De ISDE werkt met vaste bedragen per m². Laat u meer dan één isolatiemaatregel uitvoeren binnen de voorwaarden, dan verdubbelt het subsidiebedrag voor isolatie. De Warmvast-scan laat dit direct zien — eerlijk en zonder verrassingen.</p>
+			<p>De ISDE werkt met vaste bedragen per m². Laat u meer dan één isolatiemaatregel uitvoeren binnen de voorwaarden, dan verdubbelt het subsidiebedrag voor isolatie. De Warmvast-scan laat dit direct zien, eerlijk en zonder verrassingen.</p>
 			<ul class="checklist">
 				<li>Geldt ook in combinatie met warmtepomp, zonneboiler of warmtenet.</li>
 				<li>De tweede maatregel voert u binnen 24 maanden uit.</li>
@@ -216,7 +213,7 @@ $combo      = $spouw_dub + $vloer_dub;
 <!-- ============ WERKWIJZE ============ -->
 <section class="section section--surface">
 	<div class="container">
-		<?php warmvast_section_header( 'Werkwijze', 'Zo werkt isoleren met Warmvast', 'Van gratis scan tot een compleet subsidiedossier — in zes overzichtelijke stappen.' ); ?>
+		<?php warmvast_section_header( 'Werkwijze', 'Zo werkt isoleren met Warmvast', 'Van gratis scan tot een compleet subsidiedossier, in zes overzichtelijke stappen.' ); ?>
 		<ol class="steps">
 			<?php foreach ( $werkwijze as $step ) : ?>
 				<li data-reveal>

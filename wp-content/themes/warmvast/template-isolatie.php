@@ -46,7 +46,7 @@ $services = warmvast_services();
 
 <section class="section section--paper">
 	<div class="container u-center">
-		<?php warmvast_section_header( 'Niet zeker welke maatregel?', 'Laat de scan het uitrekenen', 'Vink uw situatie aan en zie direct welke combinatie het meeste oplevert — met verdubbeld ISDE-tarief.', 'center' ); ?>
+		<?php warmvast_section_header( 'Niet zeker welke maatregel?', 'Laat de scan het uitrekenen', 'Vink uw situatie aan en zie direct welke combinatie het meeste oplevert, met verdubbeld ISDE-tarief.', 'center' ); ?>
 		<?php warmvast_cta( 'Start gratis isolatiescan', 'accent', home_url( '/gratis-isolatiescan/' ) ); ?>
 	</div>
 </section>

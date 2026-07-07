@@ -113,7 +113,7 @@
 						}
 					});
 				},
-				{ threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+				{ threshold: 0.06, rootMargin: "0px 0px -12% 0px" }
 			);
 			Array.prototype.slice.call(reveals).forEach(function (el) { ro.observe(el); });
 		}

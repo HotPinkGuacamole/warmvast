@@ -108,7 +108,7 @@ function warmvast_service_detail( $key ) {
 
 		'dak'   => array(
 			'h1'        => 'Dakisolatie om groot warmteverlies structureel aan te pakken',
-			'intro'     => 'Warme lucht stijgt op — bij een ongeïsoleerd dak of zolder verdwijnt daar veel energie. Dakisolatie pakt het grootste warmteverlies bovenin de woning aan.',
+			'intro'     => 'Warme lucht stijgt op: bij een ongeïsoleerd dak of zolder verdwijnt daar veel energie. Dakisolatie pakt het grootste warmteverlies bovenin de woning aan.',
 			'symptoms'  => array(
 				'Een snikhete zolder in de zomer en koud in de winter.',
 				'Grote warmteverliezen via de kap of vlieringvloer.',
