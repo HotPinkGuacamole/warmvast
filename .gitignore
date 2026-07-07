@@ -1,0 +1,30 @@
+# --- WARMVAST: version the theme, not the WordPress core ---
+
+# WordPress core (re-downloadable with wp-cli)
+/wp-admin/
+/wp-includes/
+/wp-*.php
+/index.php
+/xmlrpc.php
+/license.txt
+/readme.html
+/wp-cli.phar
+
+# Config & secrets
+/wp-config.php
+/.htaccess
+
+# Uploads & generated content
+/wp-content/uploads/
+/wp-content/upgrade/
+/wp-content/cache/
+
+# Everything in wp-content except our own theme
+/wp-content/plugins/
+/wp-content/themes/*
+!/wp-content/themes/warmvast/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.log
