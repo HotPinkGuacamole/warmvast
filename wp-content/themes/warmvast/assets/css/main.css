@@ -59,6 +59,26 @@
 	--shadow:     0 6px 20px rgba(20,40,36,.08), 0 2px 6px rgba(20,40,36,.05);
 	--shadow-lg:  0 24px 60px rgba(12,40,34,.16), 0 6px 18px rgba(12,40,34,.08);
 
+	/* Ambient thermal depth: cool (retained cold) + warm (trapped heat), kept
+	   deliberately faint so light sections read as "lit paper", never coloured. */
+	--ambient-cool: rgba(11,107,91,.07);
+	--ambient-warm: rgba(254,208,61,.09);
+
+	/* Blueprint texture: a faint engineering graph-paper grid (measurement,
+	   precision) plus a fine paper-grain, both near-invisible at a glance and
+	   only noticeable on close inspection. Zero image requests: the grid is a
+	   repeating CSS gradient, the grain a tiny inline SVG feTurbulence data-URI. */
+	--grid-line: rgba(11,107,91,.05);
+	--noise-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+
+	/* Glass system: a gradient hairline (cool->warm, echoing the thermal theme)
+	   over a near-opaque fill so text contrast is never sacrificed for the effect. */
+	--glass-fill:   rgba(255,255,255,.74);
+	--glass-border: linear-gradient(150deg, rgba(255,255,255,.95), rgba(255,255,255,.18) 46%, rgba(11,107,91,.30));
+	--glass-border-hot: linear-gradient(150deg, rgba(255,255,255,1), rgba(254,208,61,.5) 46%, rgba(11,107,91,.5));
+	--shadow-glass: 0 22px 46px -22px rgba(12,40,34,.30), 0 8px 18px -12px rgba(12,40,34,.16);
+	--shadow-float: 0 30px 60px -24px rgba(0,0,0,.55), 0 12px 26px -16px rgba(0,0,0,.4);
+
 	--container: 1180px;
 	--gutter: clamp(1rem, 4vw, 2.5rem);
 
@@ -139,8 +159,32 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .container { width: 100%; max-width: var(--container); margin-inline: auto; padding-inline: var(--gutter); }
 .section { padding-block: clamp(3rem, 6vw, 5.5rem); }
 .section--tight { padding-block: clamp(2rem, 4vw, 3.5rem); }
-.section--paper { background: var(--paper); }
-.section--surface { background: var(--surface); }
+
+/* ---- One continuous "engineering sheet" ----
+   The whole light content area is a single unbroken blueprint surface: base
+   paper tone + a continuous grid + grain + a few large, soft ambient light
+   pools that span across section boundaries. Because it lives on <main> (not
+   per-section) the grid never resets and there are NO paper<->surface seams to
+   smooth. Dark sections (hero, cta, footer, --ink) sit opaque on top and hide
+   it; the only intentional transitions left are the crisp diagonals into those
+   dark blocks. */
+.site-main {
+	position: relative;
+	background-color: #f4f4ef;
+	background-image:
+		var(--noise-texture),
+		linear-gradient(var(--grid-line) 1px, transparent 1px),
+		linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+		radial-gradient(1200px 780px at 100% 2%, var(--ambient-cool), transparent 62%),
+		radial-gradient(1000px 680px at -6% 30%, var(--ambient-warm), transparent 58%),
+		radial-gradient(1100px 720px at 106% 60%, var(--ambient-cool), transparent 60%),
+		radial-gradient(980px 640px at -4% 92%, var(--ambient-warm), transparent 58%);
+	background-size: 220px 220px, 32px 32px, 32px 32px, auto, auto, auto, auto;
+	background-repeat: repeat, repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+}
+/* light sections are now transparent windows onto the continuous sheet */
+.section--paper,
+.section--surface { background: transparent; }
 .section--ink { background: var(--ink); color: #eef1ef; }
 .section--ink h2, .section--ink h3 { color: #fff; }
 
@@ -273,6 +317,22 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 	from { transform: translate3d(0,0,0) scale(1); }
 	to { transform: translate3d(-3%, 2%, 0) scale(1.08); }
 }
+
+/* sprawling ambient orbs: soft thermal light-sources that give the dark hero
+   real depth without an image. Contained by the hero's overflow:hidden. */
+.hero__orb {
+	position: absolute; z-index: 0; border-radius: 50%; pointer-events: none;
+	filter: blur(90px); mix-blend-mode: screen; will-change: transform;
+}
+.hero__orb--1 {
+	width: 44vw; height: 44vw; max-width: 660px; max-height: 660px; top: -12%; right: -8%;
+	background: radial-gradient(circle at center, rgba(11,107,91,.6), transparent 68%);
+}
+.hero__orb--2 {
+	width: 36vw; height: 36vw; max-width: 540px; max-height: 540px; bottom: -16%; left: -6%;
+	background: radial-gradient(circle at center, rgba(254,208,61,.22), transparent 68%);
+}
+@media (prefers-reduced-motion: reduce) { .hero__orb { will-change: auto; } }
 
 /* thermal house illustration (decorative watermark behind hero headline) */
 .hero__art {
@@ -665,8 +725,14 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
    Woningscan (address-driven)
    ========================================================================== */
 .ws {
-	background: var(--surface); color: var(--ink); border: 1px solid var(--line);
-	border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); overflow: clip;
+	color: var(--ink); border: 1px solid transparent;
+	/* solid fill (padding-box) keeps the form razor-legible; gradient hairline
+	   (border-box) + float shadow + top light-catch make it read as glass. */
+	background:
+		linear-gradient(var(--surface), var(--surface)) padding-box,
+		var(--glass-border) border-box;
+	border-radius: var(--radius-lg); overflow: clip;
+	box-shadow: var(--shadow-float), inset 0 1px 0 rgba(255,255,255,.65);
 	padding: clamp(1.3rem, 3vw, 1.9rem);
 }
 .ws-head { margin-bottom: 1.1rem; }
@@ -843,6 +909,54 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .wv-js .grid > [data-reveal]:nth-child(n+4) { transition-delay: .08s; }
 .wv-js .steps > [data-reveal]:nth-child(n+2) { transition-delay: .04s; }
 .wv-js .steps > [data-reveal]:nth-child(n+4) { transition-delay: .08s; }
+
+/* ==========================================================================
+   Premium layering: glass modules, asymmetric flow, ambient depth
+   Scoped to the named high-value modules only — glass reads as hierarchy,
+   not decoration, and stays cheap (≈5 backdrop-filters, not every chip).
+   ========================================================================== */
+
+/* Glass elevation for the 4 measures cards + the ISDE verdubbelaar logic card.
+   Translucency is justified here: these sit over the ambient section gradients,
+   so the blur samples real colour and reads as depth rather than frost. */
+.section--surface .service-card,
+.section--paper .verdub__calc {
+	border: 1px solid transparent;
+	background:
+		linear-gradient(var(--glass-fill), var(--glass-fill)) padding-box,
+		var(--glass-border) border-box;
+	-webkit-backdrop-filter: blur(12px) saturate(1.1);
+	backdrop-filter: blur(12px) saturate(1.1);
+	box-shadow: var(--shadow-glass), inset 0 1px 0 rgba(255,255,255,.6);
+}
+/* hover: a higher lift and the hairline warms up (echoing "trapped heat"). */
+.card--link.service-card:hover {
+	transform: translateY(-6px);
+	background:
+		linear-gradient(rgba(255,255,255,.88), rgba(255,255,255,.88)) padding-box,
+		var(--glass-border-hot) border-box;
+	box-shadow: 0 32px 56px -26px rgba(12,40,34,.42), 0 12px 24px -14px rgba(12,40,34,.22), inset 0 1px 0 rgba(255,255,255,.7);
+}
+@supports not (backdrop-filter: blur(1px)) {
+	.section--surface .service-card, .section--paper .verdub__calc { --glass-fill: rgba(255,255,255,.96); }
+}
+
+/* Asymmetric masking: a single shallow diagonal replaces the flat 90° seam at
+   the hero→content boundary (the one the eye actually notices). Tall side kept
+   LEFT, away from the floating scan card on the right. */
+.flow-top { position: relative; }
+.flow-top::before {
+	content: ""; position: absolute; left: 0; right: 0; top: 0;
+	height: clamp(40px, 4.5vw, 70px); transform: translateY(-98%);
+	background: var(--flow, var(--surface));
+	clip-path: polygon(0 0, 100% 100%, 0 100%);
+	pointer-events: none;
+}
+@media (max-width: 760px) { .flow-top::before { display: none; } }
+
+/* The CTA band rises on a diagonal, pulling the eye into the conversion block. */
+.cta-band { clip-path: polygon(0 34px, 100% 0, 100% 100%, 0 100%); }
+@media (max-width: 760px) { .cta-band { clip-path: polygon(0 18px, 100% 0, 100% 100%, 0 100%); } }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {

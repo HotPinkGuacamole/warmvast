@@ -67,6 +67,8 @@ $faqs = array(
 
 <!-- ============ HERO + SCAN ============ -->
 <section class="hero">
+	<span class="hero__orb hero__orb--1" aria-hidden="true"></span>
+	<span class="hero__orb hero__orb--2" aria-hidden="true"></span>
 	<div class="hero__thermal" aria-hidden="true"></div>
 	<div class="hero__art" aria-hidden="true">
 		<svg viewBox="0 0 320 300" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -116,7 +118,7 @@ $usps = array(
 	array( 'clock', 'Reactie binnen 24 uur', 'werkzaam in heel Nederland' ),
 );
 ?>
-<section class="usp-bar" aria-label="Waarom Warmvast">
+<section class="usp-bar flow-top" aria-label="Waarom Warmvast">
 	<div class="container usp-bar__grid">
 		<?php foreach ( $usps as $u ) : ?>
 			<div class="usp">

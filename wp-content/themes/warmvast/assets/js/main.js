@@ -13,6 +13,8 @@
 	var header = doc.querySelector("[data-header]");
 	var progress = doc.getElementById("scrollProgress");
 	var heroArt = doc.querySelector(".hero__art");
+	var orb1 = doc.querySelector(".hero__orb--1");
+	var orb2 = doc.querySelector(".hero__orb--2");
 	var ticking = false;
 	function onScroll() {
 		var y = window.scrollY || window.pageYOffset;
@@ -21,7 +23,12 @@
 			var docH = doc.documentElement.scrollHeight - window.innerHeight;
 			progress.style.transform = "scaleX(" + (docH > 0 ? Math.min(1, y / docH) : 0) + ")";
 		}
-		if (heroArt && !reduce && y < 900) heroArt.style.transform = "translateY(" + (y * 0.15) + "px)";
+		if (!reduce && y < 1100) {
+			if (heroArt) heroArt.style.transform = "translateY(" + (y * 0.15) + "px)";
+			// orbs drift apart on scroll for parallax depth (opposite directions)
+			if (orb1) orb1.style.transform = "translate3d(0," + (y * -0.06) + "px,0)";
+			if (orb2) orb2.style.transform = "translate3d(0," + (y * 0.1) + "px,0)";
+		}
 		ticking = false;
 	}
 	function requestScroll() { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }
