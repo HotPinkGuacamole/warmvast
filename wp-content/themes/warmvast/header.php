@@ -15,15 +15,17 @@ $services = warmvast_services();
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<?php warmvast_gtm_head(); ?>
 	<script>document.documentElement.className += " wv-js";</script>
 	<link rel="preload" href="<?php echo esc_url( WARMVAST_URI . '/assets/fonts/inter-latin-var.woff2' ); ?>" as="font" type="font/woff2" crossorigin>
 	<link rel="preload" href="<?php echo esc_url( WARMVAST_URI . '/assets/fonts/space-grotesk-latin-var.woff2' ); ?>" as="font" type="font/woff2" crossorigin>
 
-	<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b6b5b'/%3E%3Cpath d='M8 22 16 9l8 13' stroke='%23fed03d' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+	<?php warmvast_favicon_links(); ?>
 	<link rel="profile" href="https://gmpg.org/xfn/11">
 	<?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
+<?php warmvast_gtm_body(); ?>
 <?php wp_body_open(); ?>
 
 <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
@@ -32,18 +34,11 @@ $services = warmvast_services();
 <header class="site-header" id="site-header" data-header>
 	<div class="container site-header__inner">
 
-		<a class="brand" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="Warmvast home">
+		<a class="brand" href="<?php echo esc_url( home_url( '/' ) ); ?>">
 			<?php if ( has_custom_logo() ) : ?>
 				<?php the_custom_logo(); ?>
 			<?php else : ?>
-				<span class="brand__mark" aria-hidden="true">
-					<svg viewBox="0 0 32 32" width="30" height="30" fill="none" aria-hidden="true">
-						<rect x="1.5" y="1.5" width="29" height="29" rx="7" fill="currentColor"/>
-						<path d="M8 22 L16 9 L24 22" stroke="#fed03d" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-						<path d="M11.5 22 L16 14.5 L20.5 22" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
-					</svg>
-				</span>
-				<span class="brand__word">Warm<span class="brand__word-alt">vast</span></span>
+				<img class="brand__logo" src="<?php echo warmvast_asset( '/assets/img/warmvast-logo-horizontal-color.png' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper escapes. ?>" width="781" height="247" alt="Warmvast Isolatie" fetchpriority="high" decoding="async">
 			<?php endif; ?>
 		</a>
 
@@ -116,7 +111,6 @@ $services = warmvast_services();
 			?>
 
 			<div class="site-nav__cta">
-				<?php warmvast_phone_link( 'nav__phone' ); ?>
 				<a class="btn btn--accent btn--sm" href="<?php echo esc_url( home_url( '/gratis-isolatiescan/' ) ); ?>" data-track="cta_click">
 					Gratis isolatiescan <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?>
 				</a>

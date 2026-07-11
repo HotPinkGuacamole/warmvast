@@ -10,6 +10,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Theme asset URL with a filemtime cache-buster, so updated images/icons are
+ * never served stale from the browser cache.
+ *
+ * @param string $relative Path relative to the theme root, e.g. '/assets/img/logo.png'.
+ * @return string Escaped URL.
+ */
+function warmvast_asset( $relative ) {
+	$path = WARMVAST_DIR . $relative;
+	$ver  = file_exists( $path ) ? filemtime( $path ) : WARMVAST_VERSION;
+	return esc_url( WARMVAST_URI . $relative . '?v=' . $ver );
+}
+
+/**
  * Inline SVG icon set. Stroke-based, currentColor, 24x24 grid.
  *
  * @param string $name  Icon key.
@@ -121,7 +134,7 @@ function warmvast_section_header( $kicker, $title, $intro = '', $align = 'left' 
  * @param string $target Anchor or URL. Defaults to the scan on the current/home page.
  * @param string $event  data-track event name.
  */
-function warmvast_cta( $label, $style = 'primary', $target = '#warmvast-scan', $event = 'cta_click' ) {
+function warmvast_cta( $label, $style = 'primary', $target = '#warmvast-woningscan', $event = 'cta_click' ) {
 	$icon = warmvast_icon( 'arrow', 'wv-icon--end' );
 	printf(
 		'<a class="btn btn--%1$s" href="%2$s" data-track="%3$s">%4$s%5$s</a>',

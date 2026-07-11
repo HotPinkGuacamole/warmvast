@@ -132,7 +132,7 @@ $usps = array(
 <!-- ============ PROBLEEMHERKENNING ============ -->
 <section class="section section--paper">
 	<div class="container">
-		<?php warmvast_section_header( 'Herkenbaar?', 'Herkent u dit in uw woning?', 'Kleine signalen wijzen vaak op onnodig warmteverlies. Warmvast kijkt naar uw woning als een systeem.' ); ?>
+		<?php warmvast_section_header( '', 'Herkent u dit in uw woning?', 'Kleine signalen wijzen vaak op onnodig warmteverlies. Warmvast kijkt naar uw woning als een systeem.' ); ?>
 		<div class="grid grid--3">
 			<?php foreach ( $problems as $p ) : ?>
 				<div class="card problem-card" data-reveal>
@@ -150,7 +150,7 @@ $usps = array(
 <!-- ============ DIENSTEN ============ -->
 <section class="section section--surface">
 	<div class="container">
-		<?php warmvast_section_header( 'Isolatiemaatregelen', 'Vier maatregelen, één heldere aanpak', 'Elke maatregel lost een specifiek warmteverlies op. Combineer slim en benut de ISDE-systematiek optimaal.' ); ?>
+		<?php warmvast_section_header( '', 'Vier maatregelen, één heldere aanpak', 'Elke maatregel lost een specifiek warmteverlies op. Combineer slim en benut de ISDE-systematiek optimaal.' ); ?>
 		<div class="grid grid--4">
 			<?php foreach ( $services as $key => $s ) : ?>
 				<article class="card card--link service-card" data-reveal>
@@ -215,7 +215,7 @@ $combo      = $spouw_dub + $vloer_dub;
 <!-- ============ WERKWIJZE ============ -->
 <section class="section section--surface">
 	<div class="container">
-		<?php warmvast_section_header( 'Werkwijze', 'Zo werkt isoleren met Warmvast', 'Van gratis scan tot een compleet subsidiedossier, in zes overzichtelijke stappen.' ); ?>
+		<?php warmvast_section_header( '', 'Zo werkt isoleren met Warmvast', 'Van gratis scan tot een compleet subsidiedossier, in zes overzichtelijke stappen.' ); ?>
 		<ol class="steps">
 			<?php foreach ( $werkwijze as $step ) : ?>
 				<li data-reveal>
@@ -230,7 +230,7 @@ $combo      = $spouw_dub + $vloer_dub;
 <!-- ============ VERTROUWEN ============ -->
 <section class="section section--paper">
 	<div class="container">
-		<?php warmvast_section_header( 'Onze aanpak', 'Nuchter, technisch en transparant', 'Wij claimen alleen wat we kunnen uitleggen en vastleggen.' ); ?>
+		<?php warmvast_section_header( '', 'Nuchter, technisch en transparant', 'Wij claimen alleen wat we kunnen uitleggen en vastleggen.' ); ?>
 		<div class="trust-grid">
 			<?php foreach ( $trust as $t ) : ?>
 				<div class="trust-item" data-reveal>
@@ -248,7 +248,7 @@ $combo      = $spouw_dub + $vloer_dub;
 <!-- ============ FAQ ============ -->
 <section class="section section--surface">
 	<div class="container">
-		<?php warmvast_section_header( 'Veelgestelde vragen', 'Helder over subsidie en uitvoering' ); ?>
+		<?php warmvast_section_header( '', 'Helder over subsidie en uitvoering' ); ?>
 		<div class="faq">
 			<?php foreach ( $faqs as $i => $faq ) : ?>
 				<details class="faq__item" <?php echo 0 === $i ? 'open' : ''; ?>>

@@ -6,6 +6,7 @@
 	"use strict";
 
 	var doc = document;
+	var root = doc.documentElement;
 
 	var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -16,6 +17,10 @@
 	var orb1 = doc.querySelector(".hero__orb--1");
 	var orb2 = doc.querySelector(".hero__orb--2");
 	var ticking = false;
+
+	var amb = { tx: 0, ty: 0, cx: 0, cy: 0 };
+	var ambRunning = false;
+
 	function onScroll() {
 		var y = window.scrollY || window.pageYOffset;
 		if (header) header.classList.toggle("is-scrolled", y > 8);
@@ -23,17 +28,53 @@
 			var docH = doc.documentElement.scrollHeight - window.innerHeight;
 			progress.style.transform = "scaleX(" + (docH > 0 ? Math.min(1, y / docH) : 0) + ")";
 		}
-		if (!reduce && y < 1100) {
-			if (heroArt) heroArt.style.transform = "translateY(" + (y * 0.15) + "px)";
-			// orbs drift apart on scroll for parallax depth (opposite directions)
-			if (orb1) orb1.style.transform = "translate3d(0," + (y * -0.06) + "px,0)";
-			if (orb2) orb2.style.transform = "translate3d(0," + (y * 0.1) + "px,0)";
-		}
+		if (!reduce && y < 1100 && heroArt) heroArt.style.transform = "translateY(" + (y * 0.15) + "px)";
 		ticking = false;
 	}
 	function requestScroll() { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }
 	onScroll();
 	window.addEventListener("scroll", requestScroll, { passive: true });
+
+	/* Continuous ambient haze: a slow autonomous Lissajous drift (warm, organic —
+	   each element on its own long period so they never move in lockstep) plus a
+	   subtle scale "breathing", combined with the smoothed pointer offset. Drives
+	   the hero orbs directly and the card / CTA-band glows via CSS custom
+	   properties. Pauses when the tab is hidden; skipped for reduced-motion. */
+	function ambientLoop() {
+		amb.cx += (amb.tx - amb.cx) * 0.075;   // floaty pointer follow
+		amb.cy += (amb.ty - amb.cy) * 0.075;
+		var s = performance.now() / 1000;
+		var y = window.scrollY || window.pageYOffset || 0;
+		if (y < 1400) {
+			if (orb1) orb1.style.transform =
+				"translate3d(" + (amb.cx * 90 + Math.sin(s * 0.24) * 46).toFixed(1) + "px," +
+				(y * -0.06 + amb.cy * 62 + Math.cos(s * 0.31 + 1.3) * 34).toFixed(1) + "px,0) scale(" +
+				(1 + Math.sin(s * 0.20 + 0.5) * 0.04).toFixed(3) + ")";
+			if (orb2) orb2.style.transform =
+				"translate3d(" + (amb.cx * -104 + Math.sin(s * 0.19 + 2.1) * 54).toFixed(1) + "px," +
+				(y * 0.10 + amb.cy * -54 + Math.cos(s * 0.27 + 3.7) * 38).toFixed(1) + "px,0) scale(" +
+				(1 + Math.sin(s * 0.17 + 2.0) * 0.05).toFixed(3) + ")";
+		}
+		root.style.setProperty("--wv-mx", amb.cx.toFixed(4));
+		root.style.setProperty("--wv-my", amb.cy.toFixed(4));
+		root.style.setProperty("--wv-fx", Math.sin(s * 0.16 + 0.6).toFixed(4));   // card float
+		root.style.setProperty("--wv-fy", Math.cos(s * 0.21 + 2.4).toFixed(4));
+		root.style.setProperty("--wv-gx", Math.sin(s * 0.13 + 4.2).toFixed(4));   // cta float
+		root.style.setProperty("--wv-gy", Math.cos(s * 0.18 + 1.1).toFixed(4));
+		if (!doc.hidden) { requestAnimationFrame(ambientLoop); } else { ambRunning = false; }
+	}
+	function startAmbient() { if (!ambRunning && !reduce) { ambRunning = true; requestAnimationFrame(ambientLoop); } }
+
+	if (!reduce) {
+		startAmbient();
+		doc.addEventListener("visibilitychange", function () { if (!doc.hidden) startAmbient(); });
+		if (window.matchMedia && window.matchMedia("(pointer: fine)").matches) {
+			window.addEventListener("mousemove", function (e) {
+				amb.tx = (e.clientX / window.innerWidth - 0.5) * 2;   // -1 .. 1
+				amb.ty = (e.clientY / window.innerHeight - 0.5) * 2;
+			}, { passive: true });
+		}
+	}
 
 	/* ---------- mobile nav ---------- */
 	var toggle = doc.querySelector("[data-nav-toggle]");

@@ -1,8 +1,11 @@
 # WARMVAST — WordPress site
 
-Conversion-focused WordPress site for WARMVAST (Dutch insulation company), built around a
-multi-step **isolatiescan** with a live **ISDE-subsidiecalculator**. Custom theme, vanilla
-HTML/CSS/JS, no page builder. See [`warmvast_blueprint.md`](warmvast_blueprint.md) for the spec.
+Conversion-focused WordPress site for WARMVAST (Dutch insulation company), built around an
+address-driven **woningscan** (PDOK building data + EP-Online energy label) with a live
+**ISDE-subsidiecalculator**. Custom theme, vanilla HTML/CSS/JS, no page builder. See
+[`warmvast_blueprint.md`](warmvast_blueprint.md) for the original spec — note that the scan
+described there (a manual multi-step form) was superseded by the address-driven woningscan;
+see Architecture below for what's actually live.
 
 ## Local setup (already done)
 
@@ -38,24 +41,39 @@ php -c <custom-ini> wp-cli.phar --path=<repo> <command>
 - **Single source of truth for ISDE tariffs**: `inc/config.php` → `warmvast_isde_rates()`.
   Localised to JS via `wp_localize_script` (`WARMVAST_SCAN.rates`) so the calculator and the
   service pages can never drift.
-- **The scan**: `template-parts/isolatiescan.php` + `assets/js/isolatiescan.js`. Reusable via
-  shortcode `[warmvast_isolatiescan measure="spouw"]`, or by setting `$warmvast_scan_layout`
-  (`card`|`wide`) / `$warmvast_scan_preselect` before `get_template_part`.
+- **The scan**: `template-parts/woningscan.php` + `assets/js/woningscan.js`, backed by a REST
+  endpoint in `inc/woningscan.php` (`GET /wp-json/warmvast/v1/woningscan`). Flow: address ->
+  PDOK Locatieserver + BAG WFS (footprint, bouwjaar) + luchtfoto WMS -> EP-Online energy label
+  (public search, falls back to a bouwjaar estimate) -> indicative m² for vloer/dak/spouw/glas ->
+  ISDE + besparing indication -> lead -> Formspree. Rendered via the `[warmvast_isolatiescan]`
+  shortcode or directly with `get_template_part( 'template-parts/woningscan' )`. To preselect a
+  measure (used by the service pages so e.g. `/dakisolatie/` starts with only "Dakisolatie"
+  checked), set the `$warmvast_scan_preselect` global (`spouw`|`vloer`|`glas`|`dak`) before the
+  `get_template_part` call and reset it to `''` right after.
+  The older manual multi-step form (`template-parts/isolatiescan.php` / `assets/js/isolatiescan.js`)
+  described in the blueprint has been removed — it was fully superseded and no longer enqueued.
 - **Page templates**: `template-service.php` (slug-driven, all 4 services), `template-subsidie.php`,
-  `template-scan.php`, `template-isolatie.php`, `template-contact.php`, `template-kennisbank.php`.
+  `template-scan.php`, `template-isolatie.php`, `template-contact.php`, `template-kennisbank.php`,
+  `404.php`.
 - **Service copy**: `inc/service-content.php`.
 - **Nav & footer**: hand-built in `header.php` / `footer.php` (mega-dropdown with per-service
   tariffs). Assigning a WP menu to the `primary` location overrides the coded fallback.
 
-## ⚠️ Before go-live — 2 required steps
+## ⚠️ Before go-live — required steps
 
-1. **Formspree endpoint.** In `inc/config.php`, replace `WARMVAST_FORMSPREE` (`REPLACE_WITH_ID`)
-   with the real form id. The scan refuses to submit while the placeholder is present.
+1. **Formspree endpoint.** Verify `WARMVAST_FORMSPREE` in `inc/config.php` is the real, active
+   form id for this business (not a placeholder left over from setup/testing).
 2. **Verify ISDE 2026 tariffs** in `inc/config.php` against RVO. They are currently taken from the
    blueprint and dated but unverified:
    https://www.rvo.nl/subsidies-financiering/isde/woningeigenaren/isolatiemaatregelen
-
-Also replace the placeholder **contact details** (phone/email/hours) in `inc/config.php`.
+3. **Replace placeholder contact details** (phone/email/hours) in `inc/config.php`.
+4. **Reviews are sample data.** `warmvast_reviews()` in `inc/config.php` has `verified => false`,
+   which correctly suppresses the AggregateRating schema. Do not flip it to `true` until the
+   `items` are real reviews — brand rule: no fabricated reviews or ratings go live.
+5. **EP-Online label lookup** (`warmvast_ws_public_energylabel()` in `inc/woningscan.php`) scrapes
+   EP-Online's public search page (verification token + HTML parsing) since no API key is
+   configured (`WARMVAST_EP_ONLINE_API_KEY`). It already falls back gracefully to a bouwjaar
+   estimate on any failure, but a real EP-Online API key would make label lookups more reliable.
 
 ## Analytics
 

@@ -172,34 +172,53 @@ function warmvast_article_visual( $slug ) {
 		</g>
 	</svg>';
 
-	// 6) Dakisolatie, three roof methods side by side.
+	// 6) Dakisolatie: three house cross-sections. The insulation layer (green)
+	//    sits in a different place per method; a warm wash (accent) shows which
+	//    volume stays heated — for the zoldervloer the attic deliberately stays
+	//    cold, which is the whole point of that method.
 	$svgs['dakisolatie-binnen-buiten-zoldervloer'] = '
-	<svg viewBox="0 0 640 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Drie manieren om een dak te isoleren">
+	<svg viewBox="0 0 640 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Drie manieren om een dak te isoleren: aan de binnenzijde, aan de buitenzijde of op de zoldervloer. De isolatielaag zit telkens op een andere plek; bij de zoldervloer blijft de zolder onverwarmd.">
 		<rect width="640" height="260" fill="' . $primary_l . '"/>
-		<g stroke="' . $ink . '" stroke-width="2.5" stroke-linejoin="round" fill="none">
-			<path d="M60 140 120 80 180 140" />
-			<path d="M120 80 120 92" stroke="' . $accent . '" stroke-width="8" stroke-linecap="round"/>
-			<path d="M75 130h90v50H75z" opacity="0"/>
+
+		<!-- warm (heated) zones -->
+		<g fill="' . $accent . '" opacity="0.18">
+			<path d="M39 196 V150 L107 90 L175 150 V196 Z"/>
+			<path d="M252 196 V150 L320 90 L388 150 V196 Z"/>
+			<path d="M465 196 V152 H601 V196 Z"/>
 		</g>
-		<rect x="72" y="128" width="96" height="10" fill="' . $primary . '"/>
-		<g stroke="' . $ink . '" stroke-width="2.5" stroke-linejoin="round" fill="none">
-			<path d="M245 140 305 80 365 140" />
+
+		<!-- house structures -->
+		<g stroke="' . $ink . '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" fill="none">
+			<path d="M37 150 L107 74 L177 150 M37 150 V196 M177 150 V196 M33 196 H181"/>
+			<path d="M250 150 L320 74 L390 150 M250 150 V196 M390 150 V196 M246 196 H394"/>
+			<path d="M463 150 L533 74 L603 150 M463 150 V196 M603 150 V196 M459 196 H607"/>
 		</g>
-		<rect x="252" y="86" width="106" height="8" fill="' . $primary . '" transform="rotate(0)"/>
-		<g stroke="' . $ink . '" stroke-width="2.5" stroke-linejoin="round" fill="none">
-			<path d="M430 140 490 80 550 140" />
+		<!-- faint attic-floor line where the attic is part of the heated volume -->
+		<g stroke="' . $ink . '" stroke-width="1.4" opacity="0.35">
+			<path d="M37 150 H177"/><path d="M250 150 H390"/>
 		</g>
-		<rect x="440" y="128" width="100" height="10" fill="' . $primary . '"/>
-		<line x1="440" y1="150" x2="540" y2="150" stroke="' . $primary . '" stroke-width="6"/>
-		<g font-family="Inter, sans-serif" font-size="12.5" font-weight="700" fill="' . $ink . '" text-anchor="middle">
-			<text x="120" y="175">Binnenzijde</text>
-			<text x="305" y="175">Buitenzijde</text>
-			<text x="490" y="175">Zoldervloer</text>
+
+		<!-- insulation layer (green) in its method-specific position -->
+		<g stroke="' . $primary . '" stroke-linecap="round" stroke-linejoin="round" fill="none">
+			<path d="M51 148 L107 92 L163 148" stroke-width="8"/>
+			<path d="M240 150 L320 60 L400 150" stroke-width="8"/>
+			<path d="M471 150 H595" stroke-width="11"/>
 		</g>
-		<g font-family="Inter, sans-serif" font-size="11" fill="' . $ink . '" text-anchor="middle" opacity="0.75">
-			<text x="120" y="192">tegen de sporen</text>
-			<text x="305" y="192">boven de sporen</text>
-			<text x="490" y="192">isoleer de vloer</text>
+
+		<!-- panel dividers -->
+		<g stroke="' . $line . '" stroke-width="1.5">
+			<path d="M213 46 V212"/><path d="M427 46 V212"/>
+		</g>
+
+		<g font-family="Inter, sans-serif" font-weight="700" font-size="14" fill="' . $ink . '" text-anchor="middle">
+			<text x="107" y="226">Binnenzijde</text>
+			<text x="320" y="226">Buitenzijde</text>
+			<text x="533" y="226">Zoldervloer</text>
+		</g>
+		<g font-family="Inter, sans-serif" font-size="11.5" fill="' . $ink . '" text-anchor="middle" opacity="0.7">
+			<text x="107" y="243">onder de dakhelling</text>
+			<text x="320" y="243">boven de constructie</text>
+			<text x="533" y="243">zolder blijft koud</text>
 		</g>
 	</svg>';
 

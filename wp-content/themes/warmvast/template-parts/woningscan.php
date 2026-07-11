@@ -11,7 +11,9 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-$rates = warmvast_isde_rates();
+global $warmvast_scan_preselect;
+$ws_preselect = $warmvast_scan_preselect ? $warmvast_scan_preselect : '';
+$rates         = warmvast_isde_rates();
 ?>
 <section class="ws" id="warmvast-woningscan" data-endpoint="<?php echo esc_url( WARMVAST_FORMSPREE ); ?>">
 
@@ -38,7 +40,26 @@ $rates = warmvast_isde_rates();
 
 	<!-- Loading -->
 	<div class="ws-loading" id="wsLoading" hidden>
-		<span class="ws-spinner" aria-hidden="true"></span>
+		<div class="ws-loader" aria-hidden="true">
+			<svg viewBox="0 0 160 132" role="img" focusable="false">
+				<defs>
+					<linearGradient id="ws-loader-heat" x1="0" y1="0" x2="0" y2="1">
+						<stop offset="0" stop-color="#fed03d"/>
+						<stop offset="1" stop-color="#0b6b5b"/>
+					</linearGradient>
+				</defs>
+				<g class="ws-loader__heat" fill="none" stroke="#fed03d" stroke-width="3.4" stroke-linecap="round">
+					<path d="M58 38c0-8 9-8 9-16s-9-8-9-16"/>
+					<path d="M80 34c0-8 9-8 9-16s-9-8-9-16"/>
+					<path d="M102 38c0-8 9-8 9-16s-9-8-9-16"/>
+				</g>
+				<g class="ws-loader__house" fill="none" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M42 78 80 48l38 30" stroke="#0b6b5b" stroke-width="5"/>
+					<path d="M52 76v38h56V76" stroke="#0b6b5b" stroke-width="5"/>
+					<path d="M71 114V92h18v22" stroke="#0b6b5b" stroke-width="4"/>
+				</g>
+			</svg>
+		</div>
 		<p>We halen de gegevens van uw woning op…</p>
 	</div>
 
@@ -62,13 +83,15 @@ $rates = warmvast_isde_rates();
 				<label>Vloer <span class="ws-suffix"><input type="number" id="wsVloer" min="0" step="1"> m²</span></label>
 				<label>Dak <span class="ws-suffix"><input type="number" id="wsDak" min="0" step="1"> m²</span></label>
 				<label>Buitenmuur <span class="ws-suffix"><input type="number" id="wsSpouw" min="0" step="1"> m²</span></label>
+				<label>Glas <span class="ws-suffix"><input type="number" id="wsGlas" min="0" step="0.5"> m²</span></label>
 			</div>
 			<p class="ws-meta" id="wsMeta"></p>
 		</div>
 
 		<div class="ws-label">
-			<h3>Energielabel <span class="ws-hint">(indicatie o.b.v. bouwjaar)</span></h3>
+			<h3>Energielabel <span class="ws-hint" id="wsLabelHint"></span></h3>
 			<div class="ws-label__scale" id="wsLabelScale" aria-hidden="true"></div>
+			<p class="ws-label__source" id="wsLabelSource"></p>
 		</div>
 
 		<button type="button" class="btn btn--primary btn--lg ws-full" id="wsToSubsidie">
@@ -87,13 +110,16 @@ $rates = warmvast_isde_rates();
 
 		<ul class="ws-measures" id="wsMeasures">
 			<?php
-			$order = array( 'dak', 'spouw', 'vloer' );
+			$order = array( 'dak', 'spouw', 'vloer', 'glas' );
 			foreach ( $order as $key ) :
-				$r = $rates[ $key ];
+				$r          = $rates[ $key ];
+				// When a service page preselects a measure, start with only that one
+				// checked; otherwise default to showing the full picture (all checked).
+				$is_checked = $ws_preselect ? ( $key === $ws_preselect ) : true;
 				?>
 				<li>
 					<label class="ws-measure">
-						<input type="checkbox" name="ws_measure" value="<?php echo esc_attr( $key ); ?>" checked>
+						<input type="checkbox" name="ws_measure" value="<?php echo esc_attr( $key ); ?>" <?php checked( $is_checked ); ?>>
 						<span class="ws-measure__name"><?php warmvast_the_icon( 'check', 'wv-icon--sm' ); ?> <?php echo esc_html( $r['label'] ); ?></span>
 						<span class="ws-measure__m2" data-m2="<?php echo esc_attr( $key ); ?>">– m²</span>
 					</label>
@@ -114,6 +140,8 @@ $rates = warmvast_isde_rates();
 		</div>
 		<p class="ws-disclaimer">Indicatie op basis van ISDE-tarieven 2026 en uw geschatte m². Definitieve subsidie en besparing hangen af van de opname en RVO-beoordeling. Aan deze berekening kunnen geen rechten worden ontleend.</p>
 
+		<p class="ws-error" id="wsSubsidieError" role="alert" aria-live="assertive"></p>
+
 		<button type="button" class="btn btn--accent btn--lg ws-full" id="wsToLead">
 			Gratis adviesgesprek aanvragen <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?>
 		</button>
@@ -133,7 +161,7 @@ $rates = warmvast_isde_rates();
 			<label>Telefoon <input type="tel" name="telefoon" autocomplete="tel" required></label>
 			<label>Opmerking (optioneel) <textarea name="opmerking" rows="2"></textarea></label>
 			<div class="ws-honeypot" aria-hidden="true"><input type="text" name="_gotcha" tabindex="-1" autocomplete="off"></div>
-			<label class="wv-consent"><input type="checkbox" name="privacy_akkoord" value="ja" required> <span>Warmvast mag contact met mij opnemen over mijn isolatiescan. Zie de <a href="<?php echo esc_url( home_url( '/privacyverklaring/' ) ); ?>">privacyverklaring</a>.</span></label>
+			<label class="wv-consent wv-consent--inline"><span>Warmvast mag contact met mij opnemen over mijn isolatiescan. Zie de <a href="<?php echo esc_url( home_url( '/privacyverklaring/' ) ); ?>">privacyverklaring</a>.</span><input type="checkbox" name="privacy_akkoord" value="ja" required></label>
 			<p class="ws-error" id="wsLeadError" role="alert" aria-live="assertive"></p>
 			<button type="submit" class="btn btn--accent btn--lg ws-full" id="wsSubmitLead">Verstuur mijn aanvraag <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></button>
 		</form>

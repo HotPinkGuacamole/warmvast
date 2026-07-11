@@ -38,11 +38,34 @@ if ( ! defined( 'WARMVAST_REGION' ) ) {
 }
 
 /**
- * Formspree endpoint for the isolatiescan. Replace REPLACE_WITH_ID with the
- * real form id. The scan JS refuses to submit while this placeholder is present.
+ * Formspree endpoint for the isolatiescan / woningscan.
  */
 if ( ! defined( 'WARMVAST_FORMSPREE' ) ) {
-	define( 'WARMVAST_FORMSPREE', 'https://formspree.io/f/REPLACE_WITH_ID' );
+	define( 'WARMVAST_FORMSPREE', 'https://formspree.io/f/xeebwqro' );
+}
+
+/**
+ * EP-Online Public API key for registered energy labels.
+ *
+ * Request a key via EP-Online/RVO and define it here or in wp-config.php. When
+ * empty, the woningscan shows that the registered label was not fetched.
+ * Docs: https://public.ep-online.nl/swagger/index.html
+ */
+if ( ! defined( 'WARMVAST_EP_ONLINE_API_KEY' ) ) {
+	define( 'WARMVAST_EP_ONLINE_API_KEY', '' );
+}
+
+/**
+ * Google Tag Manager container ID (e.g. "GTM-XXXXXXX").
+ *
+ * Every conversion event (scan_start, scan_subsidy_seen, scan_submit_success,
+ * phone_click, cta_click, etc. -- see assets/js/main.js and woningscan.js)
+ * already dispatches to window.dataLayer / window.gtag. Nothing is listening
+ * until a real container ID is set here; the GTM snippet in header.php
+ * activates automatically once it is, no other change needed.
+ */
+if ( ! defined( 'WARMVAST_GTM_ID' ) ) {
+	define( 'WARMVAST_GTM_ID', '' );
 }
 
 /**

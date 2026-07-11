@@ -20,6 +20,12 @@ $trust = array(
 );
 ?>
 <section class="section section--ink scan-landing">
+	<div class="scan-landing__bg" aria-hidden="true">
+		<span class="scan-landing__heat scan-landing__heat--roof"></span>
+		<span class="scan-landing__heat scan-landing__heat--floor"></span>
+		<span class="scan-landing__beam scan-landing__beam--1"></span>
+		<span class="scan-landing__beam scan-landing__beam--2"></span>
+	</div>
 	<div class="container">
 		<div class="scan-landing__head">
 			<span class="hero__eyebrow"><?php warmvast_the_icon( 'thermo', 'wv-icon--sm' ); ?> Gratis &amp; vrijblijvend</span>

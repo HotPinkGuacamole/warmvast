@@ -23,7 +23,7 @@ if ( empty( $reviews['items'] ) ) {
 					<em><?php echo esc_html( sprintf( 'Gemiddeld op basis van %d beoordelingen', $reviews['count'] ) ); ?><?php echo $reviews['source'] ? esc_html( ' · ' . $reviews['source'] ) : ''; ?></em>
 				</span>
 			</div>
-			<?php warmvast_section_header( 'Ervaringen', 'Woningeigenaren over Warmvast' ); ?>
+			<?php warmvast_section_header( '', 'Woningeigenaren over Warmvast' ); ?>
 		</div>
 
 		<div class="grid grid--3 reviews__grid">

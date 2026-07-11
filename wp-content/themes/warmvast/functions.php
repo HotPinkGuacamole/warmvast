@@ -33,14 +33,13 @@ function warmvast_setup() {
 		'html5',
 		array( 'search-form', 'comment-form', 'comment-list', 'gallery', 'caption', 'style', 'script', 'navigation-widgets' )
 	);
-	add_theme_support( 'custom-logo', array( 'height' => 48, 'width' => 200, 'flex-width' => true, 'flex-height' => true ) );
+	add_theme_support( 'custom-logo', array( 'height' => 40, 'width' => 160, 'flex-width' => true, 'flex-height' => true ) );
 	add_theme_support( 'responsive-embeds' );
 
 	register_nav_menus(
 		array(
-			'primary'         => __( 'Hoofdmenu', 'warmvast' ),
-			'primary_isolatie' => __( 'Isolatie dropdown', 'warmvast' ),
-			'footer'          => __( 'Footer menu', 'warmvast' ),
+			'primary' => __( 'Hoofdmenu', 'warmvast' ),
+			'footer'  => __( 'Footer menu', 'warmvast' ),
 		)
 	);
 
@@ -90,12 +89,23 @@ add_action( 'wp_enqueue_scripts', 'warmvast_assets' );
 /**
  * Shortcode: [warmvast_isolatiescan] — renders the address-driven woningscan.
  * (The legacy multi-step form is retired; the shortcode name is kept for
- * backwards compatibility.)
+ * backwards compatibility.) Accepts an optional measure attribute
+ * (spouw|vloer|glas|dak) to preselect that measure, e.g.
+ * [warmvast_isolatiescan measure="dak"].
  */
 function warmvast_isolatiescan_shortcode( $atts ) {
+	$atts  = shortcode_atts( array( 'measure' => '' ), $atts, 'warmvast_isolatiescan' );
+	$rates = warmvast_isde_rates();
+
+	global $warmvast_scan_preselect;
+	$warmvast_scan_preselect = isset( $rates[ $atts['measure'] ] ) ? $atts['measure'] : '';
+
 	ob_start();
 	get_template_part( 'template-parts/woningscan' );
-	return ob_get_clean();
+	$html = ob_get_clean();
+
+	$warmvast_scan_preselect = '';
+	return $html;
 }
 add_shortcode( 'warmvast_isolatiescan', 'warmvast_isolatiescan_shortcode' );
 
