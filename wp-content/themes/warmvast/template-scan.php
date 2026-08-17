@@ -12,11 +12,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 get_header();
 
+// A service page can link here with ?maatregel=dak to preselect that measure,
+// e.g. when its own dark inline-scan block was replaced by a plain link.
+global $warmvast_scan_preselect;
+$maatregel = isset( $_GET['maatregel'] ) ? sanitize_key( wp_unslash( $_GET['maatregel'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only preselect, no state change.
+$warmvast_scan_preselect = isset( warmvast_isde_rates()[ $maatregel ] ) ? $maatregel : '';
+
 $trust = array(
 	array( 'clock', 'Binnen 24 uur reactie' ),
 	array( 'ruler', 'Technische opname vóór uitvoering' ),
 	array( 'camera', 'Fotobewijs voor uw subsidie' ),
-	array( 'map', 'Werkzaam in heel Nederland' ),
+	array( 'map', 'Werkzaam in ' . WARMVAST_REGION ),
 );
 ?>
 <section class="section section--ink scan-landing">

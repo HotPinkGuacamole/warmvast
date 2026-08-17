@@ -50,6 +50,10 @@ function warmvast_icon( $name, $class = '' ) {
 		'chevron' => '<path d="m6 9 6 6 6-6"/>',
 		'phone-check' => '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6"/>',
 		'doc'     => '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/>',
+		'whatsapp' => '<path d="M3 21l1.4-4.9A8.5 8.5 0 1 1 8 19.6z"/><path d="M8.5 8.3c.2-.5.5-.5.8-.5h.5c.2 0 .4 0 .6.4s.7 1.7.8 1.9.1.3 0 .5-.2.3-.4.5-.4.4-.2.7c.2.3.9 1.5 1.9 2.4 1.3 1.2 2.2 1.5 2.5 1.7s.5.1.7-.1.8-.9 1-1.2.5-.3.8-.2 1.9.9 2.2 1.1.5.3.5.5-.1 1.2-.7 1.6-1.7 1.2-2.9 1.2c-1.5 0-3.6-.7-5.1-2.2s-2.5-3.6-2.6-4.4.1-1.9.3-2.4Z"/>',
+		'building' => '<rect x="4" y="3" width="10" height="18" rx="1"/><rect x="14" y="8" width="6" height="13" rx="1"/><path d="M7 7h1M11 7h1M7 11h1M11 11h1M7 15h1M11 15h1"/><path d="M17 12h1M17 16h1"/>',
+		'award'   => '<circle cx="12" cy="8" r="6"/><path d="m8.5 13.5-1.8 7.3L12 18l5.3 2.8-1.8-7.3"/>',
+		'image'   => '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5.5-5.5L4 21"/>',
 	);
 
 	$d = isset( $paths[ $name ] ) ? $paths[ $name ] : '';
@@ -167,6 +171,122 @@ function warmvast_email_link( $class = '' ) {
 		warmvast_icon( 'mail' ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		esc_html( WARMVAST_EMAIL )
 	);
+}
+
+/**
+ * WhatsApp CTA. Prints nothing when WARMVAST_WHATSAPP is empty, so it never
+ * shows a dead link.
+ *
+ * @param string $class Extra CSS class.
+ * @param string $label Link text.
+ */
+function warmvast_whatsapp_link( $class = '', $label = 'WhatsApp ons' ) {
+	if ( ! WARMVAST_WHATSAPP ) {
+		return;
+	}
+	$text = rawurlencode( 'Hallo, ik heb een vraag over isolatie via warmvast.nl.' );
+	printf(
+		'<a class="%1$s" href="https://wa.me/%2$s?text=%3$s" data-track="whatsapp_click" target="_blank" rel="noopener">%4$s%5$s</a>',
+		esc_attr( $class ),
+		esc_attr( WARMVAST_WHATSAPP ),
+		esc_attr( $text ),
+		warmvast_icon( 'whatsapp' ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		esc_html( $label )
+	);
+}
+
+/**
+ * Keurmerken/certificeringen block. Prints nothing when
+ * warmvast_certificeringen() is empty -- never a placeholder badge.
+ *
+ * @param string $class Extra wrapper class.
+ */
+function warmvast_the_keurmerken( $class = '' ) {
+	$items = warmvast_certificeringen();
+	if ( empty( $items ) ) {
+		return;
+	}
+	echo '<ul class="keurmerken ' . esc_attr( $class ) . '">';
+	foreach ( $items as $item ) {
+		echo '<li class="keurmerken__item">';
+		if ( ! empty( $item['logo'] ) ) {
+			printf( '<img src="%s" alt="%s" loading="lazy">', esc_url( $item['logo'] ), esc_attr( $item['naam'] ) );
+		} else {
+			warmvast_the_icon( 'award' );
+		}
+		echo '<span><strong>' . esc_html( $item['naam'] ) . '</strong>';
+		if ( ! empty( $item['beschrijving'] ) ) {
+			echo '<em>' . esc_html( $item['beschrijving'] ) . '</em>';
+		}
+		echo '</span></li>';
+	}
+	echo '</ul>';
+}
+
+/**
+ * Kernwaarden badge strip. Always has content (see warmvast_kernwaarden()),
+ * so unlike warmvast_the_keurmerken() this never needs an empty() guard.
+ *
+ * @param string $class Extra wrapper class.
+ */
+function warmvast_the_kernwaarden( $class = '' ) {
+	$items = warmvast_kernwaarden();
+	echo '<ul class="keurmerken ' . esc_attr( $class ) . '">';
+	foreach ( $items as $item ) {
+		echo '<li class="keurmerken__item">';
+		warmvast_the_icon( $item['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
+		echo '<span><strong>' . esc_html( $item['naam'] ) . '</strong></span>';
+		echo '</li>';
+	}
+	echo '</ul>';
+}
+
+/**
+ * Trust stats (oprichtingsjaar, woningen geïsoleerd, garantietermijn). Only
+ * includes the ones that have a real value set in inc/config.php; returns an
+ * empty array (and the homepage/over-ons section renders nothing) until at
+ * least one is filled in.
+ *
+ * @return array<int,array{value:string,label:string}>
+ */
+function warmvast_trust_stats() {
+	$stats = array();
+	if ( WARMVAST_FOUNDED ) {
+		$stats[] = array(
+			'value' => (string) WARMVAST_FOUNDED,
+			'label' => 'Actief sinds',
+		);
+	}
+	if ( WARMVAST_HOMES_INSULATED ) {
+		$stats[] = array(
+			'value' => number_format_i18n( WARMVAST_HOMES_INSULATED ) . '+',
+			'label' => 'Woningen geïsoleerd',
+		);
+	}
+	if ( WARMVAST_WARRANTY_YEARS ) {
+		$stats[] = array(
+			'value' => WARMVAST_WARRANTY_YEARS . ' jaar',
+			'label' => 'Garantie',
+		);
+	}
+	return $stats;
+}
+
+/**
+ * Print the trust-stats row. Prints nothing when warmvast_trust_stats() is
+ * empty (i.e. WARMVAST_FOUNDED / _HOMES_INSULATED / _WARRANTY_YEARS are all
+ * still 0).
+ */
+function warmvast_the_trust_stats() {
+	$stats = warmvast_trust_stats();
+	if ( empty( $stats ) ) {
+		return;
+	}
+	echo '<div class="trust-stats">';
+	foreach ( $stats as $s ) {
+		echo '<div class="trust-stats__item"><span class="trust-stats__value">' . esc_html( $s['value'] ) . '</span><span class="trust-stats__label">' . esc_html( $s['label'] ) . '</span></div>';
+	}
+	echo '</div>';
 }
 
 /**

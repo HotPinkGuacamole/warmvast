@@ -53,7 +53,7 @@ while ( have_posts() ) :
 						<h1 class="page-hero__title"><?php echo esc_html( $detail['h1'] ); ?></h1>
 						<p class="page-hero__sub"><?php echo esc_html( $detail['intro'] ); ?></p>
 						<div class="service-hero__actions">
-							<a class="btn btn--accent btn--lg" href="#warmvast-woningscan" data-track="cta_click">Check deze maatregel <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
+							<a class="btn btn--accent btn--lg" href="<?php echo esc_url( home_url( '/gratis-isolatiescan/?maatregel=' . $key ) ); ?>" data-track="cta_click">Check deze maatregel <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
 							<?php warmvast_phone_link( 'service-hero__phone' ); ?>
 						</div>
 					</div>
@@ -153,18 +153,11 @@ while ( have_posts() ) :
 			</section>
 		<?php endif; ?>
 
-		<!-- Inline woningscan -->
-		<section class="section section--ink">
-			<div class="container">
-				<?php warmvast_section_header( 'Direct berekenen', 'Wat levert isoleren úw woning op?', 'Vul uw adres in en zie direct de maatregelen, subsidie en besparing voor uw woning.', 'center' ); ?>
-				<div class="scan-embed scan-embed--ws">
-					<?php
-					global $warmvast_scan_preselect;
-					$warmvast_scan_preselect = $key;
-					get_template_part( 'template-parts/woningscan' );
-					$warmvast_scan_preselect = '';
-					?>
-				</div>
+		<!-- Direct naar de scan -->
+		<section class="section section--paper">
+			<div class="container u-center">
+				<?php warmvast_section_header( '', 'Wat levert isoleren úw woning op?', 'Vul uw adres in en zie direct de maatregelen, subsidie en besparing voor uw woning.', 'center' ); ?>
+				<?php warmvast_cta( 'Start gratis isolatiescan', 'accent', home_url( '/gratis-isolatiescan/?maatregel=' . $key ) ); ?>
 			</div>
 		</section>
 

@@ -13,7 +13,6 @@
 	/* ---------- sticky header shadow + scroll progress + parallax ---------- */
 	var header = doc.querySelector("[data-header]");
 	var progress = doc.getElementById("scrollProgress");
-	var heroArt = doc.querySelector(".hero__art");
 	var orb1 = doc.querySelector(".hero__orb--1");
 	var orb2 = doc.querySelector(".hero__orb--2");
 	var ticking = false;
@@ -28,7 +27,6 @@
 			var docH = doc.documentElement.scrollHeight - window.innerHeight;
 			progress.style.transform = "scaleX(" + (docH > 0 ? Math.min(1, y / docH) : 0) + ")";
 		}
-		if (!reduce && y < 1100 && heroArt) heroArt.style.transform = "translateY(" + (y * 0.15) + "px)";
 		ticking = false;
 	}
 	function requestScroll() { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }

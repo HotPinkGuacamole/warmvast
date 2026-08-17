@@ -22,19 +22,58 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Defaults are placeholders — replace with the real Warmvast data before launch.
  */
 if ( ! defined( 'WARMVAST_PHONE' ) ) {
-	define( 'WARMVAST_PHONE', '06 47 55 18 93' );
+	define( 'WARMVAST_PHONE', '085 500 5070' );
 }
 if ( ! defined( 'WARMVAST_PHONE_RAW' ) ) {
-	define( 'WARMVAST_PHONE_RAW', '+31647551893' );
+	define( 'WARMVAST_PHONE_RAW', '+31855005070' );
 }
 if ( ! defined( 'WARMVAST_EMAIL' ) ) {
-	define( 'WARMVAST_EMAIL', 'info@warmvast.nl' );
+	define( 'WARMVAST_EMAIL', 'warmvastisolatie@gmail.com' );
 }
 if ( ! defined( 'WARMVAST_HOURS' ) ) {
 	define( 'WARMVAST_HOURS', 'Ma t/m vr 08:30 - 17:30' );
 }
 if ( ! defined( 'WARMVAST_REGION' ) ) {
-	define( 'WARMVAST_REGION', 'Heel Nederland' );
+	define( 'WARMVAST_REGION', 'Noord-Holland en Noord-Zuid-Holland' );
+}
+
+/**
+ * WhatsApp Business number, digits only with country code (e.g. "31647551893",
+ * no "+" or spaces — that is what wa.me requires). Leave empty to hide every
+ * WhatsApp CTA on the site; nothing else needs to change once a real number
+ * is filled in.
+ */
+if ( ! defined( 'WARMVAST_WHATSAPP' ) ) {
+	define( 'WARMVAST_WHATSAPP', '' );
+}
+
+/**
+ * Founding year and total homes insulated. Both scale-proof claims that every
+ * major competitor states explicitly (Takkenkamp: sinds 1935; Isotech: 32.000
+ * woningen) -- and exactly the kind of number this brand must never guess at.
+ * WARMVAST_FOUNDED is real (confirmed by the owner). WARMVAST_HOMES_INSULATED
+ * stays at 0 until a real count exists -- deliberately NOT filled with a
+ * placeholder number: an exact-sounding figure like "112" reads as a factual
+ * claim to consumers, and a false one is an oneerlijke handelspraktijk under
+ * Dutch/EU consumer law, not just a cosmetic placeholder. Every place that
+ * would show it checks for a truthy value first, so it simply stays invisible
+ * rather than showing a fake number.
+ */
+if ( ! defined( 'WARMVAST_FOUNDED' ) ) {
+	define( 'WARMVAST_FOUNDED', 2026 );
+}
+if ( ! defined( 'WARMVAST_HOMES_INSULATED' ) ) {
+	define( 'WARMVAST_HOMES_INSULATED', 0 );
+}
+
+/**
+ * Warranty length in years on materiaal + uitvoering. VENIN-aangesloten
+ * bedrijven bieden doorgaans standaard 10 jaar garantie op spouwmuurisolatie;
+ * dit is echter een keuze van Warmvast zelf en dus geen aanname. 0 = niet
+ * tonen totdat een echte garantietermijn is vastgesteld.
+ */
+if ( ! defined( 'WARMVAST_WARRANTY_YEARS' ) ) {
+	define( 'WARMVAST_WARRANTY_YEARS', 0 );
 }
 
 /**
@@ -149,6 +188,77 @@ function warmvast_reviews() {
 				'stars' => 5,
 				'text'  => 'Netjes gewerkt en het subsidiedossier met foto’s helemaal geregeld. Binnen een dag reactie na de scan.',
 			),
+		),
+	);
+}
+
+/**
+ * Afgeronde projecten voor de /ons-werk/ galerij.
+ *
+ * ⚠️ EMPTY BY DESIGN. Every competitor shows a project gallery with real
+ * photos; Warmvast has none yet. Brand rule: no fabricated projects or stock
+ * photography posing as real work. /ons-werk/ checks `empty()` and shows an
+ * honest "binnenkort" state (with a CTA into the scan) instead of a populated
+ * gallery until real projects are supplied.
+ *
+ * Add one as: array( 'titel' => 'Jaren 30-woning, spouw + vloer',
+ * 'plaats' => 'Enschede', 'maatregelen' => array('spouw','vloer'),
+ * 'datum' => '2026-08', 'foto' => WARMVAST_URI . '/assets/img/projecten/...jpg' ).
+ *
+ * @return array<int,array<string,mixed>>
+ */
+function warmvast_projecten() {
+	return array();
+}
+
+/**
+ * Certificeringen / keurmerken (KOMO, VENIN, SKG-IKOB, VCA, ISO 9001, etc.).
+ *
+ * Every top-5 Dutch insulation company shows these prominently and they are
+ * legally meaningful marks — showing one Warmvast does not actually hold
+ * would be misleading (and likely a trademark violation), so this returns an
+ * empty array until real certification data is supplied. Every place that
+ * renders keurmerken (footer, trust sections, /kwaliteit-en-garantie/) checks
+ * `empty()` first and simply omits the block when there is nothing real to
+ * show — never a placeholder badge.
+ *
+ * To add one once certified: array( 'naam' => 'KOMO', 'beschrijving' =>
+ * 'Procescertificaat voor na-isolatie', 'url' => 'https://...', 'logo' =>
+ * WARMVAST_URI . '/assets/img/keurmerken/komo.svg' ).
+ *
+ * @return array<int,array{naam:string,beschrijving:string,url:string,logo:string}>
+ */
+function warmvast_certificeringen() {
+	return array();
+}
+
+/**
+ * Kernwaarden — a compact badge strip restating Warmvast's own werkwijze
+ * (already described in full on /kwaliteit-en-garantie/). Unlike
+ * warmvast_certificeringen() these are NOT third-party certification claims
+ * (no KOMO/VCA/InstallQ-style logos), so there is no trademark or misleading-
+ * claim risk: it is just Warmvast's own true statements about how it works,
+ * safe to show before any external certification is obtained.
+ *
+ * @return array<int,array{icon:string,naam:string}>
+ */
+function warmvast_kernwaarden() {
+	return array(
+		array(
+			'icon' => 'ruler',
+			'naam' => 'Technische opname vooraf',
+		),
+		array(
+			'icon' => 'shield',
+			'naam' => 'Vakkundige uitvoering',
+		),
+		array(
+			'icon' => 'camera',
+			'naam' => 'Fotobewijs voor uw dossier',
+		),
+		array(
+			'icon' => 'map',
+			'naam' => 'Actief in ' . WARMVAST_REGION,
 		),
 	);
 }

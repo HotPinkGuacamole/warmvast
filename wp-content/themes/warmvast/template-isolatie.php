@@ -10,6 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 get_header();
 $services = warmvast_services();
+
+$keuze = array(
+	array( 'Vertel uw situatie', 'Vul de gratis scan in, of geef aan welke maatregel u overweegt.' ),
+	array( 'Wij rekenen per maatregel', 'Direct zicht op ISDE-tarief, geschiktheid en indicatieve besparing.' ),
+	array( 'U kiest of combineert', 'Eén maatregel, of meerdere tegelijk voor het verdubbelde ISDE-tarief.' ),
+);
 ?>
 <header class="page-hero">
 	<div class="container page-hero__inner">
@@ -24,6 +30,19 @@ $services = warmvast_services();
 		</div>
 	</div>
 </header>
+
+<section class="section section--tight section--paper">
+	<div class="container">
+		<ol class="steps">
+			<?php foreach ( $keuze as $step ) : ?>
+				<li data-reveal>
+					<h3><?php echo esc_html( $step[0] ); ?></h3>
+					<p><?php echo esc_html( $step[1] ); ?></p>
+				</li>
+			<?php endforeach; ?>
+		</ol>
+	</div>
+</section>
 
 <section class="section section--surface">
 	<div class="container">

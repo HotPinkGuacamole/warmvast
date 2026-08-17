@@ -8,7 +8,8 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-$services = warmvast_services();
+$services  = warmvast_services();
+$gemeenten = warmvast_zaanstreek_gemeenten();
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -38,7 +39,7 @@ $services = warmvast_services();
 			<?php if ( has_custom_logo() ) : ?>
 				<?php the_custom_logo(); ?>
 			<?php else : ?>
-				<img class="brand__logo" src="<?php echo warmvast_asset( '/assets/img/warmvast-logo-horizontal-color.png' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper escapes. ?>" width="781" height="247" alt="Warmvast Isolatie" fetchpriority="high" decoding="async">
+				<img class="brand__logo" src="<?php echo warmvast_asset( '/assets/img/warmvast-logo-horizontal-black.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper escapes. ?>" width="730" height="212" alt="Warmvast Isolatie" fetchpriority="high" decoding="async">
 			<?php endif; ?>
 		</a>
 
@@ -88,11 +89,27 @@ $services = warmvast_services();
 					</li>
 					<li class="menu-item"><a href="<?php echo esc_url( home_url( '/subsidie-service/' ) ); ?>">Subsidie</a></li>
 					<li class="menu-item menu-item--has-children" data-dropdown>
-						<a href="<?php echo esc_url( home_url( '/over-warmvast/' ) ); ?>" aria-haspopup="true" aria-expanded="false">
-							Over ons <?php warmvast_the_icon( 'chevron', 'wv-icon--sm nav__caret' ); ?>
+						<a href="<?php echo esc_url( home_url( '/gemeentes/' ) ); ?>" aria-haspopup="true" aria-expanded="false">
+							Gemeentes <?php warmvast_the_icon( 'chevron', 'wv-icon--sm nav__caret' ); ?>
 						</a>
-						<div class="dropdown dropdown--simple">
-							<div class="dropdown__grid dropdown__grid--single">
+						<div class="dropdown dropdown--wide">
+							<p class="dropdown__lead">ISDE-subsidie per gemeente in regio Zaandam</p>
+							<div class="dropdown__links">
+								<?php foreach ( $gemeenten as $gkey => $g ) : ?>
+									<a href="<?php echo esc_url( home_url( '/subsidie-' . $gkey . '/' ) ); ?>"><?php echo esc_html( $g['naam'] ); ?></a>
+								<?php endforeach; ?>
+								<span class="dropdown__links-all">
+									<a href="<?php echo esc_url( home_url( '/gemeentes/' ) ); ?>">Alle gemeentes bekijken →</a>
+								</span>
+							</div>
+						</div>
+					</li>
+					<li class="menu-item menu-item--has-children" data-dropdown>
+						<a href="<?php echo esc_url( home_url( '/over-warmvast/' ) ); ?>" aria-haspopup="true" aria-expanded="false">
+							Bedrijf <?php warmvast_the_icon( 'chevron', 'wv-icon--sm nav__caret' ); ?>
+						</a>
+						<div class="dropdown">
+							<div class="dropdown__grid">
 								<a class="dropdown__item" href="<?php echo esc_url( home_url( '/over-warmvast/' ) ); ?>">
 									<span class="dropdown__icon"><?php warmvast_the_icon( 'shield' ); ?></span>
 									<span><strong>Over ons</strong><em>Wie is Warmvast</em></span>
@@ -100,6 +117,18 @@ $services = warmvast_services();
 								<a class="dropdown__item" href="<?php echo esc_url( home_url( '/kennisbank/' ) ); ?>">
 									<span class="dropdown__icon"><?php warmvast_the_icon( 'doc' ); ?></span>
 									<span><strong>Kennisbank</strong><em>Uitleg over subsidie en isolatie</em></span>
+								</a>
+								<a class="dropdown__item" href="<?php echo esc_url( home_url( '/zakelijk/' ) ); ?>">
+									<span class="dropdown__icon"><?php warmvast_the_icon( 'building' ); ?></span>
+									<span><strong>Zakelijk &amp; VvE</strong><em>Meerdere woningen of complexen</em></span>
+								</a>
+								<a class="dropdown__item" href="<?php echo esc_url( home_url( '/ons-werk/' ) ); ?>">
+									<span class="dropdown__icon"><?php warmvast_the_icon( 'image' ); ?></span>
+									<span><strong>Ons werk</strong><em>Afgeronde projecten</em></span>
+								</a>
+								<a class="dropdown__item dropdown__item--all" href="<?php echo esc_url( home_url( '/kwaliteit-en-garantie/' ) ); ?>">
+									<span class="dropdown__icon"><?php warmvast_the_icon( 'award' ); ?></span>
+									<span><strong>Kwaliteit &amp; garantie</strong><em>Hoe wij kwaliteit waarborgen</em></span>
 								</a>
 							</div>
 						</div>

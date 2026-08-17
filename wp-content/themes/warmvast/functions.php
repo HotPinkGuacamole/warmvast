@@ -16,6 +16,7 @@ define( 'WARMVAST_URI', get_template_directory_uri() );
 require_once WARMVAST_DIR . '/inc/config.php';
 require_once WARMVAST_DIR . '/inc/template-tags.php';
 require_once WARMVAST_DIR . '/inc/service-content.php';
+require_once WARMVAST_DIR . '/inc/gemeente-content.php';
 require_once WARMVAST_DIR . '/inc/woningscan.php';
 require_once WARMVAST_DIR . '/inc/article-visuals.php';
 require_once WARMVAST_DIR . '/inc/seo.php';
@@ -156,7 +157,7 @@ add_filter(
 		if ( is_front_page() ) {
 			$classes[] = 'is-front';
 		}
-		if ( is_page_template() || is_page() ) {
+		if ( is_page() ) {
 			$classes[] = 'is-page';
 		}
 		return $classes;
@@ -164,16 +165,21 @@ add_filter(
 );
 
 /**
- * Fallback for the primary menu when none is assigned yet.
+ * Fallback for the primary menu when none is assigned yet. Flat list only (no
+ * dropdown support) -- mirrors every top-level destination in header.php's own
+ * hand-built menu, which is what actually renders while no WP menu exists.
  */
 function warmvast_primary_menu_fallback() {
 	$items = array(
-		'Isolatie' => home_url( '/isolatie/' ),
-		'Subsidie' => home_url( '/subsidie-service/' ),
-		'Over ons' => home_url( '/over-warmvast/' ),
-		// Kennisbank lives under "Over ons" in the hand-built menu; kept flat here since this fallback has no dropdown support.
-		'Kennisbank' => home_url( '/kennisbank/' ),
-		'Contact'    => home_url( '/contact/' ),
+		'Isolatie'                => home_url( '/isolatie/' ),
+		'Subsidie'                => home_url( '/subsidie-service/' ),
+		'Gemeentes'               => home_url( '/gemeentes/' ),
+		'Over ons'                => home_url( '/over-warmvast/' ),
+		'Kennisbank'              => home_url( '/kennisbank/' ),
+		'Zakelijk & VvE'          => home_url( '/zakelijk/' ),
+		'Ons werk'                => home_url( '/ons-werk/' ),
+		'Kwaliteit & garantie'    => home_url( '/kwaliteit-en-garantie/' ),
+		'Contact'                 => home_url( '/contact/' ),
 	);
 	echo '<ul id="primary-menu" class="nav__list">';
 	foreach ( $items as $label => $url ) {

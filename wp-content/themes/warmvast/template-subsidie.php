@@ -36,6 +36,7 @@ $faqs = array(
 	array( 'q' => 'Hoeveel subsidie kan ik krijgen?', 'a' => 'Dat hangt af van de maatregelen en het aantal m². Gebruik de isolatiescan voor een directe indicatie op basis van uw woning.' ),
 	array( 'q' => 'Wat betekent de verdubbeling precies?', 'a' => 'Voert u binnen de voorwaarden twee of meer isolatiemaatregelen uit, dan verdubbelt het bedrag per m² voor die isolatie. Dat maakt combineren financieel aantrekkelijk.' ),
 	array( 'q' => 'Moet ik zelf iets regelen voor de aanvraag?', 'a' => 'Nauwelijks. Warmvast bereidt het volledige dossier voor — meldcodes, m² en fotobewijs — en zet de aanvraag klaar. U dient in na uitvoering; RVO beoordeelt en beslist.' ),
+	array( 'q' => 'Kan ik de ISDE combineren met een regeling van mijn gemeente?', 'a' => 'In de meeste gevallen wel. Gemeenten bieden meestal geen aparte subsidie maar een duurzaamheidslening — geld dat u, anders dan bij de ISDE, wel terugbetaalt. Zo’n lening voor het bedrag dat na de ISDE-subsidie overblijft, is doorgaans geen probleem. Lees de volledige uitleg in onze kennisbank.' ),
 );
 ?>
 <header class="page-hero">
@@ -117,11 +118,22 @@ $faqs = array(
 	</div>
 </section>
 
-<section class="section section--ink">
-	<div class="container">
-		<?php warmvast_section_header( 'Bereken direct', 'Uw ISDE-indicatie in beeld', 'Vul uw adres in en zie direct de maatregelen, subsidie en besparing voor uw woning.', 'center' ); ?>
-		<div class="scan-embed scan-embed--ws">
-			<?php get_template_part( 'template-parts/woningscan' ); ?>
+<section class="section section--paper" id="rijk-vs-gemeente">
+	<div class="container grid grid--2" style="align-items:start;gap:clamp(1.5rem,4vw,3rem)">
+		<div data-reveal>
+			<?php warmvast_section_header( 'Rijk versus gemeente', 'ISDE is landelijk — sommige gemeenten bieden méér' ); ?>
+			<p>De ISDE is een rijksregeling: het tarief per m² is overal in Nederland gelijk. Los daarvan bieden veel gemeenten een <strong>eigen regeling</strong> aan — meestal geen subsidie, maar een duurzaamheidslening die u, anders dan de ISDE, wel terugbetaalt.</p>
+			<ul class="checklist" style="margin-top:1rem">
+				<li>ISDE-subsidie: niet terugbetalen, landelijk gelijk tarief.</li>
+				<li>Gemeentelijke lening: wel terugbetalen, voorwaarden per gemeente verschillend.</li>
+				<li>Combineren kan doorgaans: de lening overbrugt het deel dat na de ISDE-subsidie overblijft.</li>
+			</ul>
+			<a class="link-arrow" href="<?php echo esc_url( home_url( '/isde-combineren-met-gemeentelijke-subsidie/' ) ); ?>">Lees de volledige uitleg <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
+		</div>
+		<div class="card" data-reveal>
+			<h3>Regeling in uw gemeente?</h3>
+			<p>Warmvast berekent en begeleidt de landelijke ISDE. Voor lokale leningen of subsidiepotjes verwijzen we u naar uw eigen gemeente — bekijk de situatie en kernen van uw regio.</p>
+			<?php warmvast_cta( 'Bekijk uw gemeente', 'secondary', home_url( '/gemeentes/' ) ); ?>
 		</div>
 	</div>
 </section>

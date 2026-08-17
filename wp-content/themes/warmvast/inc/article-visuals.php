@@ -275,6 +275,85 @@ function warmvast_article_visual( $slug ) {
 		<text x="500" y="164" font-family="Inter, sans-serif" font-size="12" fill="' . $ink . '" text-anchor="middle">min ramen &amp; deuren</text>
 	</svg>';
 
+	// 9) ISDE combineren met gemeentelijke regeling: twee geldstromen (rijk =
+	//    subsidie, gemeente = meestal een lening) die samenkomen in één project.
+	$svgs['isde-combineren-met-gemeentelijke-subsidie'] = '
+	<svg viewBox="0 0 640 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ISDE-subsidie van het Rijk en een gemeentelijke lening komen samen in de financiering van uw isolatie">
+		<rect width="640" height="260" fill="' . $primary_l . '"/>
+
+		<!-- source: Rijksoverheid / ISDE (subsidie, niet terugbetalen) -->
+		<rect x="46" y="46" width="190" height="66" rx="8" fill="#fff" stroke="' . $primary . '" stroke-width="3"/>
+		<circle cx="76" cy="79" r="16" fill="' . $accent . '" stroke="' . $ink . '" stroke-width="2"/>
+		<text x="76" y="84" font-family="Space Grotesk, sans-serif" font-size="16" font-weight="800" fill="' . $ink . '" text-anchor="middle">€</text>
+		<text x="102" y="70" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="' . $ink . '">Rijksoverheid</text>
+		<text x="102" y="88" font-family="Inter, sans-serif" font-size="12" fill="' . $primary . '">ISDE-subsidie</text>
+		<text x="102" y="103" font-family="Inter, sans-serif" font-size="10.5" fill="' . $ink . '" opacity="0.6">niet terugbetalen</text>
+
+		<!-- source: Gemeente / lening (terugbetalen) -->
+		<rect x="46" y="148" width="190" height="66" rx="8" fill="#fff" stroke="' . $line . '" stroke-width="3"/>
+		<circle cx="76" cy="181" r="16" fill="#fff" stroke="' . $ink . '" stroke-width="2"/>
+		<path d="M69 181a7 7 0 1 1 3 5.7" stroke="' . $ink . '" stroke-width="2" fill="none" stroke-linecap="round"/>
+		<path d="M69 176v5h5" stroke="' . $ink . '" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+		<text x="102" y="172" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="' . $ink . '">Gemeente</text>
+		<text x="102" y="190" font-family="Inter, sans-serif" font-size="12" fill="' . $ink . '">Lening (optioneel)</text>
+		<text x="102" y="205" font-family="Inter, sans-serif" font-size="10.5" fill="' . $ink . '" opacity="0.6">wel terugbetalen</text>
+
+		<!-- converging lines to the project -->
+		<path d="M236 79C300 79 300 130 356 130" stroke="' . $primary . '" stroke-width="2.5" fill="none" stroke-dasharray="1 7" stroke-linecap="round"/>
+		<path d="M236 181C300 181 300 130 356 130" stroke="' . $ink . '" stroke-width="2.5" fill="none" stroke-dasharray="1 7" stroke-linecap="round" opacity="0.55"/>
+		<path d="M356 130h34" stroke="' . $ink . '" stroke-width="3" stroke-linecap="round"/>
+		<path d="M378 120l14 10-14 10" stroke="' . $ink . '" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+		<!-- destination: uw isolatieproject -->
+		<g stroke="' . $ink . '" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" fill="#fff">
+			<path d="M470 150 528 104 586 150"/>
+			<path d="M484 140v66h88v-66"/>
+		</g>
+		<rect x="514" y="176" width="24" height="30" fill="' . $accent . '" stroke="' . $ink . '" stroke-width="2"/>
+		<rect x="552" y="176" width="20" height="20" fill="' . $primary_l . '" stroke="' . $ink . '" stroke-width="1.5"/>
+		<text x="528" y="228" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="' . $ink . '" text-anchor="middle">Uw isolatieproject</text>
+		<text x="528" y="243" font-family="Inter, sans-serif" font-size="10.5" fill="' . $ink . '" opacity="0.6" text-anchor="middle">subsidie + financiering samen</text>
+	</svg>';
+
+	// 10) Welk isolatieniveau hoort bij het bouwjaar: vijf periodes, oplopende
+	//     isolatiegraad als staafhoogte, met dezelfde rood->groen taal als de
+	//     energielabel-schaal in de woningscan.
+	$svgs['welk-isolatiemateriaal-past-bij-bouwjaar'] = '
+	<svg viewBox="0 0 640 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Isolatieniveau per bouwperiode: van vooroorlogs zonder spouw tot woningen na 2005 die al goed geïsoleerd zijn">
+		<rect width="640" height="260" fill="' . $primary_l . '"/>
+		<line x1="46" y1="205" x2="596" y2="205" stroke="' . $line . '" stroke-width="2"/>
+
+		<!-- vóór 1945 -->
+		<rect x="60" y="180" width="52" height="25" rx="3" fill="#f46d43"/>
+		<text x="86" y="168" font-family="Inter, sans-serif" font-size="11" fill="' . $ink . '" text-anchor="middle">geen spouw</text>
+
+		<!-- 1945-1975 -->
+		<rect x="168" y="150" width="52" height="55" rx="3" fill="#fdae61"/>
+		<text x="194" y="138" font-family="Inter, sans-serif" font-size="11" fill="' . $ink . '" text-anchor="middle">spouw leeg</text>
+
+		<!-- 1975-1992 -->
+		<rect x="276" y="120" width="52" height="85" rx="3" fill="#f6c945"/>
+		<text x="302" y="108" font-family="Inter, sans-serif" font-size="11" fill="' . $ink . '" text-anchor="middle">deels gevuld</text>
+
+		<!-- 1992-2005 -->
+		<rect x="384" y="90" width="52" height="115" rx="3" fill="#8bd06b"/>
+		<text x="410" y="78" font-family="Inter, sans-serif" font-size="11" fill="' . $ink . '" text-anchor="middle">genormeerd</text>
+
+		<!-- na 2005 -->
+		<rect x="492" y="60" width="52" height="145" rx="3" fill="' . $primary . '"/>
+		<text x="518" y="48" font-family="Inter, sans-serif" font-size="11" fill="' . $ink . '" text-anchor="middle">goed geïsoleerd</text>
+
+		<g font-family="Space Grotesk, sans-serif" font-size="13" font-weight="700" fill="' . $ink . '" text-anchor="middle">
+			<text x="86" y="228">vóór 1945</text>
+			<text x="194" y="228">1945–1975</text>
+			<text x="302" y="228">1975–1992</text>
+			<text x="410" y="228">1992–2005</text>
+			<text x="518" y="228">na 2005</text>
+		</g>
+		<path d="M596 205 606 205" stroke="' . $ink . '" stroke-width="2" stroke-linecap="round"/>
+		<path d="M600 199 608 205 600 211" stroke="' . $ink . '" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+	</svg>';
+
 	if ( ! isset( $svgs[ $slug ] ) ) {
 		return '';
 	}

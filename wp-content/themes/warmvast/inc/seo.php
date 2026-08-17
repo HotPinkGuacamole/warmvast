@@ -155,7 +155,7 @@ function warmvast_schema_localbusiness() {
 		'url'         => home_url( '/' ),
 		'telephone'   => WARMVAST_PHONE_RAW,
 		'email'       => WARMVAST_EMAIL,
-		'areaServed'  => 'NL',
+		'areaServed'  => WARMVAST_REGION,
 		'priceRange'  => '€€',
 		'address'     => array(
 			'@type'           => 'PostalAddress',

@@ -47,6 +47,10 @@ $faqs = array(
 		'a' => 'De ISDE werkt met vaste bedragen per m². Laat u binnen de voorwaarden twee of meer isolatiemaatregelen uitvoeren, dan verdubbelt het subsidiebedrag per m² voor de isolatie. Dit geldt ook in combinatie met bijvoorbeeld een warmtepomp of zonneboiler. De tweede maatregel moet binnen 24 maanden worden uitgevoerd.',
 	),
 	array(
+		'q' => 'Wat houdt de Warmvast subsidieservice precies in?',
+		'a' => 'Naast de isolatiemaatregel zelf begeleidt Warmvast u door het hele ISDE-traject: een eerste indicatie via de gratis scan, een technische opname die de exacte m² vaststelt, en tijdens de uitvoering de juiste meldcodes en fotobewijs voor uw dossier. Op de subsidieservice-pagina vindt u de actuele ISDE-tarieven per maatregel en hoe de verdubbeling bij twee of meer maatregelen precies werkt.',
+	),
+	array(
 		'q' => 'Moet ik zelf de subsidie aanvragen?',
 		'a' => 'De aanvraag gebeurt na uitvoering. Warmvast legt de benodigde meldcodes, m² en foto’s vast en helpt u met de voorbereiding van uw dossier. RVO beoordeelt en beslist uiteindelijk over de toekenning.',
 	),
@@ -66,28 +70,19 @@ $faqs = array(
 ?>
 
 <!-- ============ HERO + SCAN ============ -->
+<!-- ============ USP overview data (rendered as a floating card inside the hero) ============ -->
+<?php
+$usps = array(
+	array( 'ruler', 'Technische opname', 'vóór elke uitvoering' ),
+	array( 'euro', 'Helder m²-overzicht', 'u weet wat u betaalt' ),
+	array( 'doc', 'Subsidiedossier geregeld', 'meldcodes &amp; fotobewijs' ),
+	array( 'clock', 'Reactie binnen 24 uur', 'werkzaam in ' . WARMVAST_REGION ),
+);
+?>
 <section class="hero">
 	<span class="hero__orb hero__orb--1" aria-hidden="true"></span>
 	<span class="hero__orb hero__orb--2" aria-hidden="true"></span>
 	<div class="hero__thermal" aria-hidden="true"></div>
-	<div class="hero__art" aria-hidden="true">
-		<svg viewBox="0 0 320 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-			<!-- rising heat waves (animated) -->
-			<g class="hero__heat" stroke="#fed03d" stroke-width="2.2" stroke-linecap="round" fill="none">
-				<path class="hero__wave" d="M120 70c0-10 12-10 12-20s-12-10-12-20"/>
-				<path class="hero__wave" d="M160 62c0-10 12-10 12-20s-12-10-12-20"/>
-				<path class="hero__wave" d="M200 70c0-10 12-10 12-20s-12-10-12-20"/>
-			</g>
-			<!-- house -->
-			<g stroke="#4fd0b8" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" fill="none">
-				<path class="hero__roof" d="M70 150 L165 82 L260 150" stroke="#fed03d"/>
-				<path d="M92 138 V250 H238 V138"/>
-				<rect x="120" y="176" width="42" height="42" rx="2"/>
-				<rect x="180" y="176" width="34" height="74"/>
-				<path d="M108 250 V138 M222 250 V138" opacity="0.5"/>
-			</g>
-		</svg>
-	</div>
 	<div class="container hero__inner">
 		<div class="hero__copy">
 			<span class="hero__eyebrow"><?php warmvast_the_icon( 'thermo', 'wv-icon--sm' ); ?> Comfortabel &amp; energiezuinig wonen</span>
@@ -95,7 +90,7 @@ $faqs = array(
 			<p class="hero__sub">Ontdek waar uw woning warmte verliest en welke isolatie het meeste oplevert, met een directe ISDE-indicatie en besparing op basis van úw adres.</p>
 			<div class="hero__actions">
 				<a class="btn btn--accent btn--lg btn--sheen" href="#warmvast-woningscan" data-track="cta_click">Start gratis isolatiescan <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
-				<a class="btn btn--ghost btn--lg" href="<?php echo esc_url( home_url( '/subsidie-service/' ) ); ?>" data-track="cta_click">Bekijk subsidievoordeel</a>
+				<a class="btn btn--ghost btn--lg" href="#subsidievoordeel" data-track="cta_click">Bekijk subsidievoordeel</a>
 			</div>
 			<div class="hero__trust">
 				<span><?php warmvast_the_icon( 'check', 'wv-icon--sm' ); ?> Gratis, 2 minuten, geen verplichtingen</span>
@@ -107,26 +102,21 @@ $faqs = array(
 			<?php get_template_part( 'template-parts/woningscan' ); ?>
 		</div>
 	</div>
-</section>
 
-<!-- ============ USP BAR ============ -->
-<?php
-$usps = array(
-	array( 'ruler', 'Technische opname', 'vóór elke uitvoering' ),
-	array( 'euro', 'Helder m²-overzicht', 'u weet wat u betaalt' ),
-	array( 'doc', 'Subsidiedossier geregeld', 'meldcodes &amp; fotobewijs' ),
-	array( 'clock', 'Reactie binnen 24 uur', 'werkzaam in heel Nederland' ),
-);
-?>
-<section class="usp-bar flow-top" aria-label="Waarom Warmvast">
-	<div class="container usp-bar__grid">
-		<?php foreach ( $usps as $u ) : ?>
-			<div class="usp">
-				<span class="usp__icon"><?php warmvast_the_icon( $u[0] ); ?></span>
-				<span class="usp__text"><strong><?php echo esc_html( $u[1] ); ?></strong><em><?php echo wp_kses_post( $u[2] ); ?></em></span>
+	<!-- floating USP overview: fully contained inside the hero, so it's always
+	     visible on first paint without scrolling, whatever the viewport height -->
+	<section class="usp-bar" aria-label="Waarom Warmvast">
+		<div class="container">
+			<div class="usp-bar__grid">
+				<?php foreach ( $usps as $u ) : ?>
+					<div class="usp">
+						<span class="usp__icon"><?php warmvast_the_icon( $u[0] ); ?></span>
+						<span class="usp__text"><strong><?php echo esc_html( $u[1] ); ?></strong><em><?php echo wp_kses_post( $u[2] ); ?></em></span>
+					</div>
+				<?php endforeach; ?>
 			</div>
-		<?php endforeach; ?>
-	</div>
+		</div>
+	</section>
 </section>
 
 <!-- ============ PROBLEEMHERKENNING ============ -->
@@ -142,7 +132,7 @@ $usps = array(
 			<?php endforeach; ?>
 		</div>
 		<div style="margin-top:2rem">
-			<?php warmvast_cta( 'Laat Warmvast meekijken', 'primary', '#warmvast-woningscan' ); ?>
+			<?php warmvast_cta( 'Laat Warmvast meekijken', 'primary', home_url( '/gratis-isolatiescan/' ) ); ?>
 		</div>
 	</div>
 </section>
@@ -165,6 +155,9 @@ $usps = array(
 				</article>
 			<?php endforeach; ?>
 		</div>
+		<div style="margin-top:2rem">
+			<?php warmvast_cta( 'Twijfelt u welke maatregel past? Start de scan', 'secondary', home_url( '/gratis-isolatiescan/' ) ); ?>
+		</div>
 	</div>
 </section>
 
@@ -176,7 +169,7 @@ $spouw_dub  = 65 * $r['spouw']['baseRate'] * 2;
 $vloer_dub  = 55 * $r['vloer']['baseRate'] * 2;
 $combo      = $spouw_dub + $vloer_dub;
 ?>
-<section class="section section--paper">
+<section class="section section--paper" id="subsidievoordeel">
 	<div class="container verdub">
 		<div class="verdub__copy" data-reveal="left">
 			<span class="verdub__badge"><?php warmvast_the_icon( 'spark', 'wv-icon--sm' ); ?> De grootste hefboom</span>
@@ -187,7 +180,7 @@ $combo      = $spouw_dub + $vloer_dub;
 				<li>De tweede maatregel voert u binnen 24 maanden uit.</li>
 				<li>U vraagt de subsidie aan ná uitvoering.</li>
 			</ul>
-			<?php warmvast_cta( 'Bereken uw verdubbeling', 'primary', '#warmvast-woningscan' ); ?>
+			<?php warmvast_cta( 'Bereken uw verdubbeling', 'primary', home_url( '/gratis-isolatiescan/' ) ); ?>
 		</div>
 
 		<div class="verdub__calc" data-reveal="right">
@@ -239,6 +232,13 @@ $combo      = $spouw_dub + $vloer_dub;
 				</div>
 			<?php endforeach; ?>
 		</div>
+		<?php if ( warmvast_trust_stats() ) : ?>
+			<div style="margin-top:2.2rem" data-reveal>
+				<?php warmvast_the_trust_stats(); ?>
+			</div>
+		<?php endif; ?>
+		<?php warmvast_the_kernwaarden( 'u-center' ); ?>
+		<?php warmvast_the_keurmerken( 'u-center' ); ?>
 	</div>
 </section>
 
