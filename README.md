@@ -59,33 +59,43 @@ php -c <custom-ini> wp-cli.phar --path=<repo> <command>
 - **Nav & footer**: hand-built in `header.php` / `footer.php` (mega-dropdown with per-service
   tariffs). Assigning a WP menu to the `primary` location overrides the coded fallback.
 
-## Deployment
+## Deployment — Endurer Hosting
 
-`setup.sh` (repo root) turns a fresh `git clone` of this repo into a working WordPress install —
-self-contained: the repo carries the theme *and* a content snapshot (`warmvast-db-localhost.sql`
-— pages, kennisbank, settings), so a `git pull` on the host brings everything except WordPress
-core itself (vendor code, re-downloaded by the script) and the database credentials (secrets,
-can never live in git). One command supplies both:
+Hosted on an Endurer Hosting Pterodactyl egg, which drives deploys via two of its own scripts:
+`generic/latest.sh` (git-pulls a repo, or downloads+extracts a GitHub/GitLab/Gitea release, into
+`GIT_TARGET_DIR`) and `website/wordpress/latest.sh` (installs nginx/MariaDB/PHP-FPM if missing,
+starts MariaDB against the persistent `/home/container/mysql` volume, creates a `wordpress`
+database and a matching `wp-config.php` if they don't exist yet, then serves nginx). Neither of
+those downloads WordPress core itself, and neither imports any content — this repo supplies both:
 
-```bash
-bash setup.sh https://warmvast.nl <db_name> <db_user> <db_pass> [db_host] [db_port]
-```
+- **`warmvast-db.sql`** — a full content snapshot (pages, kennisbank, settings), already
+  domain-corrected for the live site via `wp search-replace ... --export` (never a raw SQL
+  find/replace — that corrupts WordPress's serialized PHP arrays).
+- **`start.sh`** — the wrapper that ties it together: runs Endurer's `wordpress/latest.sh` in the
+  background, waits for MariaDB + `wp-config.php`, imports `warmvast-db.sql` **only** if
+  `wp_options` doesn't exist yet (i.e. only on the very first boot — every later restart reuses
+  the persistent MariaDB volume and skips the import, so it never clobbers real content/leads),
+  then hands off to nginx.
 
-Or set `SITE_DOMAIN` / `DB_NAME` / `DB_USER` / `DB_PASS` (/ `DB_HOST` / `DB_PORT`) as environment
-variables instead of passing args — e.g. in a hosting panel's "Startup command"/"Variables" tab,
-so the whole deploy runs unattended every time the panel pulls from GitHub.
+**Panel setup (once):**
+- Variables tab: `GIT_REPO_URL` = this repo's URL, `GIT_TARGET_DIR` = `/home/container/www`
+  (the wordpress script expects WP core in `.../www`), `GIT_PULL_ON_RESTART` = `true`.
+- Startup Command:
+  ```
+  curl -fsSL https://startup.endurerhosting.com/generic/latest.sh | bash && bash /home/container/www/start.sh
+  ```
 
-The script downloads matching WP core, writes `wp-config.php` (with fresh salts), imports the
-SQL snapshot, then serialization-safely rewrites every `http://localhost/warmvast` URL to the
-real domain via `wp search-replace` (never do this with a raw SQL find/replace — it corrupts
-WordPress's serialized PHP arrays) and flushes permalinks. Safe to re-run; skips the core
-download if `wp-load.php` already exists. The database itself (and its user) must already exist
-— see the comment at the top of `setup.sh` for the one-line `CREATE DATABASE` if not.
+**Still missing: WordPress core itself isn't in this repo yet** (only the theme + `start.sh` +
+`warmvast-db.sql` are). The `generic` script only pulls what's in the git repo/release — it needs
+to find `wp-config-sample.php` etc. already present in `GIT_TARGET_DIR` for the wordpress script
+to configure anything. Until core is added (either committed, or — cleaner — attached as a
+GitHub Release asset with `GIT_RELEASE_VERSION` set so `generic/latest.sh` downloads it), a
+fresh deploy will start nginx over an incomplete webroot.
 
-**Repo contains a full content dump.** `warmvast-db-localhost.sql` has real (if pre-launch)
-WordPress data including the admin account's hashed password. Keep this repository **private**
-on GitHub, and once the site's own database is the source of truth post-launch, this snapshot
-can be dropped from the repo (and ideally purged from git history) rather than kept indefinitely.
+**Repo contains a full content dump.** `warmvast-db.sql` has real (if pre-launch) WordPress data
+including the admin account's hashed password. Keep this repository **private** on GitHub, and
+once the live database is the source of truth post-launch, this snapshot can be dropped from the
+repo (and ideally purged from git history) rather than kept indefinitely.
 
 ## ⚠️ Before go-live — required steps
 
