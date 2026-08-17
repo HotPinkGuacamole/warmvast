@@ -78,10 +78,38 @@
 	var toggle = doc.querySelector("[data-nav-toggle]");
 	var nav = doc.querySelector("[data-nav]");
 	if (toggle && nav) {
+		var lockedScrollY = 0;
 		var setOpen = function (open) {
 			toggle.setAttribute("aria-expanded", String(open));
 			nav.classList.toggle("is-open", open);
 			doc.body.classList.toggle("nav-open", open);
+			// body{overflow:hidden} alone doesn't reliably block touch-drag
+			// scrolling on mobile browsers -- the page behind kept scrolling
+			// while the menu was open, which also visibly shifted the sticky
+			// header (and the fixed nav pinned to it) out of place, showing
+			// a gap at the top. Freezing body at its current scroll offset
+			// (the standard mobile scroll-lock pattern) blocks it properly;
+			// restore the exact position on close so the page doesn't jump.
+			if (open) {
+				lockedScrollY = window.scrollY || window.pageYOffset || 0;
+				doc.body.style.position = "fixed";
+				doc.body.style.top = -lockedScrollY + "px";
+				doc.body.style.left = "0";
+				doc.body.style.right = "0";
+			} else {
+				doc.body.style.position = "";
+				doc.body.style.top = "";
+				doc.body.style.left = "";
+				doc.body.style.right = "";
+				// html has scroll-behavior:smooth for anchor links, which would
+				// otherwise turn this restore into a visible glide back to
+				// position instead of an instant snap. Force instant just for
+				// this jump, then hand scroll-behavior back to the stylesheet.
+				var prevScrollBehavior = root.style.scrollBehavior;
+				root.style.scrollBehavior = "auto";
+				window.scrollTo(0, lockedScrollY);
+				root.style.scrollBehavior = prevScrollBehavior;
+			}
 		};
 		toggle.addEventListener("click", function () {
 			setOpen(toggle.getAttribute("aria-expanded") !== "true");

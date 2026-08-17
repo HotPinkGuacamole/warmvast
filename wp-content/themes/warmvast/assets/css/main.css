@@ -1418,30 +1418,49 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 		position: fixed; inset: var(--header-h) 0 0 auto; width: min(360px, 88vw);
 		flex-direction: column; align-items: stretch; gap: 0; margin: 0; padding: 1.2rem;
 		background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow-lg);
-		transform: translateX(100%); transition: transform var(--dur-2) var(--ease-out); overflow-y: auto;
+		transform: translateX(100%); transition: transform var(--dur-2) var(--ease-out);
+		overflow-y: auto; overscroll-behavior: contain;
 	}
 	.site-nav.is-open { transform: translateX(0); }
 	.nav__list { flex-direction: column; align-items: stretch; gap: .1rem; }
 	.nav__list a { padding: .85rem .6rem; font-size: var(--step-1); }
-	/* !important: the desktop rule this overrides
+	/* !important throughout: the desktop rule this overrides
 	   (.dropdown.is-open { transform: translateX(-50%) ... }, meant to
 	   center a hover dropdown under its trigger) kept winning here even
 	   after matching this on equal specificity with later source order --
 	   empirically confirmed via getComputedStyle, cause not fully pinned
 	   down. Left unresolved it shifts the open mobile submenu half its own
-	   width off-screen to the left, so this forces it rather than staying
-	   theoretically "correct" but visibly broken. */
-	.dropdown, .dropdown.is-open {
-		position: static !important; opacity: 1 !important; visibility: visible !important;
-		transform: none !important; box-shadow: none !important;
+	   width off-screen to the left.
+	   Open/closed is driven by `display`, not opacity/visibility -- those
+	   are what the desktop hover-fade uses, and fighting that cascade for
+	   two properties instead of one is exactly what caused the follow-up
+	   bug where every submenu got stuck permanently open (an earlier,
+	   overly-broad version of this rule forced opacity/visibility to
+	   "shown" unconditionally on both .dropdown and .dropdown.is-open, so
+	   the JS below classList.toggle()-ing .is-open on and off no longer
+	   changed anything visible). display isn't touched by any other rule
+	   at any breakpoint, so there's nothing left to fight. */
+	.dropdown {
+		position: static !important; transform: none !important; box-shadow: none !important;
 		width: auto !important; border: 0 !important; padding: 0 0 .5rem .6rem !important; background: transparent !important;
+		display: none !important;
 	}
+	.dropdown.is-open { display: block !important; }
 	.dropdown__grid { grid-template-columns: 1fr; }
 	.dropdown__item--all { grid-column: auto; }
 	.dropdown__links { grid-template-columns: 1fr; }
 	.site-nav__cta { flex-direction: column; align-items: stretch; gap: .8rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 	.site-nav__cta .btn { width: 100%; }
 	.nav__phone { justify-content: center; padding: .6rem; }
+
+	/* Body scroll-lock (see main.js setOpen) pins body via position:fixed,
+	   which breaks .site-header's position:sticky -- sticky only means
+	   anything relative to a normally-scrolling ancestor, and once body
+	   itself is pinned the header just sits wherever body's local flow
+	   puts it: off-screen above the viewport by the frozen scroll offset,
+	   taking the close button with it. Force it back to the true viewport
+	   while the menu is open, the same way .site-nav already is. */
+	body.nav-open .site-header { position: fixed; top: 0; left: 0; right: 0; }
 }
 
 @media (max-width: 560px) {
@@ -1460,7 +1479,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 	.hero__actions .btn { width: 100%; }
 }
 
-/* body scroll lock when mobile nav open */
+/* body scroll lock when mobile nav open. overflow:hidden alone doesn't
+   reliably block touch-drag scrolling on mobile, so JS (main.js) also
+   freezes body with position:fixed + a negative top offset matching the
+   scroll position at open time -- the standard mobile scroll-lock pattern,
+   restored again on close. */
 body.nav-open { overflow: hidden; }
 
 /* ---------- scroll progress bar ---------- */
