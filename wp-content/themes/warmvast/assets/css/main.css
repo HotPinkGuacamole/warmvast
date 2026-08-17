@@ -242,9 +242,18 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 	font: inherit; font-weight: 650; line-height: 1; text-align: center; cursor: pointer;
 	padding: .95rem 1.5rem; border-radius: var(--radius-pill); border: 2px solid transparent;
 	transition: transform var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
-	white-space: nowrap;
+	white-space: nowrap; max-width: 100%;
 }
 .btn:hover { transform: translateY(-2px); }
+@media (max-width: 560px) {
+	/* nowrap is fine for short labels but a few CTAs run long ("Twijfelt u
+	   welke maatregel past? Start de scan") -- on a narrow phone that just
+	   pushes the pill past the viewport edge instead of ever wrapping.
+	   Letting it wrap below this width keeps every button visually
+	   contained; the short labels most buttons use don't reach a second
+	   line anyway. */
+	.btn { white-space: normal; line-height: 1.25; }
+}
 .btn:active { transform: translateY(0); }
 .btn--sm { padding: .62rem 1rem; font-size: var(--step--1); }
 .btn--lg { padding: 1.1rem 1.9rem; font-size: var(--step-1); }
@@ -1414,9 +1423,18 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 	.site-nav.is-open { transform: translateX(0); }
 	.nav__list { flex-direction: column; align-items: stretch; gap: .1rem; }
 	.nav__list a { padding: .85rem .6rem; font-size: var(--step-1); }
-	.dropdown {
-		position: static; opacity: 1; visibility: visible; transform: none; box-shadow: none;
-		width: auto; border: 0; padding: 0 0 .5rem .6rem; background: transparent;
+	/* !important: the desktop rule this overrides
+	   (.dropdown.is-open { transform: translateX(-50%) ... }, meant to
+	   center a hover dropdown under its trigger) kept winning here even
+	   after matching this on equal specificity with later source order --
+	   empirically confirmed via getComputedStyle, cause not fully pinned
+	   down. Left unresolved it shifts the open mobile submenu half its own
+	   width off-screen to the left, so this forces it rather than staying
+	   theoretically "correct" but visibly broken. */
+	.dropdown, .dropdown.is-open {
+		position: static !important; opacity: 1 !important; visibility: visible !important;
+		transform: none !important; box-shadow: none !important;
+		width: auto !important; border: 0 !important; padding: 0 0 .5rem .6rem !important; background: transparent !important;
 	}
 	.dropdown__grid { grid-template-columns: 1fr; }
 	.dropdown__item--all { grid-column: auto; }
