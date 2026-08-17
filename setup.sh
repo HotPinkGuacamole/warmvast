@@ -1,44 +1,49 @@
 #!/usr/bin/env bash
 #
-# Warmvast one-shot deploy setup.
+# Warmvast one-shot deploy setup — fully self-contained.
 #
-# Run this ONCE, from the webroot, right after `git clone`/`git pull` has
-# landed this repo there (the repo only tracks wp-content/themes/warmvast +
-# docs, per .gitignore — WordPress core, wp-config.php, uploads and other
-# plugins/themes are deliberately not versioned). This script fills in
-# everything git can't: WordPress core, wp-config.php, and the database.
+# The repo carries everything content-wise (theme + warmvast-db-localhost.sql
+# content snapshot); only WordPress core and the database *credentials* can't
+# live in git (core is vendor code, credentials are secrets). This script
+# supplies both, so a `git clone`/`git pull` of this repo + running this
+# script is the entire deploy.
 #
-# It expects warmvast-db-localhost.sql (a content export of the live site —
-# pages, kennisbank articles, settings) to already be sitting next to this
-# script. That file is a one-time content snapshot, not code, so it isn't
-# committed to git — upload it once via the panel's file manager.
+# Reads its settings from environment variables first (so a hosting panel's
+# "Startup command" can wire this up to run automatically on every deploy —
+# just set these as the container's startup variables), falling back to
+# positional CLI args for a manual run:
 #
-# Usage:
-#   bash setup.sh <domain> <db_name> <db_user> <db_pass> [db_host] [db_port]
+#   bash setup.sh [domain] [db_name] [db_user] [db_pass] [db_host] [db_port]
 #
-# Example:
-#   bash setup.sh https://warmvast.nl warmvast wv_user 'S3cret!' 127.0.0.1 3306
+# Env var names (override to match whatever your panel injects):
+#   SITE_DOMAIN, DB_NAME (or DB_DATABASE), DB_USER (or DB_USERNAME),
+#   DB_PASS (or DB_PASSWORD), DB_HOST, DB_PORT
 #
-# The database itself (and its user) must already exist before running this
-# — this script imports INTO it, it does not create it. If it doesn't exist
-# yet, create it first, e.g.:
+# The database itself (and its user) must already exist — this script
+# imports INTO it, it does not create it. If it doesn't exist yet:
 #   mysql -u root -p -e "CREATE DATABASE warmvast CHARACTER SET utf8mb4;
 #     CREATE USER 'wv_user'@'%' IDENTIFIED BY 'S3cret!';
 #     GRANT ALL PRIVILEGES ON warmvast.* TO 'wv_user'@'%'; FLUSH PRIVILEGES;"
 
 set -euo pipefail
 
-DOMAIN="${1:?Usage: bash setup.sh <domain> <db_name> <db_user> <db_pass> [db_host] [db_port]}"
-DB_NAME="${2:?db name required}"
-DB_USER="${3:?db user required}"
-DB_PASS="${4:?db pass required}"
-DB_HOST="${5:-127.0.0.1}"
-DB_PORT="${6:-3306}"
+DOMAIN="${1:-${SITE_DOMAIN:-}}"
+DB_NAME="${2:-${DB_NAME:-${DB_DATABASE:-}}}"
+DB_USER="${3:-${DB_USER:-${DB_USERNAME:-}}}"
+DB_PASS="${4:-${DB_PASS:-${DB_PASSWORD:-}}}"
+DB_HOST="${5:-${DB_HOST:-127.0.0.1}}"
+DB_PORT="${6:-${DB_PORT:-3306}}"
 SQL_FILE="warmvast-db-localhost.sql"
 OLD_URL="http://localhost/warmvast"
 
+if [ -z "$DOMAIN" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ]; then
+	echo "ERROR: missing domain/db settings. Pass them as args, or set SITE_DOMAIN/DB_NAME/DB_USER/DB_PASS as env vars (e.g. in the panel's Startup/Variables tab)." >&2
+	echo "Usage: bash setup.sh <domain> <db_name> <db_user> <db_pass> [db_host] [db_port]" >&2
+	exit 1
+fi
+
 if [ ! -f "$SQL_FILE" ]; then
-	echo "ERROR: $SQL_FILE not found next to setup.sh. Upload it first (via the panel's file manager), then re-run." >&2
+	echo "ERROR: $SQL_FILE not found — it should have come with the git clone. Did the pull actually include the repo root, not just wp-content?" >&2
 	exit 1
 fi
 

@@ -61,23 +61,31 @@ php -c <custom-ini> wp-cli.phar --path=<repo> <command>
 
 ## Deployment
 
-`setup.sh` (repo root) turns a fresh `git clone` of this repo into a working WordPress install.
-The repo only ever tracks `wp-content/themes/warmvast` + docs (see `.gitignore`) — WordPress
-core, `wp-config.php`, uploads and other plugins/themes are deliberately not versioned, so
-`git pull` alone is never enough. The script fills in the rest:
+`setup.sh` (repo root) turns a fresh `git clone` of this repo into a working WordPress install —
+self-contained: the repo carries the theme *and* a content snapshot (`warmvast-db-localhost.sql`
+— pages, kennisbank, settings), so a `git pull` on the host brings everything except WordPress
+core itself (vendor code, re-downloaded by the script) and the database credentials (secrets,
+can never live in git). One command supplies both:
 
 ```bash
-# once, after cloning into the webroot, with the DB already created:
 bash setup.sh https://warmvast.nl <db_name> <db_user> <db_pass> [db_host] [db_port]
 ```
 
-It downloads matching WP core, writes `wp-config.php` (with fresh salts), imports
-`warmvast-db-localhost.sql` (a content snapshot — pages, kennisbank, settings; upload this file
-next to `setup.sh` separately, it is not committed to git since it's a data dump, not code), then
-serialization-safely rewrites every `http://localhost/warmvast` URL to the real domain via
-`wp search-replace` (never do this with a raw SQL find/replace — it corrupts WordPress's
-serialized PHP arrays) and flushes permalinks. Safe to re-run; skips the core download if
-`wp-load.php` already exists.
+Or set `SITE_DOMAIN` / `DB_NAME` / `DB_USER` / `DB_PASS` (/ `DB_HOST` / `DB_PORT`) as environment
+variables instead of passing args — e.g. in a hosting panel's "Startup command"/"Variables" tab,
+so the whole deploy runs unattended every time the panel pulls from GitHub.
+
+The script downloads matching WP core, writes `wp-config.php` (with fresh salts), imports the
+SQL snapshot, then serialization-safely rewrites every `http://localhost/warmvast` URL to the
+real domain via `wp search-replace` (never do this with a raw SQL find/replace — it corrupts
+WordPress's serialized PHP arrays) and flushes permalinks. Safe to re-run; skips the core
+download if `wp-load.php` already exists. The database itself (and its user) must already exist
+— see the comment at the top of `setup.sh` for the one-line `CREATE DATABASE` if not.
+
+**Repo contains a full content dump.** `warmvast-db-localhost.sql` has real (if pre-launch)
+WordPress data including the admin account's hashed password. Keep this repository **private**
+on GitHub, and once the site's own database is the source of truth post-launch, this snapshot
+can be dropped from the repo (and ideally purged from git history) rather than kept indefinitely.
 
 ## ⚠️ Before go-live — required steps
 
