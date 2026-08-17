@@ -59,18 +59,41 @@ php -c <custom-ini> wp-cli.phar --path=<repo> <command>
 - **Nav & footer**: hand-built in `header.php` / `footer.php` (mega-dropdown with per-service
   tariffs). Assigning a WP menu to the `primary` location overrides the coded fallback.
 
+## Deployment
+
+`setup.sh` (repo root) turns a fresh `git clone` of this repo into a working WordPress install.
+The repo only ever tracks `wp-content/themes/warmvast` + docs (see `.gitignore`) — WordPress
+core, `wp-config.php`, uploads and other plugins/themes are deliberately not versioned, so
+`git pull` alone is never enough. The script fills in the rest:
+
+```bash
+# once, after cloning into the webroot, with the DB already created:
+bash setup.sh https://warmvast.nl <db_name> <db_user> <db_pass> [db_host] [db_port]
+```
+
+It downloads matching WP core, writes `wp-config.php` (with fresh salts), imports
+`warmvast-db-localhost.sql` (a content snapshot — pages, kennisbank, settings; upload this file
+next to `setup.sh` separately, it is not committed to git since it's a data dump, not code), then
+serialization-safely rewrites every `http://localhost/warmvast` URL to the real domain via
+`wp search-replace` (never do this with a raw SQL find/replace — it corrupts WordPress's
+serialized PHP arrays) and flushes permalinks. Safe to re-run; skips the core download if
+`wp-load.php` already exists.
+
 ## ⚠️ Before go-live — required steps
 
-1. **Formspree endpoint.** Verify `WARMVAST_FORMSPREE` in `inc/config.php` is the real, active
-   form id for this business (not a placeholder left over from setup/testing).
-2. **Verify ISDE 2026 tariffs** in `inc/config.php` against RVO. They are currently taken from the
-   blueprint and dated but unverified:
-   https://www.rvo.nl/subsidies-financiering/isde/woningeigenaren/isolatiemaatregelen
-3. **Replace placeholder contact details** (phone/email/hours) in `inc/config.php`.
-4. **Reviews are sample data.** `warmvast_reviews()` in `inc/config.php` has `verified => false`,
+1. ~~Formspree endpoint~~ / ~~Verify ISDE 2026 tariffs~~ / ~~Replace placeholder contact
+   details~~ — still to verify against RVO / Formspree dashboard before relying on them for real
+   leads, but no longer using setup-era placeholders.
+2. **Privacyverklaring & Algemene voorwaarden have literal `[PLACEHOLDER]` fields** (KvK-nummer,
+   vestigingsadres, and five policy terms: offerte-geldigheid, opleveringstermijn,
+   **garantietermijn** — this one should also update `WARMVAST_WARRANTY_YEARS` in
+   `inc/config.php` to match — annuleringstermijn, klachttermijn, and the lead bewaartermijn).
+   Deliberately deferred past the initial launch per the site owner; fix before relying on these
+   pages as real legal terms.
+3. **Reviews are sample data.** `warmvast_reviews()` in `inc/config.php` has `verified => false`,
    which correctly suppresses the AggregateRating schema. Do not flip it to `true` until the
    `items` are real reviews — brand rule: no fabricated reviews or ratings go live.
-5. **EP-Online label lookup** (`warmvast_ws_public_energylabel()` in `inc/woningscan.php`) scrapes
+4. **EP-Online label lookup** (`warmvast_ws_public_energylabel()` in `inc/woningscan.php`) scrapes
    EP-Online's public search page (verification token + HTML parsing) since no API key is
    configured (`WARMVAST_EP_ONLINE_API_KEY`). It already falls back gracefully to a bouwjaar
    estimate on any failure, but a real EP-Online API key would make label lookups more reliable.
