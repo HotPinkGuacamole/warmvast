@@ -22,19 +22,34 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Defaults are placeholders — replace with the real Warmvast data before launch.
  */
 if ( ! defined( 'WARMVAST_PHONE' ) ) {
-	define( 'WARMVAST_PHONE', '085 500 5070' );
+	define( 'WARMVAST_PHONE', '085 800 5070' );
 }
 if ( ! defined( 'WARMVAST_PHONE_RAW' ) ) {
-	define( 'WARMVAST_PHONE_RAW', '+31855005070' );
+	define( 'WARMVAST_PHONE_RAW', '+31858005070' );
 }
 if ( ! defined( 'WARMVAST_EMAIL' ) ) {
-	define( 'WARMVAST_EMAIL', 'warmvastisolatie@gmail.com' );
+	define( 'WARMVAST_EMAIL', 'info@warmvastisolatie.nl' );
 }
 if ( ! defined( 'WARMVAST_HOURS' ) ) {
 	define( 'WARMVAST_HOURS', 'Ma t/m vr 08:30 - 17:30' );
 }
 if ( ! defined( 'WARMVAST_REGION' ) ) {
 	define( 'WARMVAST_REGION', 'Noord-Holland en Noord-Zuid-Holland' );
+}
+
+/**
+ * Vestigingsadres. Used in the LocalBusiness schema and the footer/contact
+ * card -- not a walk-in showroom, so it's presented as a registered address
+ * rather than "bezoek ons".
+ */
+if ( ! defined( 'WARMVAST_ADDRESS_STREET' ) ) {
+	define( 'WARMVAST_ADDRESS_STREET', 'Albert Schweitzerlaan 37' );
+}
+if ( ! defined( 'WARMVAST_ADDRESS_POSTAL' ) ) {
+	define( 'WARMVAST_ADDRESS_POSTAL', '1902 EG' );
+}
+if ( ! defined( 'WARMVAST_ADDRESS_CITY' ) ) {
+	define( 'WARMVAST_ADDRESS_CITY', 'Castricum' );
 }
 
 /**
@@ -45,6 +60,23 @@ if ( ! defined( 'WARMVAST_REGION' ) ) {
  */
 if ( ! defined( 'WARMVAST_WHATSAPP' ) ) {
 	define( 'WARMVAST_WHATSAPP', '' );
+}
+
+/**
+ * Real social profile URLs, used for the schema.org `sameAs` array (helps
+ * Google associate the profiles with the business entity / Knowledge Panel).
+ * Leave a constant empty to omit that profile everywhere -- never fill these
+ * with a placeholder/guessed URL, per the site's no-fabricated-trust-signal
+ * rule (same reasoning as reviews and the homes-insulated count).
+ */
+if ( ! defined( 'WARMVAST_TWITTER_HANDLE' ) ) {
+	define( 'WARMVAST_TWITTER_HANDLE', 'warmvast' );
+}
+if ( ! defined( 'WARMVAST_TWITTER_URL' ) ) {
+	define( 'WARMVAST_TWITTER_URL', 'https://x.com/' . WARMVAST_TWITTER_HANDLE );
+}
+if ( ! defined( 'WARMVAST_FACEBOOK_URL' ) ) {
+	define( 'WARMVAST_FACEBOOK_URL', 'https://www.facebook.com/profile.php?id=61593140505102' );
 }
 
 /**

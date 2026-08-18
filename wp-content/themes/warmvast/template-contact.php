@@ -47,6 +47,10 @@ get_header();
 					<span class="contact-card__icon"><?php warmvast_the_icon( 'map' ); ?></span>
 					<span><strong>Werkgebied</strong><em><?php echo esc_html( WARMVAST_REGION ); ?></em></span>
 				</div>
+				<div class="card contact-card">
+					<span class="contact-card__icon"><?php warmvast_the_icon( 'building' ); ?></span>
+					<span><strong>Vestigingsadres</strong><em><?php echo esc_html( WARMVAST_ADDRESS_STREET . ', ' . WARMVAST_ADDRESS_POSTAL . ' ' . WARMVAST_ADDRESS_CITY ); ?></em></span>
+				</div>
 			</div>
 			<?php if ( trim( get_the_content() ) ) : ?>
 				<div class="prose" style="margin-top:1.5rem"><?php the_content(); ?></div>

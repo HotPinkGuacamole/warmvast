@@ -224,28 +224,9 @@ function warmvast_the_keurmerken( $class = '' ) {
 }
 
 /**
- * Kernwaarden badge strip. Always has content (see warmvast_kernwaarden()),
- * so unlike warmvast_the_keurmerken() this never needs an empty() guard.
- *
- * @param string $class Extra wrapper class.
- */
-function warmvast_the_kernwaarden( $class = '' ) {
-	$items = warmvast_kernwaarden();
-	echo '<ul class="keurmerken ' . esc_attr( $class ) . '">';
-	foreach ( $items as $item ) {
-		echo '<li class="keurmerken__item">';
-		warmvast_the_icon( $item['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
-		echo '<span><strong>' . esc_html( $item['naam'] ) . '</strong></span>';
-		echo '</li>';
-	}
-	echo '</ul>';
-}
-
-/**
  * Trust stats (oprichtingsjaar, woningen geïsoleerd, garantietermijn). Only
  * includes the ones that have a real value set in inc/config.php; returns an
- * empty array (and the homepage/over-ons section renders nothing) until at
- * least one is filled in.
+ * empty array until at least one is filled in.
  *
  * @return array<int,array{value:string,label:string}>
  */
@@ -273,20 +254,31 @@ function warmvast_trust_stats() {
 }
 
 /**
- * Print the trust-stats row. Prints nothing when warmvast_trust_stats() is
- * empty (i.e. WARMVAST_FOUNDED / _HOMES_INSULATED / _WARRANTY_YEARS are all
- * still 0).
+ * Combined "at a glance" facts strip: real trust stats (see
+ * warmvast_trust_stats()), if any, followed by the always-on kernwaarden
+ * badges (see warmvast_kernwaarden()) -- one bordered card instead of two
+ * separately-styled blocks, so a single configured stat (e.g. just
+ * "Actief sinds") reads as one item among several rather than an orphaned
+ * oversized number floating on its own.
+ *
+ * @param string $class Extra wrapper class.
  */
-function warmvast_the_trust_stats() {
+function warmvast_the_trust_facts( $class = '' ) {
 	$stats = warmvast_trust_stats();
-	if ( empty( $stats ) ) {
-		return;
-	}
-	echo '<div class="trust-stats">';
+	$items = warmvast_kernwaarden();
+	echo '<ul class="trust-facts ' . esc_attr( $class ) . '" data-reveal>';
 	foreach ( $stats as $s ) {
-		echo '<div class="trust-stats__item"><span class="trust-stats__value">' . esc_html( $s['value'] ) . '</span><span class="trust-stats__label">' . esc_html( $s['label'] ) . '</span></div>';
+		echo '<li class="trust-facts__item trust-facts__item--stat"><strong>' . esc_html( $s['value'] ) . '</strong><span>' . esc_html( $s['label'] ) . '</span></li>';
 	}
-	echo '</div>';
+	foreach ( $items as $item ) {
+		echo '<li class="trust-facts__item">';
+		echo '<span class="trust-facts__icon">';
+		warmvast_the_icon( $item['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
+		echo '</span>';
+		echo '<span><strong>' . esc_html( $item['naam'] ) . '</strong></span>';
+		echo '</li>';
+	}
+	echo '</ul>';
 }
 
 /**

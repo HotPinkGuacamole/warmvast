@@ -227,17 +227,12 @@ $combo      = $spouw_dub + $vloer_dub;
 		<div class="trust-grid">
 			<?php foreach ( $trust as $t ) : ?>
 				<div class="trust-item" data-reveal>
-					<?php warmvast_the_icon( $t[0] ); ?>
+					<span class="trust-item__icon"><?php warmvast_the_icon( $t[0] ); ?></span>
 					<span><?php echo esc_html( $t[1] ); ?></span>
 				</div>
 			<?php endforeach; ?>
 		</div>
-		<?php if ( warmvast_trust_stats() ) : ?>
-			<div style="margin-top:2.2rem" data-reveal>
-				<?php warmvast_the_trust_stats(); ?>
-			</div>
-		<?php endif; ?>
-		<?php warmvast_the_kernwaarden( 'u-center' ); ?>
+		<?php warmvast_the_trust_facts(); ?>
 		<?php warmvast_the_keurmerken( 'u-center' ); ?>
 	</div>
 </section>

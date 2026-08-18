@@ -21,6 +21,27 @@ function warmvast_seo_plugin_active() {
 }
 
 /**
+ * Front-page <title>. Core's title-tag support (see add_theme_support() in
+ * functions.php) already gives every other page a good "Page – Warmvast"
+ * title; the front page is the one case with no post title to build from, so
+ * without this it falls back to the bare site name -- "Warmvast" alone in a
+ * search snippet, with none of the keywords someone searching for isolatie
+ * would actually type. Brand name first (what people search for directly),
+ * then the two things the site is actually for.
+ */
+function warmvast_document_title_parts( $parts ) {
+	if ( warmvast_seo_plugin_active() ) {
+		return $parts;
+	}
+	if ( is_front_page() ) {
+		$parts['title'] = 'Warmvast Isolatie | Gratis Isolatiescan & ISDE-subsidie';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+}
+add_filter( 'document_title_parts', 'warmvast_document_title_parts' );
+
+/**
  * Serve /robots.txt directly, independent of WordPress's virtual-robots
  * rewrite rule. Core only registers that rule when the site is installed at
  * the domain root (see WP_Rewrite::rewrite_rules()); on a subdirectory
@@ -105,22 +126,54 @@ function warmvast_meta_description() {
 }
 
 /**
- * Output meta description + Open Graph tags.
+ * Resolve the share image for the current view: the post's own featured
+ * image when one is set (full singular pages can have a genuinely relevant
+ * one), otherwise the brand mark. TODO: the fallback is a 512x512 square app
+ * icon, not a proper 1200x630 designed share card -- swap
+ * WARMVAST_OG_IMAGE_FALLBACK for a real one once the brand has one; a square
+ * icon is what every unfurl (Facebook/LinkedIn/Slack/X) will show until then.
+ *
+ * @return array{0:string,1:int,2:int} [url, width, height]
+ */
+function warmvast_og_image() {
+	if ( is_singular() && has_post_thumbnail() ) {
+		$thumb = wp_get_attachment_image_src( get_post_thumbnail_id(), 'large' );
+		if ( $thumb ) {
+			return array( $thumb[0], $thumb[1], $thumb[2] );
+		}
+	}
+	return array( warmvast_asset( '/assets/img/favicons/android-chrome-512x512.png' ), 512, 512 );
+}
+
+/**
+ * Output meta description + Open Graph + Twitter Card tags.
  */
 function warmvast_head_meta() {
 	if ( warmvast_seo_plugin_active() ) {
 		return;
 	}
-	$desc  = warmvast_meta_description();
-	$title = wp_get_document_title();
+	$desc     = warmvast_meta_description();
+	$title    = wp_get_document_title();
+	$url      = ( is_singular() ) ? get_permalink() : home_url( add_query_arg( array(), null ) );
+	list( $image, $img_w, $img_h ) = warmvast_og_image();
 
 	echo "\n" . '<meta name="description" content="' . esc_attr( $desc ) . '">' . "\n";
 	echo '<meta property="og:type" content="website">' . "\n";
 	echo '<meta property="og:site_name" content="Warmvast">' . "\n";
+	echo '<meta property="og:locale" content="nl_NL">' . "\n";
 	echo '<meta property="og:title" content="' . esc_attr( $title ) . '">' . "\n";
 	echo '<meta property="og:description" content="' . esc_attr( $desc ) . '">' . "\n";
-	echo '<meta property="og:url" content="' . esc_url( ( is_singular() ) ? get_permalink() : home_url( add_query_arg( array(), null ) ) ) . '">' . "\n";
+	echo '<meta property="og:url" content="' . esc_url( $url ) . '">' . "\n";
+	echo '<meta property="og:image" content="' . esc_url( $image ) . '">' . "\n";
+	echo '<meta property="og:image:width" content="' . esc_attr( $img_w ) . '">' . "\n";
+	echo '<meta property="og:image:height" content="' . esc_attr( $img_h ) . '">' . "\n";
 	echo '<meta name="twitter:card" content="summary_large_image">' . "\n";
+	if ( WARMVAST_TWITTER_HANDLE ) {
+		echo '<meta name="twitter:site" content="@' . esc_attr( WARMVAST_TWITTER_HANDLE ) . '">' . "\n";
+	}
+	echo '<meta name="twitter:title" content="' . esc_attr( $title ) . '">' . "\n";
+	echo '<meta name="twitter:description" content="' . esc_attr( $desc ) . '">' . "\n";
+	echo '<meta name="twitter:image" content="' . esc_url( $image ) . '">' . "\n";
 	echo '<meta name="theme-color" content="#1b1f21">' . "\n";
 }
 add_action( 'wp_head', 'warmvast_head_meta', 5 );
@@ -151,18 +204,37 @@ function warmvast_schema_localbusiness() {
 		'@context'    => 'https://schema.org',
 		'@type'       => 'HomeAndConstructionBusiness',
 		'name'        => 'Warmvast',
+		'legalName'   => 'Warmvast Isolatie',
 		'description' => 'Isolatiebedrijf voor woningeigenaren: spouwmuur-, vloer-, glas- en dakisolatie met ISDE-subsidiebegeleiding.',
 		'url'         => home_url( '/' ),
+		'logo'        => warmvast_asset( '/assets/img/favicons/android-chrome-512x512.png' ),
+		'image'       => warmvast_asset( '/assets/img/favicons/android-chrome-512x512.png' ),
 		'telephone'   => WARMVAST_PHONE_RAW,
 		'email'       => WARMVAST_EMAIL,
 		'areaServed'  => WARMVAST_REGION,
 		'priceRange'  => '€€',
 		'address'     => array(
 			'@type'           => 'PostalAddress',
+			'streetAddress'   => WARMVAST_ADDRESS_STREET,
+			'postalCode'      => WARMVAST_ADDRESS_POSTAL,
+			'addressLocality' => WARMVAST_ADDRESS_CITY,
 			'addressCountry'  => 'NL',
 		),
+		// schema.org wants day abbreviations + 24h time with no spaces, a
+		// different format than WARMVAST_HOURS's human-readable string ("Ma
+		// t/m vr 08:30 - 17:30") -- same convention as WARMVAST_PHONE vs.
+		// _PHONE_RAW above: two representations of one fact, kept in sync by
+		// hand rather than parsed from one another. Update both together.
 		'openingHours' => 'Mo-Fr 08:30-17:30',
 	);
+	// Only real, live profiles -- never a placeholder/guessed URL here, per the
+	// site's own no-fabricated-trust-signal rule (same reasoning as reviews and
+	// the homes-insulated count). Each constant defaults to '' until filled in
+	// with a confirmed real profile in inc/config.php.
+	$profiles = array_filter( array( WARMVAST_FACEBOOK_URL, WARMVAST_TWITTER_URL ) );
+	if ( $profiles ) {
+		$data['sameAs'] = array_values( $profiles );
+	}
 	echo "\n" . '<script type="application/ld+json">' . wp_json_encode( $data ) . '</script>' . "\n";
 }
 add_action( 'wp_footer', 'warmvast_schema_localbusiness' );

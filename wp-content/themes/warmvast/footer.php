@@ -51,6 +51,7 @@ $services = warmvast_services();
 					<li><?php warmvast_whatsapp_link(); ?></li>
 				<?php endif; ?>
 				<li><?php warmvast_email_link(); ?></li>
+				<li><?php warmvast_the_icon( 'building' ); ?> <span><?php echo esc_html( WARMVAST_ADDRESS_STREET . ', ' . WARMVAST_ADDRESS_POSTAL . ' ' . WARMVAST_ADDRESS_CITY ); ?></span></li>
 				<li><?php warmvast_the_icon( 'map' ); ?> <span><?php echo esc_html( WARMVAST_REGION ); ?></span></li>
 				<li><?php warmvast_the_icon( 'clock' ); ?> <span><?php echo esc_html( WARMVAST_HOURS ); ?></span></li>
 			</ul>

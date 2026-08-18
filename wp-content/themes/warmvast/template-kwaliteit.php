@@ -55,8 +55,7 @@ $faqs = array(
 
 <section class="section section--surface">
 	<div class="container">
-		<?php warmvast_the_trust_stats(); ?>
-		<?php warmvast_the_kernwaarden(); ?>
+		<?php warmvast_the_trust_facts(); ?>
 		<?php warmvast_the_keurmerken(); ?>
 	</div>
 </section>
