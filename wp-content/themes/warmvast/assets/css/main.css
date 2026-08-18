@@ -323,11 +323,21 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .menu-item--has-children:focus-within .dropdown,
 .dropdown.is-open { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 .menu-item--has-children:hover .nav__caret { transform: rotate(180deg); }
-.dropdown__grid { display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; }
+/* minmax(0, 1fr), not a bare 1fr: a grid track's default minimum is auto (its
+   content's own min-content size), so a long unbroken subtitle like
+   "Uitleg over subsidie en isolatie" was demanding more than its fair half
+   and pushing the whole grid -- and the item boxes with it -- past the
+   dropdown panel's right edge instead of wrapping. minmax(0, 1fr) lets the
+   track shrink below that and forces the text to wrap within its column. */
+.dropdown__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .3rem; }
 .dropdown__grid--single { grid-template-columns: 1fr; }
 .dropdown--simple { width: min(300px, 92vw); }
-.dropdown__item { display: flex; align-items: center; gap: .8rem; padding: .7rem .8rem !important; border-radius: var(--radius); background: transparent !important; transition: background-color var(--dur-1) var(--ease-out); }
+.dropdown__item { display: flex; align-items: center; gap: .8rem; padding: .7rem .8rem !important; border-radius: var(--radius); background: transparent !important; transition: background-color var(--dur-1) var(--ease-out); min-width: 0; }
 .dropdown__item:hover { background: var(--primary-050) !important; }
+/* the text span is itself a flex item (of .dropdown__item) with the same
+   min-width:auto default -- without this it also refuses to shrink and the
+   overflow reappears one level down even after the grid track is fixed. */
+.dropdown__item > span:last-child { min-width: 0; }
 .dropdown__item strong { display: block; color: var(--ink); font-size: .98rem; }
 .dropdown__item em { font-style: normal; color: var(--ink-3); font-size: .82rem; }
 .dropdown__icon { display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; border-radius: var(--radius-md); background: var(--primary-050); color: var(--primary); }
@@ -338,7 +348,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
    unwieldy. */
 .dropdown--wide { width: min(680px, 94vw); }
 .dropdown__lead { padding: .3rem .5rem .7rem; color: var(--ink-3); font-size: var(--step--1); border-bottom: 1px solid var(--line); margin-bottom: .5rem; }
-.dropdown__links { display: grid; grid-template-columns: repeat(3, 1fr); gap: .1rem .3rem; }
+.dropdown__links { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .1rem .3rem; }
 .dropdown__links a {
 	display: block; padding: .5rem .7rem !important; border-radius: var(--radius-sm);
 	color: var(--ink-2); font-weight: 600; font-size: .92rem;
@@ -408,9 +418,14 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 	align-items: start;
 	/* full-screen hero: clear the sticky header up top; padding-bottom reserves
 	   room so hero content never sits under the floating USP card anchored to
-	   the hero's own bottom edge (see .usp-bar). */
+	   the hero's own bottom edge (see .usp-bar). The clamp() is only a fallback
+	   for before JS runs / no-JS: main.js measures the USP bar's real height
+	   (it varies with wrapped text, e.g. the region name) and writes the exact
+	   clearance to --usp-clearance, because a static guess here and the bar's
+	   own position are two independent numbers with no guarantee of staying in
+	   sync -- a tall woningscan result state proved that wrong by ~10px. */
 	padding-top: clamp(5.5rem, 10vh, 8rem);
-	padding-bottom: clamp(11rem, 19vh, 15rem);
+	padding-bottom: var(--usp-clearance, clamp(11rem, 19vh, 15rem));
 }
 .hero__eyebrow {
 	display: inline-flex; align-items: center; gap: .55rem;
@@ -532,14 +547,32 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .stapel__card h3 { font-size: var(--step-1); margin-bottom: .3rem; }
 .stapel__card > p { color: var(--ink-3); font-size: var(--step--1); margin: 0; }
 .stapel__amount { font-family: var(--font-display); font-weight: 800; font-size: var(--step-4); letter-spacing: -.03em; line-height: 1; color: var(--ink); margin: .2rem 0 .6rem; font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
-.stapel__amount-sub {
-	display: inline-flex; align-self: flex-start; align-items: center; gap: .4rem;
-	font-weight: 700; font-size: var(--step--1); color: var(--accent-ink); background: var(--accent);
-	padding: .3rem .7rem; border-radius: var(--radius-pill); margin-bottom: .9rem;
-}
-.stapel__desc { margin-bottom: 1rem !important; }
-.stapel__meta { font-size: .82rem; color: var(--ink-3); margin: 0 0 .4rem; }
+/* a plain colored line, not a filled pill: the full "bij energiearmoede..."
+   sentence used to sit in a solid accent-yellow badge, which for the longer
+   gemeenten wrapped to 2-3 lines of small bold text on a bright block -- the
+   single biggest contributor to the card reading as cluttered. Same color
+   coding, much less visual weight. */
+.stapel__amount-sub { display: flex; align-items: flex-start; gap: .4rem; font-weight: 600; font-size: .82rem; color: var(--accent); margin: 0 0 .9rem; }
+.stapel__amount-sub .wv-icon { flex: 0 0 auto; margin-top: .15rem; }
+.stapel__desc { margin-bottom: .7rem !important; }
 .stapel__card .link-arrow { margin-top: auto; padding-top: .5rem; }
+
+/* voorwaarden/looptijd: real, carefully-sourced regulatory detail that must
+   stay -- but shown by default it's what made the card feel like a wall of
+   text. Tucked behind a native <details> so the card reads as a scannable
+   headline number first; the fine print is one tap away, not gone. */
+.stapel__details { margin: 0 0 1rem; }
+.stapel__details summary {
+	list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem;
+	font-size: .82rem; font-weight: 700; color: var(--ink-3);
+}
+.stapel__details summary::-webkit-details-marker { display: none; }
+.stapel__details summary .wv-icon { width: 14px; height: 14px; transition: transform var(--dur-2) var(--ease-out); }
+.stapel__details[open] summary .wv-icon { transform: rotate(180deg); }
+.stapel__details__body { margin-top: .6rem; }
+.stapel__details__body p { font-size: .82rem; color: var(--ink-3); margin: 0 0 .5rem; }
+.stapel__card--lokaal .stapel__details summary { color: #9fb0ab; }
+.stapel__card--lokaal .stapel__details__body p { color: #9fb0ab; }
 
 .stapel__card--lokaal { background: var(--ink); border-color: var(--ink); color: #fff; }
 .stapel__card--lokaal .stapel__kicker { background: rgba(254, 208, 61, .16); color: var(--accent); }
@@ -547,7 +580,6 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .stapel__card--lokaal h3 { color: #fff; }
 .stapel__card--lokaal > p { color: #b9c4c0; }
 .stapel__card--lokaal .stapel__amount { color: var(--accent); }
-.stapel__card--lokaal .stapel__meta { color: #9fb0ab; }
 .stapel__card--lokaal .link-arrow { color: var(--accent); }
 .stapel__card--lokaal .link-arrow:hover { color: var(--accent-strong); }
 
@@ -604,9 +636,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 
 /* ---------- Trust ---------- */
 .trust-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-.trust-item { display: flex; align-items: center; gap: .8rem; padding: 1rem 1.2rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
-.trust-item .wv-icon { color: var(--primary); width: 24px; height: 24px; flex: 0 0 auto; }
-.trust-item span { font-weight: 600; }
+.trust-item { display: flex; align-items: center; gap: .9rem; padding: 1.1rem 1.3rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+.trust-item__icon { flex: 0 0 auto; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md); background: var(--primary-050); color: var(--primary); }
+.trust-item__icon .wv-icon { width: 22px; height: 22px; }
+.trust-item span:last-child { font-weight: 600; }
 
 /* keurmerken: only rendered at all once warmvast_certificeringen() is non-empty */
 .keurmerken { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .8rem 1.4rem; }
@@ -633,6 +666,26 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .trust-stats__label { display: block; margin-top: .4rem; color: var(--ink-3); font-size: var(--step--1); font-weight: 600; }
 .section--ink .trust-stats__value { color: var(--accent); }
 .section--ink .trust-stats__label { color: #b9c4c0; }
+
+/* trust-facts: one bordered card combining warmvast_trust_stats() (if any real
+   ones are configured) with the always-on kernwaarden badges -- see
+   warmvast_the_trust_facts(). auto-fit (not a fixed column count) because the
+   item count varies with how many trust stats are configured; the divider
+   rule below can draw a stray hairline at the left edge of a wrapped row's
+   first item, an accepted trade-off for not hardcoding a count that drifts
+   out of sync with the content. */
+.trust-facts {
+	list-style: none; margin: clamp(1.5rem, 3vw, 2.2rem) 0 0; padding: 0;
+	display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+	background: var(--surface); border: 1px solid var(--line);
+	border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden;
+}
+.trust-facts__item { display: flex; align-items: center; gap: .8rem; padding: 1.15rem 1.4rem; position: relative; }
+.trust-facts__item + .trust-facts__item::before { content: ""; position: absolute; left: 0; top: 22%; height: 56%; width: 1px; background: var(--line); }
+.trust-facts__icon { flex: 0 0 auto; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md); background: var(--primary-050); color: var(--primary); }
+.trust-facts__item strong { font-size: .95rem; }
+.trust-facts__item--stat strong { display: block; font-family: var(--font-display); font-size: var(--step-2); font-weight: 800; color: var(--primary); line-height: 1; letter-spacing: -.02em; }
+.trust-facts__item--stat span { display: block; margin-top: .35rem; color: var(--ink-3); font-size: .82rem; font-weight: 600; }
 
 /* ---------- FAQ ---------- */
 .faq { max-width: 820px; }

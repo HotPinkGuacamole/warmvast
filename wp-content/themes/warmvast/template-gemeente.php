@@ -79,78 +79,11 @@ while ( have_posts() ) :
 			</div>
 		</header>
 
-		<!-- Kernen + karakter -->
-		<section class="section section--paper">
-			<div class="container grid grid--2" style="align-items:start;gap:clamp(1.5rem,4vw,3rem)">
-				<div data-reveal>
-					<?php warmvast_section_header( 'De regio', 'Regio Zaandam, kern voor kern' ); ?>
-					<p><?php echo esc_html( $gemeente['karakter'] ); ?></p>
-				</div>
-				<div class="card" data-reveal>
-					<h3>Kernen in <?php echo esc_html( $gemeente['naam'] ); ?></h3>
-					<ul class="kernen-list">
-						<?php foreach ( $gemeente['kernen'] as $kern ) : ?>
-							<li><?php warmvast_the_icon( 'map', 'wv-icon--sm' ); ?> <?php echo esc_html( $kern ); ?></li>
-						<?php endforeach; ?>
-					</ul>
-					<p class="facts__note">Warmvast isoleert woningen in heel <?php echo esc_html( $gemeente['naam'] ); ?>, van de hoofdkern tot de kleinere buurtschappen.</p>
-				</div>
-			</div>
-		</section>
-
-		<!-- Welke maatregel loont hier -->
-		<section class="section section--surface">
-			<div class="container">
-				<?php warmvast_section_header( 'Aandachtspunt', 'Welke isolatie loont in ' . $gemeente['naam'] . '?', $gemeente['aandacht'] ); ?>
-				<div class="grid grid--<?php echo count( $gemeente['focus'] ) >= 3 ? '3' : '2'; ?>">
-					<?php
-					foreach ( $gemeente['focus'] as $fkey ) :
-						if ( ! isset( $services[ $fkey ] ) ) {
-							continue;
-						}
-						$s = $services[ $fkey ];
-						?>
-						<article class="card card--link service-card" data-reveal>
-							<span class="service-card__icon"><?php warmvast_the_icon( $s['icon'] ); ?></span>
-							<h3><?php echo esc_html( $s['label'] ); ?></h3>
-							<p class="service-card__solution"><?php echo esc_html( $s['solution'] ); ?></p>
-							<span class="service-card__subsidy"><?php warmvast_the_icon( 'euro', 'wv-icon--sm' ); ?> Vanaf <?php echo esc_html( warmvast_rate( $s['baseRate'] ) ); ?>/m²</span>
-							<div class="service-card__foot">
-								<a class="link-arrow" href="<?php echo esc_url( $s['url'] ); ?>">Bekijk <?php echo esc_html( strtolower( $s['label'] ) ); ?> <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
-							</div>
-						</article>
-					<?php endforeach; ?>
-				</div>
-			</div>
-		</section>
-
-		<!-- ISDE tarieven (landelijk, dus identiek aan /subsidie-service/) -->
-		<section class="section section--paper">
-			<div class="container">
-				<?php warmvast_section_header( 'Tarieven 2026', 'ISDE-bedragen in ' . $gemeente['naam'], 'Landelijke RVO-tarieven per m². Bij twee of meer isolatiemaatregelen verdubbelt het tarief — ook in ' . $gemeente['naam'] . '.' ); ?>
-				<div class="table-wrap">
-					<table class="rate-table">
-						<thead>
-							<tr><th>Maatregel</th><th>Basis /m²</th><th>Verdubbeld /m²</th><th>Min. m²</th><th>Max. m²</th></tr>
-						</thead>
-						<tbody>
-							<?php foreach ( $rates as $rkey => $r ) : ?>
-								<tr>
-									<td><a href="<?php echo esc_url( home_url( '/' . $r['slug'] . '/' ) ); ?>"><?php echo esc_html( $r['label'] ); ?></a></td>
-									<td><?php echo esc_html( warmvast_rate( $r['baseRate'] ) ); ?></td>
-									<td class="rate-table__hot"><?php echo esc_html( warmvast_rate( $r['baseRate'] * 2 ) ); ?></td>
-									<td><?php echo esc_html( $r['minM2'] ); ?></td>
-									<td><?php echo esc_html( $r['maxM2'] ); ?></td>
-								</tr>
-							<?php endforeach; ?>
-						</tbody>
-					</table>
-				</div>
-				<p class="wv-disclaimer">Bedragen gebaseerd op de bekende ISDE-tarieven 2026. Definitieve subsidie hangt af van RVO-beoordeling, meldcodes, bewijsstukken en minimale oppervlaktes. Aan deze cijfers kunnen geen rechten worden ontleend.</p>
-			</div>
-		</section>
-
-		<!-- ISDE + gemeentelijke subsidie combineren -->
+		<!-- ISDE + gemeentelijke subsidie combineren -- placed right after the
+		     hero (not further down the page) so a visitor who lands here from
+		     the gemeentes list sees every subsidy at a glance immediately;
+		     regio/kernen and the maatregel breakdown follow below for anyone
+		     who scrolls for more detail. -->
 		<?php if ( $gs ) : ?>
 		<section class="section section--surface">
 			<div class="container">
@@ -182,8 +115,13 @@ while ( have_posts() ) :
 							<span class="stapel__amount-sub"><?php warmvast_the_icon( 'spark', 'wv-icon--sm' ); ?> <?php echo esc_html( $gs['bedrag_laag'] ); ?></span>
 						<?php endif; ?>
 						<p class="stapel__desc"><?php echo esc_html( $gs['naam'] ); ?></p>
-						<p class="stapel__meta"><?php echo esc_html( $gs['voorwaarden'] ); ?></p>
-						<p class="stapel__meta"><?php echo esc_html( $gs['looptijd'] ); ?></p>
+						<details class="stapel__details">
+							<summary>Voorwaarden &amp; looptijd <?php warmvast_the_icon( 'chevron', 'wv-icon--sm' ); ?></summary>
+							<div class="stapel__details__body">
+								<p><?php echo esc_html( $gs['voorwaarden'] ); ?></p>
+								<p><?php echo esc_html( $gs['looptijd'] ); ?></p>
+							</div>
+						</details>
 						<a class="link-arrow" href="<?php echo esc_url( $gs['bron_url'] ); ?>" target="_blank" rel="noopener">Bekijk de regeling bij gemeente <?php echo esc_html( $gemeente['naam'] ); ?> <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
 					</div>
 				</div>
@@ -195,6 +133,80 @@ while ( have_posts() ) :
 			</div>
 		</section>
 		<?php endif; ?>
+
+		<!-- ISDE tarieven (landelijk, dus identiek aan /subsidie-service/) --
+		     directly beneath the two subsidy cards, not further down, so all
+		     the pricing (stapel amounts + the full per-m² table) sits together
+		     and is visible without much scrolling. -->
+		<section class="section section--paper">
+			<div class="container">
+				<?php warmvast_section_header( 'Tarieven 2026', 'ISDE-bedragen in ' . $gemeente['naam'], 'Landelijke RVO-tarieven per m². Bij twee of meer isolatiemaatregelen verdubbelt het tarief — ook in ' . $gemeente['naam'] . '.' ); ?>
+				<div class="table-wrap">
+					<table class="rate-table">
+						<thead>
+							<tr><th>Maatregel</th><th>Basis /m²</th><th>Verdubbeld /m²</th><th>Min. m²</th><th>Max. m²</th></tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $rates as $rkey => $r ) : ?>
+								<tr>
+									<td><a href="<?php echo esc_url( home_url( '/' . $r['slug'] . '/' ) ); ?>"><?php echo esc_html( $r['label'] ); ?></a></td>
+									<td><?php echo esc_html( warmvast_rate( $r['baseRate'] ) ); ?></td>
+									<td class="rate-table__hot"><?php echo esc_html( warmvast_rate( $r['baseRate'] * 2 ) ); ?></td>
+									<td><?php echo esc_html( $r['minM2'] ); ?></td>
+									<td><?php echo esc_html( $r['maxM2'] ); ?></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+				<p class="wv-disclaimer">Bedragen gebaseerd op de bekende ISDE-tarieven 2026. Definitieve subsidie hangt af van RVO-beoordeling, meldcodes, bewijsstukken en minimale oppervlaktes. Aan deze cijfers kunnen geen rechten worden ontleend.</p>
+			</div>
+		</section>
+
+		<!-- Kernen + karakter -->
+		<section class="section section--surface">
+			<div class="container grid grid--2" style="align-items:start;gap:clamp(1.5rem,4vw,3rem)">
+				<div data-reveal>
+					<?php warmvast_section_header( 'De regio', 'Regio Zaandam, kern voor kern' ); ?>
+					<p><?php echo esc_html( $gemeente['karakter'] ); ?></p>
+				</div>
+				<div class="card" data-reveal>
+					<h3>Kernen in <?php echo esc_html( $gemeente['naam'] ); ?></h3>
+					<ul class="kernen-list">
+						<?php foreach ( $gemeente['kernen'] as $kern ) : ?>
+							<li><?php warmvast_the_icon( 'map', 'wv-icon--sm' ); ?> <?php echo esc_html( $kern ); ?></li>
+						<?php endforeach; ?>
+					</ul>
+					<p class="facts__note">Warmvast isoleert woningen in heel <?php echo esc_html( $gemeente['naam'] ); ?>, van de hoofdkern tot de kleinere buurtschappen.</p>
+				</div>
+			</div>
+		</section>
+
+		<!-- Welke maatregel loont hier -->
+		<section class="section section--paper">
+			<div class="container">
+				<?php warmvast_section_header( 'Aandachtspunt', 'Welke isolatie loont in ' . $gemeente['naam'] . '?', $gemeente['aandacht'] ); ?>
+				<div class="grid grid--<?php echo count( $gemeente['focus'] ) >= 3 ? '3' : '2'; ?>">
+					<?php
+					foreach ( $gemeente['focus'] as $fkey ) :
+						if ( ! isset( $services[ $fkey ] ) ) {
+							continue;
+						}
+						$s = $services[ $fkey ];
+						?>
+						<article class="card card--link service-card" data-reveal>
+							<span class="service-card__icon"><?php warmvast_the_icon( $s['icon'] ); ?></span>
+							<h3><?php echo esc_html( $s['label'] ); ?></h3>
+							<p class="service-card__solution"><?php echo esc_html( $s['solution'] ); ?></p>
+							<span class="service-card__subsidy"><?php warmvast_the_icon( 'euro', 'wv-icon--sm' ); ?> Vanaf <?php echo esc_html( warmvast_rate( $s['baseRate'] ) ); ?>/m²</span>
+							<div class="service-card__foot">
+								<a class="link-arrow" href="<?php echo esc_url( $s['url'] ); ?>">Bekijk <?php echo esc_html( strtolower( $s['label'] ) ); ?> <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
+							</div>
+						</article>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		</section>
 
 		<!-- Direct naar de scan -->
 		<section class="section section--paper">

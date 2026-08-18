@@ -74,6 +74,34 @@
 		}
 	}
 
+	/* ---------- hero: reserve exact space for the floating USP bar ----------
+	   .usp-bar floats via position:absolute near the hero's bottom edge (see
+	   CSS) so it stays visible without scrolling. .hero__inner reserves space
+	   for it via padding-bottom, but the bar's real height depends on wrapped
+	   text (region name, item labels) that varies by viewport width and
+	   content -- a static CSS guess drifts out of sync with the bar's actual
+	   size and the bar ends up overlapping tall woningscan states. Measure it
+	   and feed the exact number back as a CSS var instead of guessing. Only
+	   meaningful >960px, where the bar is absolutely positioned at all -- below
+	   that it sits in normal flow (see .usp-bar mobile rule), so the var is
+	   cleared and the fallback clamp() in the CSS applies. */
+	var uspBar = doc.querySelector(".usp-bar");
+	var heroInner = doc.querySelector(".hero__inner");
+	if (uspBar && heroInner && "ResizeObserver" in window) {
+		var uspDesktopMq = window.matchMedia("(min-width: 961px)");
+		var syncUspClearance = function () {
+			if (!uspDesktopMq.matches) {
+				heroInner.style.removeProperty("--usp-clearance");
+				return;
+			}
+			var offset = parseFloat(getComputedStyle(uspBar).bottom) || 0;
+			heroInner.style.setProperty("--usp-clearance", (offset + uspBar.offsetHeight + 56) + "px");
+		};
+		new ResizeObserver(syncUspClearance).observe(uspBar);
+		if (uspDesktopMq.addEventListener) uspDesktopMq.addEventListener("change", syncUspClearance);
+		syncUspClearance();
+	}
+
 	/* ---------- mobile nav ---------- */
 	var toggle = doc.querySelector("[data-nav-toggle]");
 	var nav = doc.querySelector("[data-nav]");
