@@ -216,23 +216,6 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .section--ink { background: var(--ink); color: #eef1ef; }
 .section--ink h2, .section--ink h3 { color: #fff; }
 
-/* Seam softening: the sheet's own ambient pools (above) drift across section
-   boundaries just fine, but the two hard dark<->light cuts -- hero into the
-   next section, and this same light sheet into .cta-band (present on every
-   page, via footer.php) -- were still an instant color jump. Rather than
-   touch .hero or .cta-band's own glow/orb treatment, each fade lives as an
-   extra background-image layer on the RECEIVING side, painted behind that
-   element's own content automatically (no z-index needed, unlike the
-   orb/pseudo-element approach those two use internally) -- so it's a purely
-   additive, low-risk way to echo the neighboring color for a short distance
-   instead of cutting straight to it. */
-.hero + .section {
-	background-image: linear-gradient(180deg, #1d2426 0%, transparent 100%);
-	background-size: 100% clamp(120px, 18vw, 220px);
-	background-position: top;
-	background-repeat: no-repeat;
-}
-
 .section-head { max-width: 62ch; margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
 .section-head--center { margin-inline: auto; text-align: center; }
 .section-head__title { font-size: var(--step-3); }
@@ -723,19 +706,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .cta-band {
 	position: relative;
 	overflow: clip;
-	/* longhand (not the background: shorthand) so the new top fade-in layer
-	   -- echoing the light sheet's own tone for a short distance, same idea
-	   as .hero + .section above -- can be added without disturbing how the
-	   other three layers already render (their explicit size/position/repeat
-	   below just spell out gradients' existing cover-the-box default). */
-	background-image:
-		linear-gradient(180deg, #f4f4ef 0%, transparent 100%),
+	background:
 		radial-gradient(120% 92% at 82% -25%, rgba(11,107,91,.5), transparent 56%),
 		radial-gradient(96% 82% at 14% 125%, rgba(254,208,61,.12), transparent 54%),
 		linear-gradient(180deg, #171b1d, #1d2426);
-	background-size: 100% clamp(120px, 18vw, 220px), auto, auto, auto;
-	background-position: top, 0 0, 0 0, 0 0;
-	background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
 	color: #fff;
 }
 /* drifting thermal haze (the hero's warm shimmer, reduced-motion aware) */
