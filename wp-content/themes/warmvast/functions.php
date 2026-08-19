@@ -160,6 +160,12 @@ add_filter(
 		if ( is_page() ) {
 			$classes[] = 'is-page';
 		}
+		// Pages that open on the dark .hero (front page, the scan landing page)
+		// float the header transparently over it instead of the usual solid
+		// bar -- see .site-header in main.css.
+		if ( is_front_page() || is_page_template( 'template-scan.php' ) ) {
+			$classes[] = 'has-dark-hero';
+		}
 		return $classes;
 	}
 );

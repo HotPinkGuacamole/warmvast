@@ -297,6 +297,48 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .site-header.is-scrolled { box-shadow: var(--shadow-sm); }
 .site-header__inner { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.5rem; min-height: var(--header-h); }
 
+/* Transparent-over-hero header: on pages that open on the dark .hero,
+   the header floats over it (same color as the hero, effectively invisible
+   as its own bar) until the user scrolls, at which point it gets the usual
+   frosted-white fill and dark text back. position:fixed (not the sticky
+   above) so it's removed from flow and the hero can render full-bleed from
+   y:0 underneath it instead of being pushed down by the header's own box --
+   .hero__inner's existing top padding (88-128px) already clears the 74px
+   header comfortably, so no further adjustment was needed there. */
+body.has-dark-hero .site-header {
+	position: fixed; left: 0; right: 0;
+	border-bottom-color: transparent;
+	transition: box-shadow var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
+}
+body.has-dark-hero .site-header::before { opacity: 0; transition: opacity var(--dur-2) var(--ease-out); }
+body.has-dark-hero .site-header.is-scrolled {
+	border-bottom-color: var(--line);
+}
+body.has-dark-hero .site-header.is-scrolled::before { opacity: 1; }
+/* min-width, not unscoped: below 960px .nav__list only ever renders inside
+   the off-canvas panel (its own permanent white background, open or not),
+   never inline over the hero -- white text there would just be invisible
+   white-on-white the moment the panel opens. */
+@media (min-width: 961px) {
+	body.has-dark-hero .site-header:not(.is-scrolled) .nav__list a { color: rgba(255,255,255,.86); }
+	body.has-dark-hero .site-header:not(.is-scrolled) .nav__list a:hover,
+	body.has-dark-hero .site-header:not(.is-scrolled) .nav__list .current-menu-item > a {
+		color: #fff; background: rgba(255,255,255,.14);
+	}
+}
+/* logo crossfade: the dark wordmark reads fine on the white scrolled bar,
+   but disappears into the hero's own near-black background when floating
+   transparently -- swap to the light variant (already used in the footer)
+   for that state instead of leaving it illegible. */
+.brand { position: relative; display: inline-flex; align-items: center; }
+.brand__logo--light {
+	position: absolute; inset: 0; opacity: 0; pointer-events: none;
+	transition: opacity var(--dur-2) var(--ease-out);
+}
+.brand__logo--dark { transition: opacity var(--dur-2) var(--ease-out); }
+body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--dark { opacity: 0; }
+body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--light { opacity: 1; }
+
 .brand { display: inline-flex; align-items: center; }
 .brand__logo { display: block; height: 48px; width: auto; }
 .brand__logo--footer { height: 60px; }
@@ -1162,17 +1204,78 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .review figcaption em { font-style: normal; color: var(--ink-3); font-size: var(--step--1); }
 
 /* ---------- USP bar ---------- */
-/* A centred, rounded, elevated overview card that floats fully inside the
-   hero, anchored near its bottom edge — a light "cut-out" set into the dark
-   hero. Absolutely positioned (not a sibling with negative margin) so it can
-   never end up below the fold: the hero is exactly 100svh, so anything
-   outside its own box would need scrolling to reach. Below the breakpoint
-   where the hero stacks to one column, it drops back into normal flow. */
+/* A centred, rounded overview card that floats fully inside the hero,
+   anchored flush to its bottom edge (bottom:0, not offset) and sharing the
+   page sheet's own background color -- so the card's bottom simply becomes
+   the page starting underneath it, no visible seam, instead of a gap of
+   dark hero showing between the card and the page below. Absolutely
+   positioned (not a sibling with negative margin) so it can never end up
+   below the fold: the hero is exactly 100svh, so anything outside its own
+   box would need scrolling to reach. Below the breakpoint where the hero
+   stacks to one column, it drops back into normal flow. */
 .usp-bar {
-	position: absolute; left: 0; right: 0; z-index: 3;
-	bottom: clamp(2.4rem, 6.5vh, 4.25rem);
+	position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+}
+/* Concave corner fill: the card's square bottom corners (see .usp-bar__grid)
+   sit flush against the hero's own flat bottom edge, which continues past
+   the card's narrower width -- that junction (card's straight side edge
+   meeting the hero's straight bottom edge) is itself a sharp inward corner,
+   even though both the card and the hero-bottom are individually "seamless"
+   now. mask-image (not a plain radial-gradient background) so the actual
+   fill can be the card's real background -- flat color AND the same noise
+   grain (color alone still mismatched the page, same reason as the card
+   itself) -- clipped to a quarter-circle instead of trying to paint a
+   second, separate approximation of it. The circle is centered on the
+   corner AWAY from the card (0%/100% of this small box, i.e. deeper into
+   the hero) with radius var(--radius-lg): everything closer than that stays
+   masked out (hero's own background shows through, unaltered), everything
+   at-or-beyond it is filled -- the fill reaches the junction point itself
+   and curves away from it, not a bump centered ON the junction (that read
+   as a ball, not a fillet -- the first version had the circle backwards).
+   A thin border ring (::before, unmasked, 1px larger) gives it the same
+   edge definition as the card's own top/side border. Two fixed
+   940px-card-width halves (470px from center), not measured -- the card's
+   max-width is itself a fixed value, so this stays exact at any viewport
+   wide enough for the card to be at full width. */
+.usp-bar__notch {
+	position: absolute; bottom: 0; z-index: 1;
+	width: var(--radius-lg); height: var(--radius-lg);
+	pointer-events: none;
+}
+.usp-bar__notch::before {
+	content: ""; position: absolute; inset: 0;
+	background: var(--line);
+}
+.usp-bar__notch::after {
+	content: ""; position: absolute; inset: 1px;
+	background: var(--noise-texture) 0 0 / 220px 220px, #f4f4ef;
+}
+.usp-bar__notch--left {
+	right: calc(50% + 470px);
+}
+.usp-bar__notch--left::before {
+	-webkit-mask-image: radial-gradient(circle at 0% 0%, transparent calc(var(--radius-lg) - .5px), #fff var(--radius-lg));
+	mask-image: radial-gradient(circle at 0% 0%, transparent calc(var(--radius-lg) - .5px), #fff var(--radius-lg));
+}
+.usp-bar__notch--left::after {
+	--r: calc(var(--radius-lg) - 1px);
+	-webkit-mask-image: radial-gradient(circle at 0% 0%, transparent calc(var(--r) - .5px), #fff var(--r));
+	mask-image: radial-gradient(circle at 0% 0%, transparent calc(var(--r) - .5px), #fff var(--r));
+}
+.usp-bar__notch--right {
+	left: calc(50% + 470px);
+}
+.usp-bar__notch--right::before {
+	-webkit-mask-image: radial-gradient(circle at 100% 0%, transparent calc(var(--radius-lg) - .5px), #fff var(--radius-lg));
+	mask-image: radial-gradient(circle at 100% 0%, transparent calc(var(--radius-lg) - .5px), #fff var(--radius-lg));
+}
+.usp-bar__notch--right::after {
+	--r: calc(var(--radius-lg) - 1px);
+	-webkit-mask-image: radial-gradient(circle at 100% 0%, transparent calc(var(--r) - .5px), #fff var(--r));
+	mask-image: radial-gradient(circle at 100% 0%, transparent calc(var(--r) - .5px), #fff var(--r));
 }
 @media (max-width: 960px) {
+	.usp-bar__notch { display: none; }
 	/* position:static drops out of z-index entirely (it only applies to
 	   positioned elements), so without this the always-on .hero__thermal /
 	   .hero__orb glow layers (position:absolute, z-index:0) paint ABOVE this
@@ -1180,6 +1283,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 	   of a white card, exactly the "unreadable dark text" bug. `relative` +
 	   a z-index keeps it in its own stacking layer above them. */
 	.usp-bar { position: relative; z-index: 2; margin-top: clamp(1.5rem, 4vw, 2.5rem); }
+	/* the square-bottom "cutout" look only makes sense flush against the
+	   page below it (see .usp-bar__grid); here the card floats in normal
+	   flow with a gap under it, so a squared-off bottom just reads as
+	   accidentally clipped. Round it back. */
+	.usp-bar__grid { border-radius: var(--radius-lg); border-bottom: 1px solid var(--line); }
 }
 .usp-bar__grid {
 	display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
@@ -1189,8 +1297,39 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 	   color of its own) would inherit that near-white straight onto this white
 	   card and become unreadable. */
 	color: var(--ink);
-	background: var(--surface); border: 1px solid var(--line);
-	border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); overflow: hidden;
+	/* same literal color AND the same grain as body/.site-main's sheet
+	   background (no shared variable exists for either yet) -- deliberately
+	   not var(--surface)/white, so the card's bottom blends straight into
+	   the page instead of reading as a white card sitting in front of it.
+	   The color alone still measurably mismatched: .site-main's noise
+	   texture (5% black grain) darkens its #f4f4ef by a few RGB points on
+	   average, and this flat background didn't have that same grain --
+	   without it, the seam was still visible as a faint but real color
+	   step even with matching base colors. */
+	background: #f4f4ef var(--noise-texture); background-size: 220px 220px;
+	/* no border-bottom: a full 1px border on all four sides drew a visible
+	   grey hairline right across the seam -- exactly the cut the color-match
+	   was meant to erase. Top/sides still get one, for definition against
+	   the hero. */
+	border: 1px solid var(--line); border-bottom: none;
+	/* rounded top only, square bottom -- the card visually rises out of the
+	   page it shares a color with, instead of floating as a fully-rounded
+	   card that happens to touch it. */
+	border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+	/* var(--shadow-lg) is tuned for light backgrounds and all but disappears
+	   against the hero's own near-black tone. Heavier alone wasn't enough
+	   either: .hero's overflow:hidden clips right at this card's own bottom
+	   edge, so any shadow layer reaching past it got sliced mid-fade --
+	   a second hard line, on top of the border one. Negative Y offsets +
+	   spread keep every layer's reach (offset + blur + spread) at or above
+	   0, so nothing reaches the bottom edge to be cut off; the shadow only
+	   ever shows above and to the sides, which is also the only place it
+	   was ever meant to read as "floating over the dark hero" anyway. */
+	box-shadow:
+		0 -32px 44px -14px rgba(0,0,0,.5),
+		-26px -10px 44px -18px rgba(0,0,0,.4),
+		26px -10px 44px -18px rgba(0,0,0,.4);
+	overflow: hidden;
 }
 .usp { display: flex; align-items: center; gap: .8rem; padding: 1.15rem 1.4rem; position: relative; }
 .usp + .usp::before { content: ""; position: absolute; left: 0; top: 22%; height: 56%; width: 1px; background: var(--line); }

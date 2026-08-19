@@ -50,6 +50,8 @@ $usps = array(
 	<!-- floating USP overview: identical to the homepage hero's, so pricing
 	     trust signals sit in the same place a returning visitor already knows -->
 	<section class="usp-bar" aria-label="Waarom Warmvast">
+		<span class="usp-bar__notch usp-bar__notch--left" aria-hidden="true"></span>
+		<span class="usp-bar__notch usp-bar__notch--right" aria-hidden="true"></span>
 		<div class="container">
 			<div class="usp-bar__grid">
 				<?php foreach ( $usps as $u ) : ?>

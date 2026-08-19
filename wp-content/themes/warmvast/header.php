@@ -39,7 +39,11 @@ $gemeenten = warmvast_zaanstreek_gemeenten();
 			<?php if ( has_custom_logo() ) : ?>
 				<?php the_custom_logo(); ?>
 			<?php else : ?>
-				<img class="brand__logo" src="<?php echo warmvast_asset( '/assets/img/warmvast-logo-horizontal-black.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper escapes. ?>" width="730" height="212" alt="Warmvast Isolatie" fetchpriority="high" decoding="async">
+				<img class="brand__logo brand__logo--dark" src="<?php echo warmvast_asset( '/assets/img/warmvast-logo-horizontal-black.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper escapes. ?>" width="730" height="212" alt="Warmvast Isolatie" fetchpriority="high" decoding="async">
+				<?php // Crossfades in over .brand__logo--dark while the header floats
+				// transparently over a dark hero (see body.has-dark-hero in
+				// main.css) -- invisible/inert everywhere else. ?>
+				<img class="brand__logo brand__logo--light" src="<?php echo warmvast_asset( '/assets/img/warmvast-logo-horizontal-white.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>" width="730" height="212" alt="" aria-hidden="true" decoding="async">
 			<?php endif; ?>
 		</a>
 

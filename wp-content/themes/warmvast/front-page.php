@@ -106,6 +106,8 @@ $usps = array(
 	<!-- floating USP overview: fully contained inside the hero, so it's always
 	     visible on first paint without scrolling, whatever the viewport height -->
 	<section class="usp-bar" aria-label="Waarom Warmvast">
+		<span class="usp-bar__notch usp-bar__notch--left" aria-hidden="true"></span>
+		<span class="usp-bar__notch usp-bar__notch--right" aria-hidden="true"></span>
 		<div class="container">
 			<div class="usp-bar__grid">
 				<?php foreach ( $usps as $u ) : ?>
