@@ -59,16 +59,20 @@
 	--shadow:     0 6px 20px rgba(20,40,36,.08), 0 2px 6px rgba(20,40,36,.05);
 	--shadow-lg:  0 24px 60px rgba(12,40,34,.16), 0 6px 18px rgba(12,40,34,.08);
 
-	/* Ambient thermal depth: cool (retained cold) + warm (trapped heat), kept
-	   deliberately faint so light sections read as "lit paper", never coloured. */
-	--ambient-cool: rgba(11,107,91,.07);
-	--ambient-warm: rgba(254,208,61,.09);
+	/* Ambient thermal depth: the SAME soft teal/amber light the hero and
+	   CTA band glow with, just cast onto a light backdrop instead of a dark
+	   one -- so light sections read as part of one continuous atmosphere
+	   instead of a different, flatter material. Was deliberately faint
+	   ("lit paper, never coloured") which is exactly why it read as a
+	   mismatch next to the hero's rich glow; turned up so it's actually felt. */
+	--ambient-cool: rgba(11,107,91,.12);
+	--ambient-warm: rgba(254,208,61,.13);
 
-	/* Blueprint texture: a faint engineering graph-paper grid (measurement,
-	   precision) plus a fine paper-grain, both near-invisible at a glance and
-	   only noticeable on close inspection. Zero image requests: the grid is a
-	   repeating CSS gradient, the grain a tiny inline SVG feTurbulence data-URI. */
-	--grid-line: rgba(11,107,91,.05);
+	/* Fine paper-grain only -- the ruled engineering-grid layer that used to
+	   sit under this (measurement lines every 32px) read as technical
+	   "kladpapier" against the hero/CTA's soft glow, a mismatched visual
+	   language no amount of edge-fading could fix. Zero image requests: a
+	   tiny inline SVG feTurbulence data-URI. */
 	--noise-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
 
 	/* Glass system: a gradient hairline (cool->warm, echoing the thermal theme)
@@ -144,11 +148,8 @@ body {
 	line-height: 1.62;
 	color: var(--ink);
 	background-color: #f4f4ef;
-	background-image:
-		var(--noise-texture),
-		linear-gradient(var(--grid-line) 1px, transparent 1px),
-		linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-	background-size: 220px 220px, 32px 32px, 32px 32px;
+	background-image: var(--noise-texture);
+	background-size: 220px 220px;
 	background-repeat: repeat;
 	-webkit-font-smoothing: antialiased;
 	text-rendering: optimizeLegibility;
@@ -188,27 +189,27 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .section { padding-block: clamp(3rem, 6vw, 5.5rem); }
 .section--tight { padding-block: clamp(2rem, 4vw, 3.5rem); }
 
-/* ---- One continuous "engineering sheet" ----
-   The whole light content area is a single unbroken blueprint surface: base
-   paper tone + a continuous grid + grain + a few large, soft ambient light
-   pools that span across section boundaries. Because it lives on <main> (not
-   per-section) the grid never resets and there are NO paper<->surface seams to
-   smooth. Dark sections (hero, cta, footer, --ink) sit opaque on top and hide
-   it; the only intentional transitions left are the crisp diagonals into those
-   dark blocks. */
+/* ---- One continuous glowing sheet ----
+   The whole light content area is a single unbroken surface: base paper
+   tone + grain + several large, soft ambient light pools in the SAME
+   teal/amber the hero and CTA band glow with -- so light sections read as
+   the same atmosphere continuing at a brighter exposure, not a different,
+   flatter material next to it. Because it lives on <main> (not per-section)
+   the pools drift across section boundaries with no paper<->surface seams
+   to smooth. Dark sections (hero, cta, footer, --ink) sit opaque on top and
+   hide it. */
 .site-main {
 	position: relative;
 	background-color: #f4f4ef;
 	background-image:
 		var(--noise-texture),
-		linear-gradient(var(--grid-line) 1px, transparent 1px),
-		linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
-		radial-gradient(1200px 780px at 100% 2%, var(--ambient-cool), transparent 62%),
-		radial-gradient(1000px 680px at -6% 30%, var(--ambient-warm), transparent 58%),
-		radial-gradient(1100px 720px at 106% 60%, var(--ambient-cool), transparent 60%),
-		radial-gradient(980px 640px at -4% 92%, var(--ambient-warm), transparent 58%);
-	background-size: 220px 220px, 32px 32px, 32px 32px, auto, auto, auto, auto;
-	background-repeat: repeat, repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+		radial-gradient(1900px 1300px at 102% 0%, var(--ambient-cool), transparent 72%),
+		radial-gradient(1700px 1200px at -10% 26%, var(--ambient-warm), transparent 70%),
+		radial-gradient(1800px 1250px at 110% 55%, var(--ambient-cool), transparent 70%),
+		radial-gradient(1650px 1150px at -8% 80%, var(--ambient-warm), transparent 68%),
+		radial-gradient(1750px 1200px at 102% 104%, var(--ambient-cool), transparent 70%);
+	background-size: 220px 220px, auto, auto, auto, auto, auto;
+	background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
 }
 /* light sections are now transparent windows onto the continuous sheet */
 .section--paper,
@@ -922,106 +923,6 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .service-card--wide { flex-direction: column; }
 @media (max-width: 560px) { .contact-cards { grid-template-columns: 1fr; } }
 
-.scan-embed { margin-top: .5rem; }
-.scan-embed--ws { max-width: 640px; margin-inline: auto; }
-
-/* scan landing */
-.scan-landing {
-	position: relative;
-	overflow: hidden;
-	background:
-		radial-gradient(80% 48% at 50% -10%, rgba(11,107,91,.55), transparent 62%),
-		linear-gradient(180deg, #151b1d 0%, #172021 58%, #111718 100%);
-}
-.scan-landing::before {
-	content: "";
-	position: absolute;
-	inset: 0;
-	background-image:
-		linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
-		linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
-	background-size: 34px 34px;
-	mask-image: linear-gradient(180deg, rgba(0,0,0,.75), transparent 78%);
-	pointer-events: none;
-}
-.scan-landing::after {
-	content: "";
-	position: absolute;
-	left: 0;
-	right: 0;
-	bottom: -1px;
-	height: 120px;
-	background: linear-gradient(180deg, transparent, rgba(8,15,16,.62));
-	pointer-events: none;
-}
-.scan-landing > .container { position: relative; z-index: 1; }
-.scan-landing__bg {
-	position: absolute;
-	inset: 0;
-	pointer-events: none;
-	overflow: hidden;
-}
-.scan-landing__heat {
-	position: absolute;
-	border-radius: 999px;
-	transform: rotate(-8deg);
-	filter: blur(18px);
-	mix-blend-mode: screen;
-}
-.scan-landing__heat--roof {
-	right: 4%;
-	top: 11%;
-	width: min(520px, 36vw);
-	height: 130px;
-	background: linear-gradient(90deg, transparent, rgba(254,208,61,.28), rgba(11,107,91,.32), transparent);
-}
-.scan-landing__heat--floor {
-	left: 8%;
-	bottom: 13%;
-	width: min(620px, 44vw);
-	height: 118px;
-	background: linear-gradient(90deg, transparent, rgba(11,107,91,.28), rgba(254,208,61,.14), transparent);
-}
-.scan-landing__beam {
-	position: absolute;
-	width: 1px;
-	height: 58vh;
-	min-height: 420px;
-	background: linear-gradient(180deg, transparent, rgba(254,208,61,.28), transparent);
-	transform: rotate(54deg);
-	opacity: .55;
-}
-.scan-landing__beam--1 { left: 14%; top: -12%; }
-.scan-landing__beam--2 { right: 21%; top: -18%; opacity: .32; }
-.scan-landing__head { position: relative; max-width: 720px; margin: 0 auto clamp(1.5rem, 4vw, 2.5rem); text-align: center; }
-.scan-landing__head h1 { color: #fff; font-size: var(--step-4); }
-.scan-landing__head p { color: #c6d0cc; font-size: var(--step-1); }
-.scan-landing__trust { list-style: none; margin: 1.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: .7rem 1.4rem; }
-.scan-landing__trust li { display: inline-flex; align-items: center; gap: .45rem; font-size: var(--step--1); color: #aeb9b5; }
-.scan-landing__trust .wv-icon { color: var(--accent); }
-.scan-landing .scan-embed {
-	position: relative;
-	z-index: 1;
-}
-.scan-landing .scan-embed::before {
-	content: "";
-	position: absolute;
-	left: 50%;
-	top: -18px;
-	width: min(calc(100% + 44px), 684px);
-	height: calc(100% + 36px);
-	transform: translateX(-50%);
-	border-radius: calc(var(--radius-lg) + 8px);
-	background:
-		linear-gradient(135deg, rgba(254,208,61,.13), rgba(255,255,255,.035) 24%, rgba(11,107,91,.18) 100%),
-		rgba(255,255,255,.035);
-	border: 1px solid rgba(255,255,255,.11);
-	box-shadow:
-		0 34px 90px -42px rgba(0,0,0,.74),
-		inset 0 1px 0 rgba(255,255,255,.14);
-	z-index: -1;
-}
-
 /* ==========================================================================
    Woningscan (address-driven)
    ========================================================================== */
@@ -1427,8 +1328,6 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {
 	.hero__inner { grid-template-columns: 1fr; }
-	.scan-landing__heat--roof { right: -22%; width: 520px; }
-	.scan-landing__heat--floor { left: -24%; width: 520px; }
 	.verdub { grid-template-columns: 1fr; }
 	.grid--4 { grid-template-columns: repeat(2, 1fr); }
 	.grid--3 { grid-template-columns: repeat(2, 1fr); }
@@ -1518,12 +1417,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 
 @media (max-width: 560px) {
 	.grid--4, .grid--3, .grid--2, .steps, .trust-grid, .post-grid, .dropdown__grid, .compare { grid-template-columns: 1fr; }
-	.scan-landing { background: linear-gradient(180deg, #151b1d 0%, #172021 72%, #111718 100%); }
-	.scan-landing__beam { opacity: .22; }
-	.scan-landing__heat--roof { top: 6%; right: -58%; height: 100px; }
-	.scan-landing__heat--floor { left: -62%; bottom: 18%; height: 92px; }
-	.hero__scan::before,
-	.scan-landing .scan-embed::before { top: -12px; width: calc(100% + 20px); height: calc(100% + 24px); border-radius: calc(var(--radius-lg) + 4px); }
+	.hero__scan::before { top: -12px; width: calc(100% + 20px); height: calc(100% + 24px); border-radius: calc(var(--radius-lg) + 4px); }
 	.usp-bar__grid { grid-template-columns: 1fr; }
 	.usp::before { display: none !important; }
 	.usp + .usp { border-top: 1px solid var(--line); }

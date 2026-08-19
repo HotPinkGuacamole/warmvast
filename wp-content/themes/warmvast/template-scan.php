@@ -18,36 +18,49 @@ global $warmvast_scan_preselect;
 $maatregel = isset( $_GET['maatregel'] ) ? sanitize_key( wp_unslash( $_GET['maatregel'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only preselect, no state change.
 $warmvast_scan_preselect = isset( warmvast_isde_rates()[ $maatregel ] ) ? $maatregel : '';
 
-$trust = array(
-	array( 'clock', 'Binnen 24 uur reactie' ),
-	array( 'ruler', 'Technische opname vóór uitvoering' ),
-	array( 'camera', 'Fotobewijs voor uw subsidie' ),
-	array( 'map', 'Werkzaam in ' . WARMVAST_REGION ),
+// Identical USP set to the homepage hero's floating card -- same component,
+// same copy, so this landing page reads as the same hero, not a lookalike.
+$usps = array(
+	array( 'ruler', 'Technische opname', 'vóór elke uitvoering' ),
+	array( 'euro', 'Helder m²-overzicht', 'u weet wat u betaalt' ),
+	array( 'doc', 'Subsidiedossier geregeld', 'meldcodes &amp; fotobewijs' ),
+	array( 'clock', 'Reactie binnen 24 uur', 'werkzaam in ' . WARMVAST_REGION ),
 );
 ?>
-<section class="section section--ink scan-landing">
-	<div class="scan-landing__bg" aria-hidden="true">
-		<span class="scan-landing__heat scan-landing__heat--roof"></span>
-		<span class="scan-landing__heat scan-landing__heat--floor"></span>
-		<span class="scan-landing__beam scan-landing__beam--1"></span>
-		<span class="scan-landing__beam scan-landing__beam--2"></span>
-	</div>
-	<div class="container">
-		<div class="scan-landing__head">
+<section class="hero">
+	<span class="hero__orb hero__orb--1" aria-hidden="true"></span>
+	<span class="hero__orb hero__orb--2" aria-hidden="true"></span>
+	<div class="hero__thermal" aria-hidden="true"></div>
+	<div class="container hero__inner">
+		<div class="hero__copy">
 			<span class="hero__eyebrow"><?php warmvast_the_icon( 'thermo', 'wv-icon--sm' ); ?> Gratis &amp; vrijblijvend</span>
-			<h1>Bereken in 2 minuten wat isoleren u oplevert</h1>
-			<p>Vul uw woninggegevens in en zie direct een ISDE-indicatie. Geen verplichtingen. Pas op het laatste moment vragen we uw contactgegevens.</p>
-			<ul class="scan-landing__trust">
-				<?php foreach ( $trust as $t ) : ?>
-					<li><?php warmvast_the_icon( $t[0], 'wv-icon--sm' ); ?> <?php echo esc_html( $t[1] ); ?></li>
-				<?php endforeach; ?>
-			</ul>
+			<h1 class="hero__title">Bereken in 2 minuten <em>wat isoleren u oplevert</em></h1>
+			<p class="hero__sub">Vul uw woninggegevens in en zie direct een ISDE-indicatie. Geen verplichtingen. Pas op het laatste moment vragen we uw contactgegevens.</p>
+			<div class="hero__trust">
+				<span><?php warmvast_the_icon( 'check', 'wv-icon--sm' ); ?> Gratis, 2 minuten, geen verplichtingen</span>
+				<span><?php warmvast_the_icon( 'check', 'wv-icon--sm' ); ?> Spouw, vloer, glas &amp; dak</span>
+			</div>
 		</div>
 
-		<div class="scan-embed scan-embed--ws">
+		<div class="hero__scan">
 			<?php get_template_part( 'template-parts/woningscan' ); ?>
 		</div>
 	</div>
+
+	<!-- floating USP overview: identical to the homepage hero's, so pricing
+	     trust signals sit in the same place a returning visitor already knows -->
+	<section class="usp-bar" aria-label="Waarom Warmvast">
+		<div class="container">
+			<div class="usp-bar__grid">
+				<?php foreach ( $usps as $u ) : ?>
+					<div class="usp">
+						<span class="usp__icon"><?php warmvast_the_icon( $u[0] ); ?></span>
+						<span class="usp__text"><strong><?php echo esc_html( $u[1] ); ?></strong><em><?php echo wp_kses_post( $u[2] ); ?></em></span>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</div>
+	</section>
 </section>
 
 <section class="section section--surface">
