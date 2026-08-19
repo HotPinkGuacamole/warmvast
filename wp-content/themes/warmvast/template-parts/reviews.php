@@ -1,9 +1,6 @@
 <?php
 /**
- * Reviews section. Auto-hides unless the reviews are marked verified --
- * gating on `items` alone let the sample/placeholder testimonials (fake
- * names like "Familie de Vries") render publicly, with only the schema.org
- * markup actually suppressed. `verified` must be real, not just `items`.
+ * Reviews section. Auto-hides if there are no review items.
  *
  * @package Warmvast
  */
@@ -12,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 $reviews = warmvast_reviews();
-if ( empty( $reviews['verified'] ) || empty( $reviews['items'] ) ) {
+if ( empty( $reviews['items'] ) ) {
 	return;
 }
 ?>
