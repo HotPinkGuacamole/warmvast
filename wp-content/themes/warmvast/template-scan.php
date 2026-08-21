@@ -32,15 +32,11 @@ $usps = array(
 	<span class="hero__orb hero__orb--2" aria-hidden="true"></span>
 	<div class="hero__thermal" aria-hidden="true"></div>
 	<div class="container hero__inner">
-		<div class="hero__copy">
-			<span class="hero__eyebrow"><?php warmvast_the_icon( 'thermo', 'wv-icon--sm' ); ?> Gratis &amp; vrijblijvend</span>
-			<h1 class="hero__title">Bereken in 2 minuten <em>wat isoleren u oplevert</em></h1>
-			<p class="hero__sub">Vul uw woninggegevens in en zie direct een ISDE-indicatie. Geen verplichtingen. Pas op het laatste moment vragen we uw contactgegevens.</p>
-			<div class="hero__trust">
-				<span><?php warmvast_the_icon( 'check', 'wv-icon--sm' ); ?> Gratis, 2 minuten, geen verplichtingen</span>
-				<span><?php warmvast_the_icon( 'check', 'wv-icon--sm' ); ?> Spouw, vloer, glas &amp; dak</span>
-			</div>
-		</div>
+		<?php // Visually the scan card is the whole hero now -- no competing
+		// copy column -- but the page still needs a real h1 for SEO/a11y,
+		// just not a visible one duplicating what the card's own heading
+		// ("Doe de isolatiescan voor uw woning") already says on screen. ?>
+		<h1 class="screen-reader-text">Bereken in 2 minuten wat isoleren u oplevert</h1>
 
 		<div class="hero__scan">
 			<?php get_template_part( 'template-parts/woningscan' ); ?>
@@ -76,5 +72,33 @@ $usps = array(
 		</ol>
 	</div>
 </section>
+
+	<!-- Still deciding? Same bordered-card component as the homepage's
+	     trust-facts strip, reused for real links instead of a plain list --
+	     keeps someone not ready to fill in an address yet from hitting a
+	     dead end right after "Zo werkt het". -->
+	<section class="section section--paper">
+		<div class="container">
+			<?php warmvast_section_header( '', 'Nog niet zover? Lees eerst verder', '', 'center' ); ?>
+			<div class="trust-facts" data-reveal>
+				<a class="trust-facts__item" href="<?php echo esc_url( home_url( '/isolatie/' ) ); ?>">
+					<span class="trust-facts__icon"><?php warmvast_the_icon( 'wall' ); ?></span>
+					<span><strong>Welke isolatie past bij uw woning?</strong><em>Spouw, vloer, glas &amp; dak vergeleken</em></span>
+				</a>
+				<a class="trust-facts__item" href="<?php echo esc_url( home_url( '/subsidie-service/' ) ); ?>">
+					<span class="trust-facts__icon"><?php warmvast_the_icon( 'euro' ); ?></span>
+					<span><strong>ISDE-subsidie in 2026</strong><em>Tarieven en de verdubbelingsregel</em></span>
+				</a>
+				<a class="trust-facts__item" href="<?php echo esc_url( home_url( '/kennisbank/' ) ); ?>">
+					<span class="trust-facts__icon"><?php warmvast_the_icon( 'doc' ); ?></span>
+					<span><strong>Kennisbank</strong><em>Uitleg over subsidie en isolatie</em></span>
+				</a>
+				<a class="trust-facts__item" href="<?php echo esc_url( home_url( '/kwaliteit-en-garantie/' ) ); ?>">
+					<span class="trust-facts__icon"><?php warmvast_the_icon( 'award' ); ?></span>
+					<span><strong>Kwaliteit &amp; garantie</strong><em>Hoe wij kwaliteit waarborgen</em></span>
+				</a>
+			</div>
+		</div>
+	</section>
 <?php
 get_footer();

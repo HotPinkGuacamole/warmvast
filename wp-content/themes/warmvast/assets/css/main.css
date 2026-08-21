@@ -186,7 +186,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 
 /* ---------- Layout ---------- */
 .container { width: 100%; max-width: var(--container); margin-inline: auto; padding-inline: var(--gutter); }
-.section { padding-block: clamp(3rem, 6vw, 5.5rem); }
+/* Slightly tighter than before (was clamp(3rem, 6vw, 5.5rem)) -- adjacent
+   sections share this same padding top+bottom, so the gap between any two
+   was 2x it; a modest ~18% cut across the board reads as "a bit closer
+   together" without collapsing the rhythm. */
+.section { padding-block: clamp(2.5rem, 5vw, 4.5rem); }
 .section--tight { padding-block: clamp(2rem, 4vw, 3.5rem); }
 
 /* ---- One continuous glowing sheet ----
@@ -216,6 +220,22 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .section--surface { background: transparent; }
 .section--ink { background: var(--ink); color: #eef1ef; }
 .section--ink h2, .section--ink h3 { color: #fff; }
+
+/* .site-main's ambient-cool/-warm pools (see .site-main) are positioned by
+   PERCENTAGE of the whole page's height, so how strongly one happens to
+   tint the pixels right below the hero varies with how long the rest of
+   the page is. The homepage is long enough that this was never visible --
+   .usp-bar__grid's flat matched color already lines up there -- but the
+   much shorter scan landing page lands a pool close enough to visibly
+   mismatch it. Scoped to that page specifically: applying the same fade
+   site-wide painted an unnecessary flat patch over the homepage's own
+   already-correct blend, creating a new seam that hadn't been there.
+   130px, not 48: measured, the tint keeps drifting until ~80px down before
+   it settles at its true (cooler/greener) value -- a shorter fade only
+   smoothed the first few pixels and still handed off into a visibly
+   different flat tone right after, which read as its own color step even
+   without a hard edge. */
+body.is-scan-landing .hero + .section { background-image: linear-gradient(180deg, #f4f4ef 0%, transparent 100%); background-size: 100% 130px; background-position: top; background-repeat: no-repeat; }
 
 .section-head { max-width: 62ch; margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
 .section-head--center { margin-inline: auto; text-align: center; }
@@ -303,8 +323,8 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
    frosted-white fill and dark text back. position:fixed (not the sticky
    above) so it's removed from flow and the hero can render full-bleed from
    y:0 underneath it instead of being pushed down by the header's own box --
-   .hero__inner's existing top padding (88-128px) already clears the 74px
-   header comfortably, so no further adjustment was needed there. */
+   .hero's own top padding (88-128px) already clears the 74px header
+   comfortably, so no further adjustment was needed there. */
 body.has-dark-hero .site-header {
 	position: fixed; left: 0; right: 0;
 	border-bottom-color: transparent;
@@ -318,11 +338,21 @@ body.has-dark-hero .site-header.is-scrolled::before { opacity: 1; }
 /* min-width, not unscoped: below 960px .nav__list only ever renders inside
    the off-canvas panel (its own permanent white background, open or not),
    never inline over the hero -- white text there would just be invisible
-   white-on-white the moment the panel opens. */
+   white-on-white the moment the panel opens.
+   `> .menu-item > a` (direct children only), not a bare `.nav__list a`: the
+   dropdown panels (.dropdown, .dropdown--wide) are ALSO descendants of
+   .nav__list, and ALSO have their own permanent white background -- the
+   same white-on-white trap as the off-canvas panel, just missed here the
+   first time because it only breaks while unscrolled, at >=961px, with a
+   dropdown actually open (the Gemeentes list going fully blank). Only the
+   top-level trigger link ("Isolatie", "Gemeentes", ...) is an `a` that's a
+   direct child of a `.menu-item` -- every dropdown-nested link is a
+   grandchild-or-deeper, so this excludes them structurally rather than
+   needing to know every dropdown class by name. */
 @media (min-width: 961px) {
-	body.has-dark-hero .site-header:not(.is-scrolled) .nav__list a { color: rgba(255,255,255,.86); }
-	body.has-dark-hero .site-header:not(.is-scrolled) .nav__list a:hover,
-	body.has-dark-hero .site-header:not(.is-scrolled) .nav__list .current-menu-item > a {
+	body.has-dark-hero .site-header:not(.is-scrolled) .nav__list > .menu-item > a { color: rgba(255,255,255,.86); }
+	body.has-dark-hero .site-header:not(.is-scrolled) .nav__list > .menu-item > a:hover,
+	body.has-dark-hero .site-header:not(.is-scrolled) .nav__list > .current-menu-item > a {
 		color: #fff; background: rgba(255,255,255,.14);
 	}
 }
@@ -338,6 +368,13 @@ body.has-dark-hero .site-header.is-scrolled::before { opacity: 1; }
 .brand__logo--dark { transition: opacity var(--dur-2) var(--ease-out); }
 body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--dark { opacity: 0; }
 body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--light { opacity: 1; }
+
+/* Mobile menu button follows the same floating-over-dark-hero treatment as
+   the logo/nav links above -- without this it stayed a solid white square
+   (its always-on .nav-toggle background) sitting on top of the transparent
+   header, the one element that never adapted to the dark backdrop. */
+body.has-dark-hero .site-header:not(.is-scrolled) .nav-toggle { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.35); }
+body.has-dark-hero .site-header:not(.is-scrolled) .nav-toggle__bars span { background: #fff; }
 
 .brand { display: inline-flex; align-items: center; }
 .brand__logo { display: block; height: 48px; width: auto; }
@@ -365,7 +402,17 @@ body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--light { opacity:
 .menu-item--has-children:hover .dropdown,
 .menu-item--has-children:focus-within .dropdown,
 .dropdown.is-open { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-.menu-item--has-children:hover .nav__caret { transform: rotate(180deg); }
+/* min-width, not unscoped: mobile taps don't fire a real mouseleave, so touch
+   browsers (iOS Safari especially) can leave :hover "stuck" on the tapped
+   <li> after the tap ends -- and since this selector's specificity beats the
+   mobile aria-expanded-driven rule below (.nav-toggle etc.), that stuck hover
+   would win and leave the caret rotated regardless of the dropdown's real
+   open/closed state. Only meaningful >=861px anyway, where dropdowns are
+   genuinely hover-driven (below that .dropdown is forced position:static and
+   opened by tap, see the mobile block). */
+@media (min-width: 861px) {
+	.menu-item--has-children:hover .nav__caret { transform: rotate(180deg); }
+}
 /* minmax(0, 1fr), not a bare 1fr: a grid track's default minimum is auto (its
    content's own min-content size), so a long unbroken subtitle like
    "Uitleg over subsidie en isolatie" was demanding more than its fair half
@@ -409,7 +456,21 @@ body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--light { opacity:
 .nav-toggle { display: none; }
 
 /* ---------- Hero ---------- */
-.hero { position: relative; background: var(--ink); color: #eef2f0; overflow: hidden; min-height: 100vh; min-height: 100svh; }
+/* flex + justify-content:center (not a fixed top offset) so hero__inner
+   sits centered in the space between the header and the floating USP bar,
+   with equal breathing room above and below, instead of pinned to the top
+   with whatever's left over dumped below it. padding-top/-bottom are that
+   space's boundaries, not the content's own offset: top clears the fixed
+   header (see .site-header), bottom reserves the USP bar's real height
+   (main.js measures it live and writes --usp-clearance, since the bar's
+   height depends on wrapped text that varies by viewport/content). */
+.hero {
+	position: relative; background: var(--ink); color: #eef2f0; overflow: hidden;
+	min-height: 100vh; min-height: 100svh;
+	display: flex; flex-direction: column; justify-content: center;
+	padding-top: clamp(5.5rem, 10vh, 8rem);
+	padding-bottom: var(--usp-clearance, clamp(7rem, 14vh, 10rem));
+}
 .hero::before {
 	content: ""; position: absolute; inset: 0; z-index: 0;
 	background:
@@ -459,16 +520,10 @@ body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--light { opacity:
 	   subsidie -> lead), so centering would make the left copy visibly jump
 	   every time the user advances. */
 	align-items: start;
-	/* full-screen hero: clear the sticky header up top; padding-bottom reserves
-	   room so hero content never sits under the floating USP card anchored to
-	   the hero's own bottom edge (see .usp-bar). The clamp() is only a fallback
-	   for before JS runs / no-JS: main.js measures the USP bar's real height
-	   (it varies with wrapped text, e.g. the region name) and writes the exact
-	   clearance to --usp-clearance, because a static guess here and the bar's
-	   own position are two independent numbers with no guarantee of staying in
-	   sync -- a tall woningscan result state proved that wrong by ~10px. */
-	padding-top: clamp(5.5rem, 10vh, 8rem);
-	padding-bottom: var(--usp-clearance, clamp(11rem, 19vh, 15rem));
+	/* no padding of its own any more -- .hero itself now owns the top/bottom
+	   reserve and centers this whole block within it (see .hero). Full width
+	   comes for free: flex items default to align-self:stretch on the cross
+	   axis (horizontal, since .hero is flex-direction:column). */
 }
 .hero__eyebrow {
 	display: inline-flex; align-items: center; gap: .55rem;
@@ -487,16 +542,37 @@ body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--light { opacity:
 	position: relative;
 	z-index: 0;
 	isolation: isolate;
-	/* the eyebrow pill is a small decorative label, not the hero's real content
-	   anchor — align the scan card's top edge with the H1 instead, so the two
-	   heavyweight elements (headline, glass card) share one clean top line.
-	   margin-top (not padding-top): the ::before glow backdrop below is
-	   positioned relative to this box's own edge, so the whole box — glow and
-	   card together — must shift as one unit, not just the inner content.
-	   Fixed value (not clamp): the eyebrow's own size (icon + padding + margin)
-	   doesn't scale with viewport, so this offset shouldn't either. */
+	/* Tuned for a hero__copy column sitting beside this one, back when both
+	   pages' heroes had a visible eyebrow+h1 above the fold -- neither does
+	   any more (see body.is-front/.is-scan-landing overrides below), so this
+	   is really just "some top breathing room" now, kept as the shared
+	   default rather than deleted since a future hero__copy could still
+	   want it. margin-top (not padding-top): the ::before glow backdrop
+	   below is positioned relative to this box's own edge, so the whole
+	   box -- glow and card together -- must shift as one unit, not just the
+	   inner content. */
 	margin-top: 3rem;
 }
+/* Scan landing page: the card is the entire hero now, no copy column beside
+   it to align with or share width against -- single centered column. The
+   940px match to .usp-bar__grid belongs to the GLOW backdrop (.hero__scan
+   ::before below), same as the homepage's proportions: the actual white
+   card is narrower than its own glow by 44px (22px reveal on each side),
+   so capping .hero__scan itself at 940px would have matched the card, not
+   the glow, to the USP bar -- 896 (940-44) is what makes the glow land on
+   940 once its own "+44px" is added back. */
+body.is-scan-landing .hero__inner { grid-template-columns: 1fr; justify-items: center; }
+body.is-scan-landing .hero__scan { width: 100%; max-width: 896px; margin-top: 0; }
+/* ...and the glow's own 684px ceiling (tuned for the homepage's narrower
+   grid-column context) needs to come off here, or it'd clamp smaller than
+   the 896px card it's meant to frame. */
+body.is-scan-landing .hero__scan::before { width: calc(100% + 44px); }
+/* The homepage hero dropped its eyebrow pill -- h1 is hero__copy's first
+   child there now, so hero__scan needs only a small manual nudge -- not the
+   3rem tuned for the eyebrow's own height (that stays correct for
+   template-scan.php, which still has one) -- to sit a touch below the h1's
+   top line instead of dead-flush with it. */
+body.is-front .hero__scan { margin-top: 2rem; }
 .hero__scan::before {
 	content: "";
 	position: absolute;
@@ -724,9 +800,20 @@ body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--light { opacity:
 	border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden;
 }
 .trust-facts__item { display: flex; align-items: center; gap: .8rem; padding: 1.15rem 1.4rem; position: relative; }
+/* when an item is a real link (the scan landing page's "meer weten" tiles
+   reuse this exact card for that) instead of the usual plain <li>, it needs
+   its own text color reset (link color would otherwise tint strong/em) and
+   a hover cue. */
+a.trust-facts__item { color: inherit; transition: background-color var(--dur-1) var(--ease-out); }
+a.trust-facts__item:hover { background: var(--primary-050); }
 .trust-facts__item + .trust-facts__item::before { content: ""; position: absolute; left: 0; top: 22%; height: 56%; width: 1px; background: var(--line); }
 .trust-facts__icon { flex: 0 0 auto; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md); background: var(--primary-050); color: var(--primary); }
-.trust-facts__item strong { font-size: .95rem; }
+.trust-facts__item strong { display: block; font-size: .95rem; }
+/* the homepage's only other user of this component (kernwaarden badges)
+   never pairs strong with em, so this never got styled -- without it, the
+   scan landing page's quick-link tiles (the first real strong+em use) ran
+   both onto one line with no separation. */
+.trust-facts__item em { display: block; margin-top: .3rem; font-style: normal; color: var(--ink-3); font-size: .82rem; }
 .trust-facts__item--stat strong { display: block; font-family: var(--font-display); font-size: var(--step-2); font-weight: 800; color: var(--primary); line-height: 1; letter-spacing: -.02em; }
 .trust-facts__item--stat span { display: block; margin-top: .35rem; color: var(--ink-3); font-size: .82rem; font-weight: 600; }
 
@@ -1319,16 +1406,19 @@ body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--light { opacity:
 	/* var(--shadow-lg) is tuned for light backgrounds and all but disappears
 	   against the hero's own near-black tone. Heavier alone wasn't enough
 	   either: .hero's overflow:hidden clips right at this card's own bottom
-	   edge, so any shadow layer reaching past it got sliced mid-fade --
-	   a second hard line, on top of the border one. Negative Y offsets +
-	   spread keep every layer's reach (offset + blur + spread) at or above
-	   0, so nothing reaches the bottom edge to be cut off; the shadow only
-	   ever shows above and to the sides, which is also the only place it
-	   was ever meant to read as "floating over the dark hero" anyway. */
+	   edge, so any shadow layer reaching past it got sliced mid-fade -- a
+	   second hard line, on top of the border one, on the light page right
+	   below (only actually visible where that page happens to be light
+	   enough for a dark smudge to stand out -- true on both the homepage
+	   and the scan landing page, but only obvious on the latter). Negative
+	   Y offsets + spread need every layer's reach (offset + blur + spread)
+	   at or BELOW 0 for that to hold -- the two side layers were still
+	   landing at +16 (a real miscalculation, not just theoretical) until
+	   corrected here, which is what was actually leaking. */
 	box-shadow:
 		0 -32px 44px -14px rgba(0,0,0,.5),
-		-26px -10px 44px -18px rgba(0,0,0,.4),
-		26px -10px 44px -18px rgba(0,0,0,.4);
+		-26px -26px 44px -20px rgba(0,0,0,.4),
+		26px -26px 44px -20px rgba(0,0,0,.4);
 	overflow: hidden;
 }
 .usp { display: flex; align-items: center; gap: .8rem; padding: 1.15rem 1.4rem; position: relative; }
@@ -1466,6 +1556,14 @@ body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--light { opacity:
 
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {
+	/* .hero's flex-centering (see .hero) is a desktop-only trick to balance
+	   space around .hero__inner while .usp-bar floats absolutely outside
+	   the flex flow. Below this breakpoint the bar drops into normal flow
+	   as a second flex item (see .usp-bar's own mobile rule) -- centering
+	   both together would bunch them in the middle instead of the expected
+	   top-to-bottom stack, so back to plain block flow with a modest fixed
+	   bottom gap instead of reserving the bar's full height. */
+	.hero { display: block; padding-bottom: clamp(2.5rem, 6vw, 3.5rem); }
 	.hero__inner { grid-template-columns: 1fr; }
 	.verdub { grid-template-columns: 1fr; }
 	.grid--4 { grid-template-columns: repeat(2, 1fr); }
@@ -1494,9 +1592,10 @@ body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--light { opacity:
 	.nav-toggle {
 		display: inline-flex; align-items: center; justify-content: center; margin-left: auto;
 		width: 46px; height: 46px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); cursor: pointer;
+		transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
 	}
 	.nav-toggle__bars { position: relative; width: 22px; height: 16px; }
-	.nav-toggle__bars span { position: absolute; left: 0; width: 100%; height: 2.2px; background: var(--ink); border-radius: var(--radius-xs); transition: transform var(--dur-2) var(--ease-out), opacity var(--dur-2) var(--ease-out), top var(--dur-2) var(--ease-out); }
+	.nav-toggle__bars span { position: absolute; left: 0; width: 100%; height: 2.2px; background: var(--ink); border-radius: var(--radius-xs); transition: transform var(--dur-2) var(--ease-out), opacity var(--dur-2) var(--ease-out), top var(--dur-2) var(--ease-out), background-color var(--dur-2) var(--ease-out); }
 	.nav-toggle__bars span:nth-child(1) { top: 0; }
 	.nav-toggle__bars span:nth-child(2) { top: 7px; }
 	.nav-toggle__bars span:nth-child(3) { top: 14px; }
@@ -1513,8 +1612,40 @@ body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--light { opacity:
 		overflow-y: auto; overscroll-behavior: contain;
 	}
 	.site-nav.is-open { transform: translateX(0); }
+
+	/* Dimmed scrim behind the off-canvas panel -- standard mobile-drawer
+	   pattern, and gives the "click outside to close" behaviour (already
+	   handled by the document click listener in main.js, since this sits
+	   outside both .site-nav and .nav-toggle) a visible, tappable surface
+	   instead of an invisible dead zone. Always in the DOM so opacity can
+	   transition both in and out; a class-gated element could only fade in.
+	   z-index 59, one below .site-header's 60, so it dims the page content
+	   without darkening the header bar/logo/toggle sitting above it. */
+	body::after {
+		content: ""; position: fixed; inset: 0; z-index: 59;
+		background: rgba(10, 18, 16, .55);
+		opacity: 0; visibility: hidden; pointer-events: none;
+		transition: opacity var(--dur-2) var(--ease-out), visibility 0s linear var(--dur-2);
+	}
+	body.nav-open::after { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity var(--dur-2) var(--ease-out); }
+
 	.nav__list { flex-direction: column; align-items: stretch; gap: .1rem; }
 	.nav__list a { padding: .85rem .6rem; font-size: var(--step-1); }
+	/* Cascading reveal as the panel opens, instead of every link/CTA just
+	   being instantly "there" the moment the slide-in finishes -- items sit
+	   translated/faded until .site-nav.is-open, then step in with a short
+	   per-item delay. transition-delay isn't reset to 0 on close, so items
+	   also step back out in the same order the panel slides away, rather
+	   than all vanishing at once. */
+	.nav__list > .menu-item, .site-nav__cta { opacity: 0; transform: translateX(16px); transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }
+	.site-nav.is-open .nav__list > .menu-item, .site-nav.is-open .site-nav__cta { opacity: 1; transform: translateX(0); }
+	.site-nav.is-open .nav__list > .menu-item:nth-child(1) { transition-delay: .05s; }
+	.site-nav.is-open .nav__list > .menu-item:nth-child(2) { transition-delay: .09s; }
+	.site-nav.is-open .nav__list > .menu-item:nth-child(3) { transition-delay: .13s; }
+	.site-nav.is-open .nav__list > .menu-item:nth-child(4) { transition-delay: .17s; }
+	.site-nav.is-open .nav__list > .menu-item:nth-child(5) { transition-delay: .21s; }
+	.site-nav.is-open .nav__list > .menu-item:nth-child(n+6) { transition-delay: .25s; }
+	.site-nav.is-open .site-nav__cta { transition-delay: .27s; }
 	/* !important throughout: the desktop rule this overrides
 	   (.dropdown.is-open { transform: translateX(-50%) ... }, meant to
 	   center a hover dropdown under its trigger) kept winning here even
@@ -1522,21 +1653,46 @@ body.has-dark-hero .site-header:not(.is-scrolled) .brand__logo--light { opacity:
 	   empirically confirmed via getComputedStyle, cause not fully pinned
 	   down. Left unresolved it shifts the open mobile submenu half its own
 	   width off-screen to the left.
-	   Open/closed is driven by `display`, not opacity/visibility -- those
-	   are what the desktop hover-fade uses, and fighting that cascade for
-	   two properties instead of one is exactly what caused the follow-up
-	   bug where every submenu got stuck permanently open (an earlier,
-	   overly-broad version of this rule forced opacity/visibility to
-	   "shown" unconditionally on both .dropdown and .dropdown.is-open, so
-	   the JS below classList.toggle()-ing .is-open on and off no longer
-	   changed anything visible). display isn't touched by any other rule
-	   at any breakpoint, so there's nothing left to fight. */
+	   Open/closed used to be driven by `display` alone (an instant show/
+	   hide) specifically to dodge opacity/visibility -- those are what the
+	   desktop hover-fade uses (.menu-item--has-children:hover .dropdown,
+	   .dropdown.is-open below, unscoped by width), and an earlier, overly
+	   broad attempt at animating this forced opacity/visibility to "shown"
+	   unconditionally on BOTH .dropdown and .dropdown.is-open, cancelling
+	   the JS's classList.toggle() out entirely -- every submenu got stuck
+	   permanently open. This animates instead via max-height (display:none
+	   can't transition), but stays correctly *gated*, unlike that earlier
+	   attempt: the closed state below still resolves to opacity:0/hidden
+	   -- the same values the desktop rule already uses for a closed
+	   dropdown -- so there's nothing to fight, only .is-open flips them,
+	   same as before. transition-delay on visibility keeps a closed
+	   submenu's links out of tab order/screen readers (an inert max-height:0
+	   box alone doesn't), instant on open, deferred on close until the
+	   collapse finishes. 700px max-height ceiling: comfortably above every
+	   current dropdown's real content height (~450px, the widest being
+	   Gemeentes' lead + 8 links) with headroom for text wrapping -- bump it
+	   if a dropdown's content grows enough to risk clipping. */
 	.dropdown {
 		position: static !important; transform: none !important; box-shadow: none !important;
 		width: auto !important; border: 0 !important; padding: 0 0 .5rem .6rem !important; background: transparent !important;
-		display: none !important;
+		overflow: hidden !important; max-height: 0 !important; opacity: 0 !important; visibility: hidden !important;
+		/* !important applies to the whole declaration, not per comma-separated
+		   value -- can only appear once, at the end. Wins over the desktop
+		   .dropdown transition (opacity/transform, --dur-1) by source order
+		   alone (equal specificity, this rule is later in the file), so no
+		   !important is actually needed here; kept unqualified so the syntax
+		   stays valid. */
+		transition: max-height var(--dur-2) var(--ease-out), opacity var(--dur-1) var(--ease-out), visibility 0s linear var(--dur-2);
 	}
-	.dropdown.is-open { display: block !important; }
+	.dropdown.is-open {
+		max-height: 700px !important; opacity: 1 !important; visibility: visible !important;
+		transition: max-height var(--dur-2) var(--ease-out), opacity var(--dur-1) var(--ease-out), visibility 0s linear;
+	}
+	/* Desktop only flips the caret on :hover (see .menu-item--has-children:hover
+	   .nav__caret above) -- meaningless on a tap-to-open mobile submenu, which
+	   has no hover state. Key it off the trigger's own aria-expanded instead,
+	   which the JS below already keeps in sync with .is-open. */
+	[aria-expanded="true"] > .nav__caret { transform: rotate(180deg); }
 	.dropdown__grid { grid-template-columns: 1fr; }
 	.dropdown__item--all { grid-column: auto; }
 	.dropdown__links { grid-template-columns: 1fr; }

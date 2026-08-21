@@ -19,8 +19,34 @@
 
 	var amb = { tx: 0, ty: 0, cx: 0, cy: 0 };
 	var ambRunning = false;
+	// The ambient loop below (orb drift + glow custom properties) forces a
+	// style recalc every animation frame, and one of those properties drives
+	// a radial-gradient position (see --wv-fx/fy usage in main.css) which
+	// can't be composited -- it's a real repaint, every frame, forever.
+	// Landing that on the same frame as scroll compositing drops frames,
+	// which reads as inconsistent scroll speed. Freeze the DOM writes (not
+	// the cheap cx/cy smoothing) while a scroll is actively in flight so the
+	// two never fight for the same frame.
+	var isScrolling = false;
+	var scrollStopTimer = null;
+	function markScrolling() {
+		isScrolling = true;
+		clearTimeout(scrollStopTimer);
+		scrollStopTimer = setTimeout(function () { isScrolling = false; }, 200);
+	}
 
 	function onScroll() {
+		// Mobile nav scroll-lock (see setOpen below) pins body via
+		// position:fixed, which resets window.scrollY to 0 as a side effect
+		// -- that in turn fires a native scroll event, landing here with a
+		// false y=0 reading while the page is still visually scrolled. Left
+		// unguarded, that wrongly clears .is-scrolled mid-open, so the
+		// frosted header fill disappears and the transparent-over-hero state
+		// (see body.has-dark-hero) shows page content bleeding in behind the
+		// logo. Freeze the header/progress state while the nav is open;
+		// setOpen's own scrollTo restore on close produces a real scroll
+		// event that resyncs it correctly afterwards.
+		if (doc.body.classList.contains("nav-open")) { ticking = false; return; }
 		var y = window.scrollY || window.pageYOffset;
 		if (header) header.classList.toggle("is-scrolled", y > 8);
 		if (progress) {
@@ -29,7 +55,7 @@
 		}
 		ticking = false;
 	}
-	function requestScroll() { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }
+	function requestScroll() { markScrolling(); if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }
 	onScroll();
 	window.addEventListener("scroll", requestScroll, { passive: true });
 
@@ -41,24 +67,26 @@
 	function ambientLoop() {
 		amb.cx += (amb.tx - amb.cx) * 0.075;   // floaty pointer follow
 		amb.cy += (amb.ty - amb.cy) * 0.075;
-		var s = performance.now() / 1000;
-		var y = window.scrollY || window.pageYOffset || 0;
-		if (y < 1400) {
-			if (orb1) orb1.style.transform =
-				"translate3d(" + (amb.cx * 90 + Math.sin(s * 0.24) * 46).toFixed(1) + "px," +
-				(y * -0.06 + amb.cy * 62 + Math.cos(s * 0.31 + 1.3) * 34).toFixed(1) + "px,0) scale(" +
-				(1 + Math.sin(s * 0.20 + 0.5) * 0.04).toFixed(3) + ")";
-			if (orb2) orb2.style.transform =
-				"translate3d(" + (amb.cx * -104 + Math.sin(s * 0.19 + 2.1) * 54).toFixed(1) + "px," +
-				(y * 0.10 + amb.cy * -54 + Math.cos(s * 0.27 + 3.7) * 38).toFixed(1) + "px,0) scale(" +
-				(1 + Math.sin(s * 0.17 + 2.0) * 0.05).toFixed(3) + ")";
+		if (!isScrolling) {
+			var s = performance.now() / 1000;
+			var y = window.scrollY || window.pageYOffset || 0;
+			if (y < 1400) {
+				if (orb1) orb1.style.transform =
+					"translate3d(" + (amb.cx * 90 + Math.sin(s * 0.24) * 46).toFixed(1) + "px," +
+					(y * -0.06 + amb.cy * 62 + Math.cos(s * 0.31 + 1.3) * 34).toFixed(1) + "px,0) scale(" +
+					(1 + Math.sin(s * 0.20 + 0.5) * 0.04).toFixed(3) + ")";
+				if (orb2) orb2.style.transform =
+					"translate3d(" + (amb.cx * -104 + Math.sin(s * 0.19 + 2.1) * 54).toFixed(1) + "px," +
+					(y * 0.10 + amb.cy * -54 + Math.cos(s * 0.27 + 3.7) * 38).toFixed(1) + "px,0) scale(" +
+					(1 + Math.sin(s * 0.17 + 2.0) * 0.05).toFixed(3) + ")";
+			}
+			root.style.setProperty("--wv-mx", amb.cx.toFixed(4));
+			root.style.setProperty("--wv-my", amb.cy.toFixed(4));
+			root.style.setProperty("--wv-fx", Math.sin(s * 0.16 + 0.6).toFixed(4));   // card float
+			root.style.setProperty("--wv-fy", Math.cos(s * 0.21 + 2.4).toFixed(4));
+			root.style.setProperty("--wv-gx", Math.sin(s * 0.13 + 4.2).toFixed(4));   // cta float
+			root.style.setProperty("--wv-gy", Math.cos(s * 0.18 + 1.1).toFixed(4));
 		}
-		root.style.setProperty("--wv-mx", amb.cx.toFixed(4));
-		root.style.setProperty("--wv-my", amb.cy.toFixed(4));
-		root.style.setProperty("--wv-fx", Math.sin(s * 0.16 + 0.6).toFixed(4));   // card float
-		root.style.setProperty("--wv-fy", Math.cos(s * 0.21 + 2.4).toFixed(4));
-		root.style.setProperty("--wv-gx", Math.sin(s * 0.13 + 4.2).toFixed(4));   // cta float
-		root.style.setProperty("--wv-gy", Math.cos(s * 0.18 + 1.1).toFixed(4));
 		if (!doc.hidden) { requestAnimationFrame(ambientLoop); } else { ambRunning = false; }
 	}
 	function startAmbient() { if (!ambRunning && !reduce) { ambRunning = true; requestAnimationFrame(ambientLoop); } }
@@ -75,27 +103,25 @@
 	}
 
 	/* ---------- hero: reserve exact space for the floating USP bar ----------
-	   .usp-bar floats via position:absolute near the hero's bottom edge (see
-	   CSS) so it stays visible without scrolling. .hero__inner reserves space
-	   for it via padding-bottom, but the bar's real height depends on wrapped
-	   text (region name, item labels) that varies by viewport width and
-	   content -- a static CSS guess drifts out of sync with the bar's actual
-	   size and the bar ends up overlapping tall woningscan states. Measure it
-	   and feed the exact number back as a CSS var instead of guessing. Only
-	   meaningful >960px, where the bar is absolutely positioned at all -- below
-	   that it sits in normal flow (see .usp-bar mobile rule), so the var is
-	   cleared and the fallback clamp() in the CSS applies. */
+	   .usp-bar sits flush (bottom:0) against .hero's own bottom edge, and
+	   .hero reserves matching space below its centered content via
+	   padding-bottom so the bar never overlaps it (see .hero). The bar's
+	   real height depends on wrapped text (region name, item labels) that
+	   varies by viewport width and content -- a static CSS guess drifts out
+	   of sync with the bar's actual size, so this measures it live instead.
+	   Only meaningful >960px, where the bar is absolutely positioned at all
+	   -- below that it sits in normal flow (see .usp-bar mobile rule), so
+	   the var is cleared and the fallback clamp() in the CSS applies. */
 	var uspBar = doc.querySelector(".usp-bar");
-	var heroInner = doc.querySelector(".hero__inner");
-	if (uspBar && heroInner && "ResizeObserver" in window) {
+	var hero = doc.querySelector(".hero");
+	if (uspBar && hero && "ResizeObserver" in window) {
 		var uspDesktopMq = window.matchMedia("(min-width: 961px)");
 		var syncUspClearance = function () {
 			if (!uspDesktopMq.matches) {
-				heroInner.style.removeProperty("--usp-clearance");
+				hero.style.removeProperty("--usp-clearance");
 				return;
 			}
-			var offset = parseFloat(getComputedStyle(uspBar).bottom) || 0;
-			heroInner.style.setProperty("--usp-clearance", (offset + uspBar.offsetHeight + 56) + "px");
+			hero.style.setProperty("--usp-clearance", uspBar.offsetHeight + "px");
 		};
 		new ResizeObserver(syncUspClearance).observe(uspBar);
 		if (uspDesktopMq.addEventListener) uspDesktopMq.addEventListener("change", syncUspClearance);

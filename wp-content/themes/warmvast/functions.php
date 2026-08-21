@@ -165,6 +165,9 @@ add_filter(
 		// bar -- see .site-header in main.css.
 		if ( is_front_page() || is_page_template( 'template-scan.php' ) ) {
 			$classes[] = 'has-dark-hero';
+			}
+			if ( is_page_template( 'template-scan.php' ) ) {
+				$classes[] = 'is-scan-landing';
 		}
 		return $classes;
 	}

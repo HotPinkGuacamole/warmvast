@@ -85,7 +85,6 @@ $usps = array(
 	<div class="hero__thermal" aria-hidden="true"></div>
 	<div class="container hero__inner">
 		<div class="hero__copy">
-			<span class="hero__eyebrow"><?php warmvast_the_icon( 'thermo', 'wv-icon--sm' ); ?> Comfortabel &amp; energiezuinig wonen</span>
 			<h1 class="hero__title">Zit je er warmpjes bij? <em>Wij houden die warmte vast.</em></h1>
 			<p class="hero__sub">Ontdek waar uw woning warmte verliest en welke isolatie het meeste oplevert, met een directe ISDE-indicatie en besparing op basis van úw adres.</p>
 			<div class="hero__actions">
