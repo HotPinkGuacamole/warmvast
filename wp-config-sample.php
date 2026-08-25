@@ -89,7 +89,22 @@ define( 'WP_DEBUG', false );
 
 /* Add any custom values between this line and the "stop editing" line. */
 
+// The Endurer container sits behind a reverse proxy that terminates TLS, so a
+// plain HTTPS request arrives here over plain HTTP with X-Forwarded-Proto set.
+// WordPress's own is_ssl() only ever checks $_SERVER['HTTPS'], never that
+// header — without this, WP_HOME/WP_SITEURL below say https while is_ssl()
+// says http, and redirect_canonical() redirects to "fix" that, forever.
+if ( ! empty( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https' ) {
+	$_SERVER['HTTPS'] = 'on';
+}
 
+if ( ! defined( 'WP_HOME' ) && ! empty( $_SERVER['HTTP_HOST'] ) ) {
+	$warmvast_is_https = ! empty( $_SERVER['HTTPS'] ) && strtolower( $_SERVER['HTTPS'] ) !== 'off';
+	$warmvast_scheme   = $warmvast_is_https ? 'https' : 'http';
+	define( 'WP_HOME', $warmvast_scheme . '://' . $_SERVER['HTTP_HOST'] );
+	define( 'WP_SITEURL', $warmvast_scheme . '://' . $_SERVER['HTTP_HOST'] );
+	define( 'FORCE_SSL_ADMIN', $warmvast_is_https );
+}
 
 /* That's all, stop editing! Happy publishing. */
 
