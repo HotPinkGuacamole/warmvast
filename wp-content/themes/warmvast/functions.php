@@ -196,3 +196,64 @@ function warmvast_primary_menu_fallback() {
 	}
 	echo '</ul>';
 }
+
+/**
+ * Baseline hardening. No security plugin is deployed here (see .gitignore --
+ * only this theme ships to the server), so the handful of things a plugin
+ * would normally handle are done directly instead.
+ */
+
+// XML-RPC is a standing brute-force/pingback-amplification target and this
+// site doesn't use the mobile-app or pingback features it exists for.
+add_filter( 'xmlrpc_enabled', '__return_false' );
+remove_action( 'wp_head', 'rsd_link' );
+remove_action( 'wp_head', 'wlwmanifest_link' );
+
+// Don't hand an attacker who *does* get an admin session a built-in code
+// editor for the theme -- that's the fastest path to a persistent backdoor.
+if ( ! defined( 'DISALLOW_FILE_EDIT' ) ) {
+	define( 'DISALLOW_FILE_EDIT', true );
+}
+
+// Stop leaking the exact WP version to unauthenticated visitors (feeds,
+// scripts/styles query strings, generator meta tag) -- makes it slightly
+// harder to target version-specific known vulnerabilities.
+remove_action( 'wp_head', 'wp_generator' );
+add_filter( 'the_generator', '__return_empty_string' );
+add_filter(
+	'style_loader_src',
+	function ( $src ) {
+		return remove_query_arg( 'ver', $src );
+	}
+);
+add_filter(
+	'script_loader_src',
+	function ( $src ) {
+		return remove_query_arg( 'ver', $src );
+	}
+);
+
+// Throttle wp-login.php / xmlrpc.php brute-force attempts without needing a
+// plugin: a lightweight lockout keyed on IP + option table, since MariaDB is
+// already the one thing guaranteed to be there.
+add_action(
+	'wp_login_failed',
+	function ( $username ) {
+		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : 'unknown';
+		$key = 'warmvast_login_fails_' . md5( $ip );
+		$fails = (int) get_transient( $key );
+		set_transient( $key, $fails + 1, HOUR_IN_SECONDS );
+	}
+);
+add_filter(
+	'authenticate',
+	function ( $user ) {
+		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : 'unknown';
+		$key = 'warmvast_login_fails_' . md5( $ip );
+		if ( (int) get_transient( $key ) >= 10 ) {
+			return new WP_Error( 'too_many_attempts', __( 'Te veel mislukte inlogpogingen. Probeer het over een uur opnieuw.' ) );
+		}
+		return $user;
+	},
+	30
+);

@@ -13,7 +13,7 @@ see Architecture below for what's actually live.
 |---|---|
 | URL | http://localhost/warmvast/ |
 | Admin | http://localhost/warmvast/wp-admin/ |
-| Admin user | `warmvast_admin` / `Warmvast!2026` |
+| Admin user | `warmvast_admin` — password stored in your own local password manager, never here |
 | DB | `warmvast` on `127.0.0.1:3306`, user `root` / `root` |
 | WordPress | served from this repo via a Windows **junction** at `C:\MAMP\htdocs\warmvast` |
 | Theme | `wp-content/themes/warmvast` (active) |
