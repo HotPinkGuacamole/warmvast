@@ -198,6 +198,69 @@ function warmvast_primary_menu_fallback() {
 }
 
 /**
+ * Slug -> page-template fallback.
+ *
+ * Which template a page uses normally lives in the database, as each page's
+ * `_wp_page_template` meta. That makes it deploy state: a page created after
+ * warmvast-db.sql was dumped (or on a host whose MariaDB volume predates the
+ * template) silently renders through page.php instead, showing raw editor
+ * content where a designed template should be. start.sh only imports the dump
+ * on the very FIRST boot, so re-dumping does not repair an existing host
+ * either.
+ *
+ * Mapping the handful of known slugs in code removes that whole class of
+ * problem: the right template is used on a fresh import, on an existing
+ * database, and on a page someone recreates by hand. An explicit choice made
+ * in the editor still wins -- this only fills in when nothing is set.
+ *
+ * @param string $template Template path resolved by WordPress.
+ * @return string
+ */
+function warmvast_page_template_fallback( $template ) {
+	if ( ! is_page() ) {
+		return $template;
+	}
+	$post = get_queried_object();
+	if ( ! $post instanceof WP_Post ) {
+		return $template;
+	}
+	// Respect a template explicitly chosen in the editor.
+	if ( get_page_template_slug( $post ) ) {
+		return $template;
+	}
+
+	$map = array(
+		'isolatie'             => 'template-isolatie.php',
+		'subsidie-service'     => 'template-subsidie.php',
+		'gratis-isolatiescan'  => 'template-scan.php',
+		'kennisbank'           => 'template-kennisbank.php',
+		'contact'              => 'template-contact.php',
+		'gemeentes'            => 'template-gemeentes.php',
+		'zakelijk'             => 'template-zakelijk.php',
+		'ons-werk'             => 'template-ons-werk.php',
+		'kwaliteit-en-garantie' => 'template-kwaliteit.php',
+		'over-warmvast'        => 'template-over-warmvast.php',
+	);
+	// Derived from the same config the pages themselves are built from, so a
+	// new service or gemeente never needs this list edited by hand.
+	foreach ( warmvast_isde_rates() as $rate ) {
+		$map[ $rate['slug'] ] = 'template-service.php';
+	}
+	foreach ( array_keys( warmvast_zaanstreek_gemeenten() ) as $gkey ) {
+		$map[ 'subsidie-' . $gkey ] = 'template-gemeente.php';
+	}
+
+	if ( isset( $map[ $post->post_name ] ) ) {
+		$located = locate_template( $map[ $post->post_name ] );
+		if ( $located ) {
+			return $located;
+		}
+	}
+	return $template;
+}
+add_filter( 'template_include', 'warmvast_page_template_fallback' );
+
+/**
  * Baseline hardening. No security plugin is deployed here (see .gitignore --
  * only this theme ships to the server), so the handful of things a plugin
  * would normally handle are done directly instead.

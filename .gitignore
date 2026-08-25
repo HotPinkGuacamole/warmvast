@@ -34,3 +34,10 @@
 .DS_Store
 Thumbs.db
 *.log
+
+# Crop previews written by tools/build-images.py for eyeballing, not source.
+/tools/_crops/
+
+# Python bytecode from tools/
+__pycache__/
+*.pyc

@@ -54,8 +54,21 @@ php -c <custom-ini> wp-cli.phar --path=<repo> <command>
   described in the blueprint has been removed — it was fully superseded and no longer enqueued.
 - **Page templates**: `template-service.php` (slug-driven, all 4 services), `template-subsidie.php`,
   `template-scan.php`, `template-isolatie.php`, `template-contact.php`, `template-kennisbank.php`,
-  `404.php`.
-- **Service copy**: `inc/service-content.php`.
+  `template-over-warmvast.php`, `template-ons-werk.php`, `template-gemeente(s).php`,
+  `template-zakelijk.php`, `template-kwaliteit.php`, `404.php`. Slug→template mapping is also
+  enforced in code — see `warmvast_page_template_fallback()` and the Deployment note below.
+- **Service copy**: `inc/service-content.php`. **Team**: `warmvast_team()` in `inc/config.php`.
+- **Photography**: real photos only, in `assets/img/team/` and `assets/img/werk/`. They ship as
+  width-suffixed WebP variants (`team-groep-480.webp`, `-960.webp`) served via `srcset` by
+  `warmvast_responsive_img()`, and are pre-cropped to the exact aspect of the slot they render
+  into — so CSS never has to guess a crop and clip someone's head. Regenerate with
+  `python tools/build-images.py` (see that file's header for the reasoning); the camera originals
+  are gitignored, only the derived variants are committed.
+- **Shared layout components**: `.story-row` (small photo + copy, alternating sides, used by
+  Over Warmvast, Ons werk and Subsidie service) and `.team-card`, both in `assets/css/main.css`.
+  Motion is split across separate elements on purpose — `.story-row__media` takes the
+  scroll-reveal, `.story-row__drift` the parallax, the `<img>` the hover — because all three
+  animate `transform` and would otherwise silently overwrite one another.
 - **Nav & footer**: hand-built in `header.php` / `footer.php` (mega-dropdown with per-service
   tariffs). Assigning a WP menu to the `primary` location overrides the coded fallback.
 
@@ -85,12 +98,18 @@ those downloads WordPress core itself, and neither imports any content — this 
   curl -fsSL https://startup.endurerhosting.com/generic/latest.sh | bash && bash /home/container/www/start.sh
   ```
 
-**Still missing: WordPress core itself isn't in this repo yet** (only the theme + `start.sh` +
-`warmvast-db.sql` are). The `generic` script only pulls what's in the git repo/release — it needs
-to find `wp-config-sample.php` etc. already present in `GIT_TARGET_DIR` for the wordpress script
-to configure anything. Until core is added (either committed, or — cleaner — attached as a
-GitHub Release asset with `GIT_RELEASE_VERSION` set so `generic/latest.sh` downloads it), a
-fresh deploy will start nginx over an incomplete webroot.
+**WordPress core is committed** (see `.gitignore`), so `generic/latest.sh` pulls an immediately
+servable webroot — no separate install step. Update core with wp-cli (`wp core update`) and
+re-commit the result; it is deliberately not a deploy-time build step.
+
+**Page templates do not depend on the database.** Which template a page uses is normally stored
+per page as `_wp_page_template` meta, which makes it deploy state — and `start.sh` imports
+`warmvast-db.sql` only on the *first* boot, so a page added after the dump was taken (or a host
+whose MariaDB volume predates it) would silently fall back to `page.php` and show raw editor
+content. `warmvast_page_template_fallback()` in `functions.php` maps the known slugs to their
+templates in code, deriving the service and gemeente slugs from `inc/config.php` so new ones need
+no edit. An explicit choice made in the editor still wins. If you add a page with its own
+template, add it to that map rather than relying on the dump.
 
 **Repo contains a full content dump.** `warmvast-db.sql` has real (if pre-launch) WordPress data
 including the admin account's hashed password. Keep this repository **private** on GitHub, and
@@ -99,22 +118,33 @@ repo (and ideally purged from git history) rather than kept indefinitely.
 
 ## ⚠️ Before go-live — required steps
 
-1. ~~Formspree endpoint~~ / ~~Verify ISDE 2026 tariffs~~ / ~~Replace placeholder contact
-   details~~ — still to verify against RVO / Formspree dashboard before relying on them for real
-   leads, but no longer using setup-era placeholders.
-2. **Privacyverklaring & Algemene voorwaarden have literal `[PLACEHOLDER]` fields** (KvK-nummer,
-   vestigingsadres, and five policy terms: offerte-geldigheid, opleveringstermijn,
-   **garantietermijn** — this one should also update `WARMVAST_WARRANTY_YEARS` in
-   `inc/config.php` to match — annuleringstermijn, klachttermijn, and the lead bewaartermijn).
-   Deliberately deferred past the initial launch per the site owner; fix before relying on these
-   pages as real legal terms.
-3. **Reviews are sample data.** `warmvast_reviews()` in `inc/config.php` has `verified => false`,
-   which correctly suppresses the AggregateRating schema. Do not flip it to `true` until the
-   `items` are real reviews — brand rule: no fabricated reviews or ratings go live.
-4. **EP-Online label lookup** (`warmvast_ws_public_energylabel()` in `inc/woningscan.php`) scrapes
-   EP-Online's public search page (verification token + HTML parsing) since no API key is
-   configured (`WARMVAST_EP_ONLINE_API_KEY`). It already falls back gracefully to a bouwjaar
-   estimate on any failure, but a real EP-Online API key would make label lookups more reliable.
+Anything the code can enforce is enforced; what is left needs facts nobody can derive from the
+repo. **Items 1 and 2 are blockers — they are legal text, not cosmetics.**
+
+1. **Both legal pages still contain `[KVK-NUMMER]`** and `[DATUM INVULLEN BIJ PUBLICATIE]`.
+   Vestigingsadres, e-mail and telefoon are now filled from `inc/config.php` and correct; the KvK
+   number cannot be guessed. Fill both, then set the date to the actual publication date.
+2. **Algemene voorwaarden has five `[AANTAL]` terms** (offerte-geldigheid, opleveringstermijn,
+   **garantietermijn**, annuleringstermijn, klachttermijn) and the Privacyverklaring one
+   (bewaartermijn for leads). The garantietermijn must match `WARMVAST_WARRANTY_YEARS` in
+   `inc/config.php` — that constant is `0` today, which correctly hides every garantie claim
+   sitewide until a real term is set.
+3. **Reviews do not render.** `warmvast_reviews()` has `verified => false`, which now hides the
+   whole section *and* the AggregateRating schema (it used to hide only the schema, so the sample
+   rows were reaching visitors). Flip to `true` only once `items`, `rating` and `count` are real:
+   publishing invented reviews is an oneerlijke handelspraktijk, not a placeholder.
+4. **Verify ISDE 2026 tariffs against RVO** (`warmvast_isde_rates()`) and confirm the Formspree
+   endpoint receives real leads before relying on either.
+5. **EP-Online label lookup** (`warmvast_ws_public_energylabel()` in `inc/woningscan.php`) scrapes
+   EP-Online's public search page since no API key is configured
+   (`WARMVAST_EP_ONLINE_API_KEY`). It falls back gracefully to a bouwjaar estimate, but a real
+   API key would make lookups more reliable.
+
+**Editing legal text after launch:** these two pages live in the database, and `start.sh` imports
+`warmvast-db.sql` only on the *first* boot. On a host that has already booted, edit them in
+wp-admin — re-committing the dump will not reach it. Contact details are duplicated as literal
+text there on purpose (a legal document should state stable, auditable values rather than pull
+live constants), so if `inc/config.php` contact data ever changes, mirror it into both pages.
 
 ## Analytics
 

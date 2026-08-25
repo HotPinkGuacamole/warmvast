@@ -190,8 +190,12 @@ function warmvast_isde_rates() {
  *
  * ⚠️ SAMPLE DATA — replace `items`, `rating`, `count` with real Warmvast reviews
  * (e.g. from Google) before go-live. Brand rule: no fabricated reviews live.
- * Set `verified` to true ONLY when the data is real; that flag also gates the
- * AggregateRating schema output (fake review schema violates Google's policy).
+ *
+ * `verified` must stay false until every field here is real. While it is
+ * false the reviews section does not render AT ALL (see
+ * template-parts/reviews.php) and no AggregateRating schema is emitted --
+ * the sample rows below are kept only as a shape reference for whoever fills
+ * in the real ones, and are never shown to a visitor.
  *
  * @return array<string,mixed>
  */

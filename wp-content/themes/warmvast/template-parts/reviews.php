@@ -9,7 +9,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 $reviews = warmvast_reviews();
-if ( empty( $reviews['items'] ) ) {
+// `verified` gates the VISIBLE section, not just the schema below. Publishing
+// invented reviews or an invented average is an oneerlijke handelspraktijk
+// under Dutch/EU consumer law (the Omnibus Directive names fake reviews
+// explicitly), not a cosmetic placeholder -- exactly the reasoning already
+// applied to WARMVAST_HOMES_INSULATED and warmvast_certificeringen(). So this
+// behaves like those: nothing renders until the data is real, rather than
+// shipping sample copy to visitors. Set verified => true in inc/config.php
+// once `items`, `rating` and `count` are genuine and the block returns.
+if ( empty( $reviews['items'] ) || empty( $reviews['verified'] ) ) {
 	return;
 }
 ?>
