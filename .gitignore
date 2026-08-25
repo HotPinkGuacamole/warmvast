@@ -13,6 +13,12 @@
 # Local dev tooling, not needed on the server.
 /wp-cli.phar
 
+# Camera originals for the team/werk photography (~980MB of ~95MB PNGs, over
+# GitHub's 100MB-per-file limit). The web-ready, face-cropped WebP variants
+# derived from these ARE committed, in wp-content/themes/warmvast/assets/img/.
+# Keep these masters in your own backup/cloud storage, not in the deploy repo.
+/Graded photos/
+
 # Uploads & generated content
 /wp-content/uploads/
 /wp-content/upgrade/

@@ -265,6 +265,42 @@ function warmvast_certificeringen() {
 }
 
 /**
+ * Het team achter Warmvast. Real people, real photos (assets/img/team/) —
+ * no stock photography, no invented names. Order here is the order they
+ * render in on /over-warmvast/ and wherever a team credit is shown.
+ *
+ * `foto` is a BASE path with no -<width>.webp suffix: each portrait ships as
+ * width variants (400 / 960) consumed via warmvast_responsive_img().
+ *
+ * @return array<int,array{key:string,naam:string,functie:string,bio:string,foto:string}>
+ */
+function warmvast_team() {
+	return array(
+		array(
+			'key'     => 'levi',
+			'naam'    => 'Levi Kok',
+			'functie' => 'Uitvoering',
+			'bio'     => 'Levi staat zelf op de vloer, in de spouw of op zolder. Hij voert de isolatie uit en laat een woning nooit half af achter.',
+			'foto'    => '/assets/img/team/team-makita-cap',
+		),
+		array(
+			'key'     => 'alex',
+			'naam'    => 'Alex de Jong',
+			'functie' => 'Backoffice',
+			'bio'     => 'Alex regelt de planning, offertes en het subsidiedossier, zodat u niet zelf achter formulieren en meldcodes aan hoeft.',
+			'foto'    => '/assets/img/team/team-krullen-bril',
+		),
+		array(
+			'key'     => 'noah',
+			'naam'    => 'Noah',
+			'functie' => 'Technisch specialist',
+			'bio'     => 'Noah kent isolatiematerialen en -technieken van binnen en buiten, en bepaalt per woning wat technisch het beste werkt.',
+			'foto'    => '/assets/img/team/team-golvend-haar',
+		),
+	);
+}
+
+/**
  * Kernwaarden — a compact badge strip restating Warmvast's own werkwijze
  * (already described in full on /kwaliteit-en-garantie/). Unlike
  * warmvast_certificeringen() these are NOT third-party certification claims

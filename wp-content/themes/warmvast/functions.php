@@ -165,9 +165,9 @@ add_filter(
 		// bar -- see .site-header in main.css.
 		if ( is_front_page() || is_page_template( 'template-scan.php' ) ) {
 			$classes[] = 'has-dark-hero';
-			}
-			if ( is_page_template( 'template-scan.php' ) ) {
-				$classes[] = 'is-scan-landing';
+		}
+		if ( is_page_template( 'template-scan.php' ) ) {
+			$classes[] = 'is-scan-landing';
 		}
 		return $classes;
 	}
@@ -220,18 +220,33 @@ if ( ! defined( 'DISALLOW_FILE_EDIT' ) ) {
 // harder to target version-specific known vulnerabilities.
 remove_action( 'wp_head', 'wp_generator' );
 add_filter( 'the_generator', '__return_empty_string' );
-add_filter(
-	'style_loader_src',
-	function ( $src ) {
-		return remove_query_arg( 'ver', $src );
+
+/**
+ * Strip the `ver` query arg ONLY when it is WordPress's own version number.
+ *
+ * The previous version of this dropped `ver` from every asset URL, which also
+ * threw away this theme's filemtime cache-buster (see warmvast_assets()) --
+ * main.css and main.js then shipped with no version at all. Apache serves them
+ * with only Last-Modified/ETag and no Cache-Control, so browsers fall back to
+ * heuristic caching and can hold a stale stylesheet across edits: the symptom
+ * is CSS silently not applying (e.g. an <img> rendering at its full intrinsic
+ * size because the rule that sizes it is missing from the cached file).
+ *
+ * Only the WP-version value is a disclosure risk, so only that is removed;
+ * asset versions the theme sets itself are left intact.
+ *
+ * @param string $src Asset URL.
+ * @return string
+ */
+function warmvast_strip_wp_version_query( $src ) {
+	$wp_version = get_bloginfo( 'version' );
+	if ( $wp_version && false !== strpos( $src, 'ver=' . $wp_version ) ) {
+		$src = remove_query_arg( 'ver', $src );
 	}
-);
-add_filter(
-	'script_loader_src',
-	function ( $src ) {
-		return remove_query_arg( 'ver', $src );
-	}
-);
+	return $src;
+}
+add_filter( 'style_loader_src', 'warmvast_strip_wp_version_query' );
+add_filter( 'script_loader_src', 'warmvast_strip_wp_version_query' );
 
 // Throttle wp-login.php / xmlrpc.php brute-force attempts without needing a
 // plugin: a lightweight lockout keyed on IP + option table, since MariaDB is

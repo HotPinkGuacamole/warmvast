@@ -75,6 +75,28 @@ $faqs = array(
 </section>
 
 <section class="section section--paper">
+	<div class="container story-row">
+		<div class="story-row__media" data-reveal="left">
+			<div class="story-row__drift" data-parallax="0.045">
+				<?php
+				warmvast_the_responsive_img(
+					'/assets/img/werk/werk-oplevering-klant',
+					array( 480, 960 ),
+					'(max-width: 720px) 340px, 440px',
+					'Warmvast-monteur en bewoner maken kennis bij de voordeur voor de technische schouw'
+				);
+				?>
+			</div>
+		</div>
+		<div data-reveal="right">
+			<?php warmvast_section_header( 'Persoonlijk', 'Wij komen zelf voor de technische schouw langs' ); ?>
+			<p>Geen anonieme intake achter een bureau. Warmvast komt bij u thuis voor de technische opname en brengt daar direct de subsidiemogelijkheden voor úw woning in kaart — zodat advies en subsidie-indicatie op hetzelfde bezoek gebaseerd zijn, niet op een los formulier.</p>
+			<?php warmvast_cta( 'Plan uw technische schouw', 'primary', home_url( '/gratis-isolatiescan/' ) ); ?>
+		</div>
+	</div>
+</section>
+
+<section class="section section--surface">
 	<div class="container grid grid--2" style="align-items:start;gap:clamp(1.5rem,4vw,3rem)">
 		<div data-reveal>
 			<?php warmvast_section_header( 'De systematiek', 'Zo werkt de ISDE voor isolatie' ); ?>
@@ -93,7 +115,7 @@ $faqs = array(
 	</div>
 </section>
 
-<section class="section section--surface">
+<section class="section section--paper">
 	<div class="container">
 		<?php warmvast_section_header( 'Tarieven 2026', 'ISDE-bedragen per maatregel', 'Basisbedrag per m² en het verdubbelde tarief bij twee of meer maatregelen.' ); ?>
 		<div class="table-wrap">
@@ -118,7 +140,7 @@ $faqs = array(
 	</div>
 </section>
 
-<section class="section section--paper" id="rijk-vs-gemeente">
+<section class="section section--surface" id="rijk-vs-gemeente">
 	<div class="container grid grid--2" style="align-items:start;gap:clamp(1.5rem,4vw,3rem)">
 		<div data-reveal>
 			<?php warmvast_section_header( 'Rijk versus gemeente', 'ISDE is landelijk — sommige gemeenten bieden méér' ); ?>
@@ -138,7 +160,7 @@ $faqs = array(
 	</div>
 </section>
 
-<section class="section section--surface">
+<section class="section section--paper">
 	<div class="container">
 		<?php warmvast_section_header( 'Veelgestelde vragen', 'Over ISDE-subsidie' ); ?>
 		<div class="faq">

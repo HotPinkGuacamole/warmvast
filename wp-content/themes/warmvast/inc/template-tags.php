@@ -23,6 +23,59 @@ function warmvast_asset( $relative ) {
 }
 
 /**
+ * Responsive <img> for a theme photo that ships as width-suffixed WebP
+ * variants, e.g. `/assets/img/team/team-groep` -> `team-groep-480.webp` and
+ * `team-groep-960.webp`.
+ *
+ * These photos render into small, fixed slots (a ~440px story-row column, a
+ * ~348px team card). Shipping one 2200px original into those meant the browser
+ * downscaled it 3-5x at paint time, which visibly softened the image -- worst
+ * on these high-ISO evening shots -- and sent ~250KB for a 440px slot. Handing
+ * the browser correctly-sized candidates plus `sizes` lets it pick one that
+ * needs little or no rescaling, on 1x and 2x screens alike.
+ *
+ * @param string               $base   Theme-relative path WITHOUT the -<width>.webp suffix.
+ * @param array<int,int>       $widths Available variant widths; the first is the src fallback.
+ * @param string               $sizes  CSS `sizes` attribute describing the rendered slot.
+ * @param string               $alt    Alt text ('' for decorative).
+ * @param array<string,string> $extra  Extra attributes (e.g. loading/fetchpriority).
+ * @return string <img> markup.
+ */
+function warmvast_responsive_img( $base, $widths, $sizes, $alt, $extra = array() ) {
+	$srcset = array();
+	foreach ( $widths as $w ) {
+		// warmvast_asset() already esc_url()s and appends the filemtime buster.
+		$srcset[] = warmvast_asset( $base . '-' . $w . '.webp' ) . ' ' . (int) $w . 'w';
+	}
+
+	$attrs = array(
+		'loading'  => 'lazy',
+		'decoding' => 'async',
+	);
+	$attrs = array_merge( $attrs, $extra );
+	$attr_html = '';
+	foreach ( $attrs as $k => $v ) {
+		$attr_html .= sprintf( ' %s="%s"', esc_attr( $k ), esc_attr( $v ) );
+	}
+
+	return sprintf(
+		'<img src="%1$s" srcset="%2$s" sizes="%3$s" alt="%4$s"%5$s>',
+		warmvast_asset( $base . '-' . $widths[0] . '.webp' ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper escapes.
+		implode( ', ', $srcset ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each URL esc_url'd above.
+		esc_attr( $sizes ),
+		esc_attr( $alt ),
+		$attr_html // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from esc_attr above.
+	);
+}
+
+/**
+ * Print warmvast_responsive_img().
+ */
+function warmvast_the_responsive_img( $base, $widths, $sizes, $alt, $extra = array() ) {
+	echo warmvast_responsive_img( $base, $widths, $sizes, $alt, $extra ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper escapes.
+}
+
+/**
  * Inline SVG icon set. Stroke-based, currentColor, 24x24 grid.
  *
  * @param string $name  Icon key.

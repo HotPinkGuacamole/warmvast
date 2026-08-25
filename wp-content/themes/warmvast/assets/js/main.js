@@ -53,10 +53,33 @@
 			var docH = doc.documentElement.scrollHeight - window.innerHeight;
 			progress.style.transform = "scaleX(" + (docH > 0 ? Math.min(1, y / docH) : 0) + ")";
 		}
+		applyParallax();
 		ticking = false;
 	}
+
+	/* Scroll-linked parallax for the small story-row photos: each
+	   [data-parallax="0..1"] element is offset opposite to how far its own
+	   centre sits from the viewport centre, scaled by that factor -- so it
+	   drifts against the page as you scroll. Riding the same rAF tick as the
+	   header/progress update above keeps it to one layout read + one paint per
+	   frame, instead of a second scroll listener competing with this one.
+	   Skipped entirely for reduced-motion (the list stays empty). */
+	var parallaxEls = reduce ? [] : Array.prototype.slice.call(doc.querySelectorAll("[data-parallax]"));
+	function applyParallax() {
+		for (var i = 0; i < parallaxEls.length; i++) {
+			var el = parallaxEls[i];
+			var rect = el.getBoundingClientRect();
+			// Off-screen elements can't be seen moving -- skip the write.
+			if (rect.bottom < -200 || rect.top > window.innerHeight + 200) continue;
+			var factor = parseFloat(el.getAttribute("data-parallax")) || 0;
+			var center = rect.top + rect.height / 2 - window.innerHeight / 2;
+			el.style.transform = "translate3d(0," + (-center * factor).toFixed(1) + "px,0)";
+		}
+	}
+
 	function requestScroll() { markScrolling(); if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }
 	onScroll();
+	applyParallax();
 	window.addEventListener("scroll", requestScroll, { passive: true });
 
 	/* Continuous ambient haze: a slow autonomous Lissajous drift (warm, organic —

@@ -235,7 +235,8 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
    smoothed the first few pixels and still handed off into a visibly
    different flat tone right after, which read as its own color step even
    without a hard edge. */
-body.is-scan-landing .hero + .section { background-image: linear-gradient(180deg, #f4f4ef 0%, transparent 100%); background-size: 100% 130px; background-position: top; background-repeat: no-repeat; }
+body.is-scan-landing .hero + .section,
+body.is-story-hero .hero + .section { background-image: linear-gradient(180deg, #f4f4ef 0%, transparent 100%); background-size: 100% 130px; background-position: top; background-repeat: no-repeat; }
 
 .section-head { max-width: 62ch; margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
 .section-head--center { margin-inline: auto; text-align: center; }
@@ -741,6 +742,11 @@ body.is-front .hero__scan { margin-top: 2rem; }
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230b6b5b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
 	background-repeat: no-repeat; background-position: center;
 }
+
+/* Two-up variant: keeps each item's text left-aligned (checkmarks need a
+   consistent left edge to scan) inside an otherwise centered block. */
+.checklist--2 { grid-template-columns: repeat(2, 1fr); gap: .7rem 1.6rem; text-align: left; margin-bottom: 0; }
+@media (max-width: 620px) { .checklist--2 { grid-template-columns: 1fr; } }
 
 /* ---------- Werkwijze (steps) ---------- */
 .steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(1rem, 3vw, 1.8rem); }
@@ -1749,3 +1755,131 @@ body.nav-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
 	.wv-js [data-reveal] { opacity: 1; transform: none; }
 }
+
+/* ==========================================================================
+   OVER WARMVAST + ONS WERK — page makeovers
+   Both pages open on the SAME plain .page-hero every other inner page uses
+   (Contact, Subsidie, Kwaliteit, ...) -- no bespoke dark hero, no full-bleed
+   banner. Photos throughout are deliberately SMALL: one shared .story-row
+   component (photo max 300px wide, text beside it, sides alternating) used by
+   About's origin story, Ons Werk's process story, and Subsidie's
+   technische-schouw section. Reuses shared tokens/.card/.btn/kicker/checklist/
+   data-reveal rather than inventing a parallel system.
+   ========================================================================== */
+
+/* ---------- Shared "small photo + text" story row ----------
+   Used by: About's origin story, Ons Werk's process story, Subsidie's
+   technische-schouw section. One pattern, one place to tune it.
+
+   The photo column is deliberately SMALL (max 300px, 4:3) so text carries the
+   page and the eye zigzags down it -- the row is a paragraph with a picture,
+   not a picture with a caption.
+
+   Movement is three effects, and each gets its OWN element, because all three
+   animate `transform` and would otherwise overwrite each other (the JS
+   parallax writes an inline transform, which beats any CSS transform on the
+   same node -- including [data-reveal]'s slide-in and .is-revealed's reset):
+     .story-row__media  -> data-reveal left/right  (slides in from its side)
+     .story-row__drift  -> data-parallax           (drifts against the scroll)
+     img                -> :hover                  (lifts + scales)
+   Bonus from that split: the accent plate belongs to __media, so it stays put
+   while the photo drifts across it -- reads as real depth, not a moving slab. */
+/* Image column ~40% of the row: the convention comfort-isolatie.nl (the agreed
+   reference) uses for every text-beside-photo block, at the restrained end of
+   its 40-60% range. Never a percentage of the VIEWPORT -- that is what turns a
+   photo into a banner on a wide screen. */
+.story-row {
+	display: grid;
+	grid-template-columns: clamp(240px, 40%, 470px) minmax(0, 1fr);
+	gap: clamp(1.5rem, 4vw, 3.5rem);
+	align-items: center;
+}
+.story-row--alt { grid-template-columns: minmax(0, 1fr) clamp(240px, 40%, 470px); }
+.story-row--alt .story-row__media { order: 2; }
+.story-row + .story-row { margin-top: clamp(2.5rem, 6vw, 4.5rem); }
+
+.story-row__media { position: relative; isolation: isolate; }
+.story-row__drift { position: relative; z-index: 1; will-change: transform; }
+.story-row__media img {
+	display: block;
+	/* Sources are pre-cropped to this exact 3:2 with face-aware framing (see
+	   the build step in the repo notes), so cover is a no-op and there is no
+	   object-position guess left to clip anyone's head. */
+	width: 100%; aspect-ratio: 3 / 2; object-fit: cover;
+	border-radius: var(--radius-lg); box-shadow: var(--shadow);
+	transition: transform var(--dur-3) var(--ease-out), box-shadow var(--dur-3) var(--ease-out);
+}
+.story-row__media:hover img { transform: translateY(-5px) scale(1.015); box-shadow: var(--shadow-lg); }
+/* offset accent plate peeking out behind the photo -- gives a small image
+   presence without making it bigger, and reads as intentional composition. */
+.story-row__media::after {
+	content: ""; position: absolute; z-index: 0; inset: 14px -14px -14px 14px;
+	border-radius: var(--radius-lg); background: var(--primary-050);
+	border: 1px solid #d9e8e3;
+}
+.story-row--alt .story-row__media::after { inset: 14px 14px -14px -14px; }
+
+.story-row__step {
+	display: inline-flex; align-items: center; gap: .5rem;
+	font-family: var(--font-display); font-size: var(--step--1); font-weight: 700;
+	letter-spacing: .09em; text-transform: uppercase; color: var(--primary); margin-bottom: .6rem;
+}
+.story-row__step::before { content: ""; width: 22px; height: 2px; background: var(--accent); border-radius: 2px; }
+.story-row h3 { font-size: var(--step-2); margin-bottom: .5rem; }
+.story-row p { color: var(--ink-2); margin: 0; max-width: 58ch; }
+
+@media (max-width: 720px) {
+	.story-row, .story-row--alt { grid-template-columns: 1fr; gap: 1.4rem; }
+	.story-row--alt .story-row__media { order: 0; }
+	/* cap the photo on mobile too -- edge-to-edge here is exactly the "huge
+	   banner" look this component exists to avoid. */
+	.story-row__media { max-width: 340px; }
+	.story-row__media::after, .story-row--alt .story-row__media::after { inset: 12px -12px -12px 12px; }
+}
+
+/* ---------- Story pull-quote ---------- */
+.about-story__quote {
+	max-width: 640px; margin: 0 auto; padding: 1.7rem 1.9rem; background: var(--ink); color: #fff;
+	border-radius: var(--radius-lg); font-family: var(--font-display); font-weight: 700;
+	font-size: var(--step-2); line-height: 1.32; letter-spacing: -.01em; text-align: left; position: relative;
+}
+.about-story__quote::before { content: ""; position: absolute; left: 1.9rem; top: -.55rem; width: 26px; height: 4px; background: var(--accent); border-radius: 2px; }
+
+/* ---------- Team grid ---------- */
+.team-grid { grid-template-columns: repeat(3, 1fr); }
+.team-card { padding: 0; overflow: clip; display: flex; flex-direction: column; transition: transform var(--dur-2) var(--ease-spring), box-shadow var(--dur-2) var(--ease-out); }
+.team-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+/* 3:2, not the source photos' own 4:5 -- a portrait-shaped crop made each card
+   ~425px of photo before a word of text, which is what stacked them into a
+   column of pictures. The shipped files are already cropped to this ratio
+   around the detected face, so cover never has to guess. */
+.team-card__photo { position: relative; aspect-ratio: 3 / 2; overflow: hidden; background: var(--ink); }
+.team-card__photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease-out); }
+.team-card:hover .team-card__photo img { transform: scale(1.06); }
+.team-card__photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(10,14,14,.55) 100%); }
+.team-card__role-tag {
+	position: absolute; left: 1rem; bottom: 1rem; z-index: 1;
+	display: inline-flex; align-items: center; gap: .4rem;
+	background: rgba(255,255,255,.16); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+	color: #fff; font-weight: 700; font-size: var(--step--1); letter-spacing: .01em;
+	padding: .35rem .8rem; border-radius: var(--radius-pill); border: 1px solid rgba(255,255,255,.28);
+}
+.team-card__body { padding: 1.4rem 1.5rem 1.6rem; }
+.team-card__name { font-size: var(--step-1); margin-bottom: .3rem; }
+.team-card__bio { color: var(--ink-3); font-size: var(--step--1); margin: 0; }
+@media (max-width: 860px) { .team-grid { grid-template-columns: 1fr; max-width: 420px; margin-inline: auto; } }
+
+/* ---------- Ons werk: small extra-shots filmstrip ---------- */
+.werk-filmstrip { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: clamp(2rem, 5vw, 3rem); }
+.werk-filmstrip__item { position: relative; width: 118px; height: 118px; border-radius: var(--radius); overflow: hidden; flex: 0 0 auto; box-shadow: var(--shadow-sm); }
+.werk-filmstrip__item img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease-out); }
+.werk-filmstrip__item:hover img { transform: scale(1.08); }
+.wv-js .werk-filmstrip[data-reveal] .werk-filmstrip__item { transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out); }
+.wv-js .werk-filmstrip[data-reveal] .werk-filmstrip__item:nth-child(2) { transition-delay: .07s; }
+.wv-js .werk-filmstrip[data-reveal] .werk-filmstrip__item:nth-child(3) { transition-delay: .14s; }
+
+/* ---------- Scroll-linked parallax (data-parallax="0..1"; see main.js) ----------
+   Only ever used on the small .story-row photos, at a low factor: enough that
+   the page feels alive as you scroll, never enough to shift layout. */
+[data-parallax] { will-change: transform; }
+@media (prefers-reduced-motion: reduce) { [data-parallax] { transform: none !important; } }
