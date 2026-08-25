@@ -85,25 +85,17 @@ those downloads WordPress core itself, and neither imports any content — this 
   curl -fsSL https://startup.endurerhosting.com/generic/latest.sh | bash && bash /home/container/www/start.sh
   ```
 
-**`warmvast-db.sql` is not actually in this repo.** WordPress core is committed (as of the
-"Warmvast deploy bundle" commit) and `start.sh` is now committed too, but the DB content
-snapshot itself still needs to be generated and added — see below. Without it, a from-scratch
-deploy will boot a bare, contentless WordPress (`wordpress/latest.sh`'s auto-importer only fires
-if it finds a `*.sql` file; no file, no import, no pages). This matters more than usual right
-now: if the persistent MariaDB volume on the container gets wiped as part of cleaning up after
-the hijack, `warmvast-db.sql` (or a fresh backup) is the only way to get real content back.
-**Do not wipe `/home/container/mysql` until content is safely exported or you've confirmed
-you don't need what's in it.**
+**Still missing: WordPress core itself isn't in this repo yet** (only the theme + `start.sh` +
+`warmvast-db.sql` are). The `generic` script only pulls what's in the git repo/release — it needs
+to find `wp-config-sample.php` etc. already present in `GIT_TARGET_DIR` for the wordpress script
+to configure anything. Until core is added (either committed, or — cleaner — attached as a
+GitHub Release asset with `GIT_RELEASE_VERSION` set so `generic/latest.sh` downloads it), a
+fresh deploy will start nginx over an incomplete webroot.
 
-To (re)generate it once you have a working WordPress with the real content loaded:
-`wp search-replace <live-url> <live-url> --export=warmvast-db.sql` (never a raw SQL
-find/replace — that corrupts WordPress's serialized PHP arrays), then commit the file at the
-repo root next to `start.sh`.
-
-**If/when this file does contain real content**, it will have the admin account's hashed
-password in it. Keep this repository **private** on GitHub, and once the live database is the
-source of truth post-launch, this snapshot can be dropped from the repo (and ideally purged from
-git history) rather than kept indefinitely.
+**Repo contains a full content dump.** `warmvast-db.sql` has real (if pre-launch) WordPress data
+including the admin account's hashed password. Keep this repository **private** on GitHub, and
+once the live database is the source of truth post-launch, this snapshot can be dropped from the
+repo (and ideally purged from git history) rather than kept indefinitely.
 
 ## ⚠️ Before go-live — required steps
 
