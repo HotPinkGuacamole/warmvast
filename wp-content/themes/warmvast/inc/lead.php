@@ -279,7 +279,18 @@ function warmvast_lead_build_payload( $raw ) {
  * @return string Hex HMAC-SHA256.
  */
 function warmvast_lead_signature( $timestamp, $body, $secret ) {
-	return hash_hmac( 'sha256', $timestamp . '.' . $body, $secret );
+	return hash_hmac( 'sha256', warmvast_lead_signed_message( $timestamp, $body ), $secret );
+}
+
+/**
+ * Build the exact message covered by the webhook HMAC.
+ *
+ * @param string $timestamp Unix timestamp, as sent in X-Warmvast-Timestamp.
+ * @param string $body      Raw JSON body, byte for byte as sent.
+ * @return string Signed message.
+ */
+function warmvast_lead_signed_message( $timestamp, $body ) {
+	return $timestamp . '.' . $body;
 }
 
 /**

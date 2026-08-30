@@ -457,6 +457,31 @@ ok( $sig !== warmvast_lead_signature( '1730000001', $body, 'test-secret' ), 'cha
 ok( $sig !== warmvast_lead_signature( $ts, $body . ' ', 'test-secret' ), 'changing one byte of the body changes the signature' );
 ok( $sig !== warmvast_lead_signature( $ts, $body, 'other-secret' ), 'a different secret produces a different signature' );
 
+$fixture_payload = array(
+	'name'            => 'Zoë van Dijk',
+	'email'           => 'zoe@example.test',
+	'phone'           => '+31612345678',
+	'address'         => array(
+		'street'     => 'Prinsengracht 10',
+		'postalCode' => '1015AB',
+		'city'       => 'Amsterdam',
+	),
+	'measures'        => array( 'Dakisolatie', 'HR++ glas' ),
+	'customerComment' => "Dak + glas, budget € 5000. Nieuwe regel:\nAkkoord.",
+);
+$fixture_body     = warmvast_lead_encode( $fixture_payload );
+$fixture_ts       = '1700000000';
+$fixture_secret   = 'test-secret-not-production';
+$fixture_message  = warmvast_lead_signed_message( $fixture_ts, $fixture_body );
+$fixture_expected = '{"name":"Zoë van Dijk","email":"zoe@example.test","phone":"+31612345678","address":{"street":"Prinsengracht 10","postalCode":"1015AB","city":"Amsterdam"},"measures":["Dakisolatie","HR++ glas"],"customerComment":"Dak + glas, budget € 5000. Nieuwe regel:\nAkkoord."}';
+$fixture_hmac     = 'e978070bb75a02b2698866813d5295d8ef3fd426e88e83951fa37ba637ca8a0f';
+
+same( $fixture_expected, $fixture_body, 'fixture body is exact deterministic JSON, including UTF-8 and escaped newline' );
+same( $fixture_ts . '.' . $fixture_expected, $fixture_message, 'fixture signed message is exactly "<timestamp>.<body>"' );
+same( $fixture_hmac, warmvast_lead_signature( $fixture_ts, $fixture_body, $fixture_secret ), 'fixture HMAC is stable' );
+ok( $fixture_hmac !== warmvast_lead_signature( $fixture_ts, $fixture_body . ' ', $fixture_secret ), 'fixture HMAC changes when the body changes' );
+ok( $fixture_hmac !== warmvast_lead_signature( '1700000001', $fixture_body, $fixture_secret ), 'fixture HMAC changes when the timestamp changes' );
+
 // The signature must cover the exact transmitted bytes: re-encoding the
 // payload separately for signing could differ from what is sent.
 $GLOBALS['wv_test_http'] = array( 'response' => array( 'code' => 200 ) );
