@@ -106,6 +106,19 @@ if ( ! defined( 'WP_HOME' ) && ! empty( $_SERVER['HTTP_HOST'] ) ) {
 	define( 'FORCE_SSL_ADMIN', $warmvast_is_https );
 }
 
+// Woningscan lead webhook -> n8n (which owns the Teamleader side; the site
+// never talks to Teamleader itself). The URL is public, but the HMAC secret is
+// a real secret: supply it through the host's environment or this gitignored
+// wp-config.php only. Never move the secret into the theme, README examples,
+// or JavaScript. While either value is empty the lead form refuses to submit
+// and tells the visitor to phone instead, rather than dropping a lead silently.
+//
+// The secret is the HMAC key n8n verifies:
+//   HMAC_SHA256( "<X-Warmvast-Timestamp>.<raw JSON body>", <secret> )
+//
+// define( 'WARMVAST_N8N_LEAD_WEBHOOK_URL', getenv( 'WARMVAST_N8N_LEAD_WEBHOOK_URL' ) ?: 'https://n8n.warmvastisolatie.nl/webhook/warmvast-site-lead' );
+// define( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET', getenv( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' ) ?: '' );
+
 /* That's all, stop editing! Happy publishing. */
 
 /** Absolute path to the WordPress directory. */

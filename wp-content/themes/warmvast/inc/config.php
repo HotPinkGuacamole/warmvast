@@ -2,8 +2,8 @@
 /**
  * Warmvast central configuration.
  *
- * Single source of truth for contact data, the Formspree endpoint and the
- * ISDE 2026 tariff table. The tariffs are output to JavaScript via
+ * Single source of truth for contact data, the lead-webhook configuration and
+ * the ISDE 2026 tariff table. The tariffs are output to JavaScript via
  * wp_localize_script() in functions.php so the calculator and the service
  * pages can never drift apart.
  *
@@ -109,10 +109,32 @@ if ( ! defined( 'WARMVAST_WARRANTY_YEARS' ) ) {
 }
 
 /**
- * Formspree endpoint for the isolatiescan / woningscan.
+ * n8n lead webhook — where a woningscan lead goes.
+ *
+ * The browser does NOT call n8n. It posts to this site's own REST route
+ * (see inc/lead.php), which validates the submission and forwards a minimal,
+ * HMAC-signed payload server-to-server. n8n owns everything downstream:
+ * contact matching, deal creation, Teamleader OAuth and IDs. WordPress knows
+ * none of that on purpose.
+ *
+ * The webhook URL is public routing information; the HMAC secret is not.
+ * Prefer host environment variables so deployment can recreate wp-config.php
+ * without losing the integration. While either value is empty the lead endpoint
+ * refuses the submission and the visitor is told to phone us instead --
+ * deliberately loud, because the one thing that must never happen is a lead
+ * silently vanishing.
+ *
+ * The signature n8n must verify is:
+ *   HMAC_SHA256( "<X-Warmvast-Timestamp>.<raw JSON body>", <secret> )
  */
-if ( ! defined( 'WARMVAST_FORMSPREE' ) ) {
-	define( 'WARMVAST_FORMSPREE', 'https://formspree.io/f/xeebwqro' );
+if ( ! defined( 'WARMVAST_N8N_LEAD_WEBHOOK_URL' ) ) {
+	define(
+		'WARMVAST_N8N_LEAD_WEBHOOK_URL',
+		getenv( 'WARMVAST_N8N_LEAD_WEBHOOK_URL' ) ?: 'https://n8n.warmvastisolatie.nl/webhook/warmvast-site-lead'
+	);
+}
+if ( ! defined( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' ) ) {
+	define( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET', getenv( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' ) ?: '' );
 }
 
 /**
@@ -183,6 +205,20 @@ function warmvast_isde_rates() {
 			'slug'     => 'dakisolatie',
 		),
 	);
+}
+
+/**
+ * The order measures are presented to (and read back from) the visitor.
+ *
+ * The scan's measure checkboxes render in this order, and a lead's
+ * `measures` array is emitted in it too, so what the customer saw and what
+ * lands in the CRM read the same way round. Keys are validated against
+ * warmvast_isde_rates(), so this can never introduce an unknown measure.
+ *
+ * @return array<int,string>
+ */
+function warmvast_measure_order() {
+	return array( 'dak', 'spouw', 'vloer', 'glas' );
 }
 
 /**

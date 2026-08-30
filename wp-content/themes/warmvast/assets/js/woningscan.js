@@ -2,8 +2,14 @@
  * Warmvast woningscan — address-driven building scan.
  *
  * Flow: address -> (PDOK via our REST endpoint) -> result (3D house + aerial +
- * surfaces + energielabel) -> subsidie + besparing -> lead -> Formspree.
+ * surfaces + energielabel) -> subsidie + besparing -> lead -> our own REST
+ * endpoint, which forwards it to n8n server-side.
  * Self-guards on #warmvast-woningscan.
+ *
+ * The scan's estimates (bouwjaar, energielabel, m² per bouwdeel, ISDE,
+ * besparing) are shown to the visitor but deliberately NOT submitted: the lead
+ * request carries contact details, the chosen measures and the customer's
+ * comment only. See inc/lead.php for why.
  */
 (function () {
 	"use strict";
@@ -15,7 +21,8 @@
 	var rates = CFG.rates || {};
 	var savings = CFG.savings || { spouw: 4.5, vloer: 3.5, dak: 4.0, glas: 6.0 };
 	var restUrl = CFG.restUrl || "";
-	var endpoint = root.dataset.endpoint || CFG.endpoint || "";
+	var leadUrl = CFG.leadUrl || "";
+	var leadNonce = CFG.leadNonce || "";
 	var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 	var LABELS = [
@@ -43,61 +50,6 @@
 	function euro(v) {
 		try { return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v || 0); }
 		catch (e) { return "€ " + Math.round(v || 0); }
-	}
-
-	function m2(v) {
-		var n = Number(v || 0);
-		return (Math.round(n * 10) / 10).toLocaleString("nl-NL") + " m²";
-	}
-
-	function yesNo(v) {
-		return v ? "Ja" : "Nee";
-	}
-
-	function measureLabel(key) {
-		return rates[key] && rates[key].label ? rates[key].label : key;
-	}
-
-	function formatMeasures(keys) {
-		if (!keys || !keys.length) return "Geen maatregelen geselecteerd";
-		return keys.map(measureLabel).join(", ");
-	}
-
-	function buildLeadSummary(data, result, form) {
-		var address = data.address || {};
-		var energy = data.energielabel || {};
-		var energySource = energy.source && energy.source.indexOf("ep-online") === 0
-			? "EP-Online geregistreerd"
-			: "Bouwjaar indicatie";
-		return [
-			"Nieuwe woningscan lead",
-			"",
-			"CONTACT",
-			"Naam: " + form.naam.value,
-			"E-mail: " + form.email.value,
-			"Telefoon: " + form.telefoon.value,
-			"",
-			"WONING",
-			"Adres: " + (address.weergave || "-"),
-			"Postcode/plaats: " + ([address.postcode, address.woonplaats].filter(Boolean).join(" ") || "-"),
-			"Bouwjaar: " + (data.bouwjaar || "-"),
-			"Energielabel: " + (energy.letter || "-") + " (" + energySource + ")",
-			"",
-			"ADVIES",
-			"Maatregelen: " + formatMeasures(result.sel),
-			"ISDE-indicatie: " + euro(result.subsidie),
-			"Besparing indicatie: " + euro(result.besparing) + " per jaar",
-			"Verdubbeld tarief: " + yesNo(result.doubled),
-			"",
-			"OPPERVLAKTES",
-			"Vloer: " + m2(state.surfaces.vloer),
-			"Dak: " + m2(state.surfaces.dak),
-			"Buitenmuur/spouw: " + m2(state.surfaces.spouw),
-			"Glas: " + m2(state.surfaces.glas),
-			"",
-			"OPMERKING",
-			form.opmerking.value || "-"
-		].join("\n");
 	}
 
 	function showStage(name) {
@@ -418,9 +370,23 @@
 		track("scan_contact_step");
 	});
 
-	/* ---------- lead submit ---------- */
+	/* ---------- lead submit ----------
+	   Posts to this site's own REST endpoint (inc/lead.php), which validates
+	   the lead and forwards it to n8n server-side. Measures go out as KEYS;
+	   the server maps them to labels against the tariff table, so the set of
+	   services that can reach the CRM is decided in PHP, not here. */
+	var leadSubmitting = false;
+
+	function leadFallbackError() {
+		return "Verzenden lukt nu niet. Probeer het later opnieuw of bel Warmvast" + (CFG.phone ? " op " + CFG.phone : "") + ".";
+	}
+
 	$("wsLeadForm").addEventListener("submit", function (e) {
 		e.preventDefault();
+		// Guards the Enter key too, which submits the form without going
+		// through the (disabled) button.
+		if (leadSubmitting) return;
+
 		var err = $("wsLeadError");
 		err.textContent = "";
 		var form = e.target;
@@ -430,48 +396,62 @@
 		var r = computeSubsidie();
 		var d = state.data || { address: {} };
 		var address = d.address || {};
-		if (!endpoint || endpoint.indexOf("REPLACE_WITH_ID") !== -1) {
-			err.textContent = "De aanvraag is nog niet gekoppeld (Formspree). Bel ons gerust" + (CFG.phone ? " op " + CFG.phone : "") + ".";
-			return;
-		}
 
-		var fd = new FormData();
-		fd.set("_subject", "Nieuwe Warmvast lead - " + (address.weergave || "adres onbekend") + " - " + euro(r.subsidie));
-		fd.set("_replyto", form.email.value);
-		fd.set("01. Samenvatting", buildLeadSummary(d, r, form));
-		fd.set("02. Naam klant", form.naam.value);
-		fd.set("03. E-mail klant", form.email.value);
-		fd.set("04. Telefoon klant", form.telefoon.value);
-		fd.set("05. Adres", address.weergave || "");
-		fd.set("06. Postcode", address.postcode || "");
-		fd.set("07. Woonplaats", address.woonplaats || "");
-		fd.set("08. Bouwjaar", d.bouwjaar ? String(d.bouwjaar) : "Onbekend");
-		fd.set("09. Gebruiksdoel", d.gebruiksdoel || "Onbekend");
-		fd.set("10. Energielabel", d.energielabel ? d.energielabel.letter + " - " + (d.energielabel.basis || "") : "Onbekend");
-		fd.set("11. Geselecteerde maatregelen", formatMeasures(r.sel));
-		fd.set("12. Vloeroppervlak", m2(state.surfaces.vloer));
-		fd.set("13. Dakoppervlak", m2(state.surfaces.dak));
-		fd.set("14. Buitenmuur/spouw oppervlak", m2(state.surfaces.spouw));
-		fd.set("15. Glasoppervlak", m2(state.surfaces.glas));
-		fd.set("16. ISDE-subsidie indicatie", euro(r.subsidie));
-		fd.set("17. Besparing indicatie", euro(r.besparing) + " per jaar");
-		fd.set("18. Verdubbeld ISDE-tarief", yesNo(r.doubled));
-		fd.set("19. Opmerking klant", form.opmerking.value || "-");
-		fd.set("20. Privacy akkoord", yesNo(form.privacy_akkoord.checked));
-		fd.set("21. Bron", "Warmvast woningscan");
+		if (!leadUrl) { err.textContent = leadFallbackError(); return; }
+
+		var payload = {
+			name: form.naam.value,
+			email: form.email.value,
+			phone: form.telefoon.value,
+			address: {
+				street: address.weergave || "",
+				postalCode: address.postcode || "",
+				city: address.woonplaats || ""
+			},
+			measures: r.sel,
+			customerComment: form.opmerking.value || "",
+			privacyAccepted: form.privacy_akkoord.checked
+		};
 
 		var btn = $("wsSubmitLead");
+		leadSubmitting = true;
 		btn.disabled = true; var lbl = btn.innerHTML; btn.textContent = "Versturen…";
-		fetch(endpoint, { method: "POST", headers: { Accept: "application/json" }, body: fd })
-			.then(function (res) { if (!res.ok) throw new Error("formspree"); return res.json().catch(function () { return {}; }); })
-			.then(function () {
+
+		fetch(leadUrl, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"Accept": "application/json",
+				"X-WP-Nonce": leadNonce
+			},
+			body: JSON.stringify(payload)
+		})
+			.then(function (res) {
+				return res.json().catch(function () { return {}; }).then(function (body) {
+					return { ok: res.ok, body: body || {} };
+				});
+			})
+			.then(function (res) {
+				// Only a real 2xx from our endpoint (which itself only returns
+				// 2xx after n8n accepted the lead) counts as sent. Anything
+				// else must surface, never a false success screen.
+				if (!res.ok || res.body.ok !== true) {
+					track("scan_submit_error");
+					err.textContent = res.body.message || leadFallbackError();
+					return;
+				}
+				// Analytics only, stays client-side -- not part of the CRM payload.
 				track("scan_submit_success", { subsidie: Math.round(r.subsidie), aantal_maatregelen: r.sel.length });
 				showStage("success");
 			})
 			.catch(function () {
 				track("scan_submit_error");
-				err.textContent = "Verzenden lukt nu niet. Probeer het later opnieuw of bel Warmvast" + (CFG.phone ? " op " + CFG.phone : "") + ".";
+				err.textContent = leadFallbackError();
 			})
-			.finally(function () { btn.disabled = false; btn.innerHTML = lbl; });
+			.finally(function () {
+				leadSubmitting = false;
+				btn.disabled = false;
+				btn.innerHTML = lbl;
+			});
 	});
 })();

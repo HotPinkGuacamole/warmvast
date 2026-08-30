@@ -15,7 +15,7 @@ global $warmvast_scan_preselect;
 $ws_preselect = $warmvast_scan_preselect ? $warmvast_scan_preselect : '';
 $rates         = warmvast_isde_rates();
 ?>
-<section class="ws" id="warmvast-woningscan" data-endpoint="<?php echo esc_url( WARMVAST_FORMSPREE ); ?>">
+<section class="ws" id="warmvast-woningscan">
 
 	<!-- STAGE 1: address -->
 	<div class="ws-stage ws-stage--address" data-stage="address">
@@ -110,8 +110,9 @@ $rates         = warmvast_isde_rates();
 
 		<ul class="ws-measures" id="wsMeasures">
 			<?php
-			$order = array( 'dak', 'spouw', 'vloer', 'glas' );
-			foreach ( $order as $key ) :
+			// Shared with the lead endpoint's measure validation, so the order
+			// the visitor sees is the order the CRM receives.
+			foreach ( warmvast_measure_order() as $key ) :
 				$r          = $rates[ $key ];
 				// When a service page preselects a measure, start with only that one
 				// checked; otherwise default to showing the full picture (all checked).
@@ -172,10 +173,5 @@ $rates         = warmvast_isde_rates();
 		<div class="wv-success__mark"><?php warmvast_the_icon( 'check' ); ?></div>
 		<h2>Uw aanvraag is verstuurd.</h2>
 		<p>Warmvast neemt binnen 24 uur contact met u op om uw isolatiescan en subsidie door te nemen.</p>
-	</div>
-
-	<!-- hidden Formspree-bound fields, populated on submit -->
-	<div hidden aria-hidden="true">
-		<span id="wsData"></span>
 	</div>
 </section>

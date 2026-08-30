@@ -18,6 +18,7 @@ require_once WARMVAST_DIR . '/inc/template-tags.php';
 require_once WARMVAST_DIR . '/inc/service-content.php';
 require_once WARMVAST_DIR . '/inc/gemeente-content.php';
 require_once WARMVAST_DIR . '/inc/woningscan.php';
+require_once WARMVAST_DIR . '/inc/lead.php';
 require_once WARMVAST_DIR . '/inc/article-visuals.php';
 require_once WARMVAST_DIR . '/inc/seo.php';
 
@@ -62,17 +63,22 @@ function warmvast_assets() {
 	$js_ver  = file_exists( $js_path ) ? filemtime( $js_path ) : WARMVAST_VERSION;
 	wp_enqueue_script( 'warmvast-main', WARMVAST_URI . '/assets/js/main.js', array(), $js_ver, true );
 
-	// Single source of truth: PHP tariffs + REST url + savings -> JS. Attached to
-	// warmvast-main so it prints before any dependent script.
+	// Single source of truth: PHP tariffs + REST urls + savings -> JS. Attached
+	// to warmvast-main so it prints before any dependent script.
+	//
+	// Note what is NOT here: the lead webhook URL and its secret. The browser
+	// only ever learns this site's own leadUrl; the n8n endpoint and the signing
+	// secret stay server-side (see inc/lead.php).
 	wp_localize_script(
 		'warmvast-main',
 		'WARMVAST_SCAN',
 		array(
-			'endpoint' => WARMVAST_FORMSPREE,
-			'rates'    => warmvast_isde_rates(),
-			'phone'    => WARMVAST_PHONE,
-			'restUrl'  => esc_url_raw( rest_url( 'warmvast/v1/woningscan' ) ),
-			'savings'  => warmvast_savings_factors(),
+			'rates'     => warmvast_isde_rates(),
+			'phone'     => WARMVAST_PHONE,
+			'restUrl'   => esc_url_raw( rest_url( 'warmvast/v1/woningscan' ) ),
+			'leadUrl'   => esc_url_raw( rest_url( 'warmvast/v1/lead' ) ),
+			'leadNonce' => wp_create_nonce( 'wp_rest' ),
+			'savings'   => warmvast_savings_factors(),
 		)
 	);
 
