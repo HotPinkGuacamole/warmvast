@@ -17,6 +17,91 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! defined( 'WARMVAST_ENV_FILE' ) ) {
+	define( 'WARMVAST_ENV_FILE', '/home/container/.warmvast-env' );
+}
+
+/**
+ * Read supported Warmvast values from the production dotenv file.
+ *
+ * This deliberately parses a tiny KEY=value subset instead of executing shell
+ * syntax. Environment variables still win; this is only a PHP-FPM fallback for
+ * hosts that do not preserve arbitrary parent-process environment variables.
+ *
+ * @param string|null $path Optional file path for tests.
+ * @return array<string,string>
+ */
+function warmvast_env_file_values( $path = null ) {
+	$path = null === $path ? WARMVAST_ENV_FILE : (string) $path;
+	if ( '' === $path || ! is_file( $path ) || ! is_readable( $path ) ) {
+		return array();
+	}
+
+	$lines = file( $path, FILE_IGNORE_NEW_LINES );
+	if ( false === $lines ) {
+		return array();
+	}
+
+	$allowed = array(
+		'WARMVAST_N8N_LEAD_WEBHOOK_URL'    => true,
+		'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' => true,
+		'WARMVAST_TRUSTED_PROXY_IPS'       => true,
+	);
+	$values  = array();
+
+	foreach ( $lines as $line ) {
+		$line = trim( $line );
+		if ( '' === $line || '#' === substr( $line, 0, 1 ) || false === strpos( $line, '=' ) ) {
+			continue;
+		}
+
+		list( $key, $value ) = explode( '=', $line, 2 );
+		$key = trim( $key );
+		if ( ! isset( $allowed[ $key ] ) ) {
+			continue;
+		}
+
+		$value = trim( $value );
+		$quote = '' !== $value ? substr( $value, 0, 1 ) : '';
+		if ( '"' === $quote || "'" === $quote ) {
+			if ( strlen( $value ) < 2 || substr( $value, -1 ) !== $quote ) {
+				continue;
+			}
+			$value = substr( $value, 1, -1 );
+		}
+
+		if ( false !== strpos( $value, "\0" ) || preg_match( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $value ) ) {
+			continue;
+		}
+
+		$values[ $key ] = $value;
+	}
+
+	return $values;
+}
+
+/**
+ * Resolve a Warmvast config value from environment, then dotenv file, then default.
+ *
+ * @param string      $key      Supported config key.
+ * @param string      $default  Default value.
+ * @param string|null $env_path Optional dotenv path for tests.
+ * @return string
+ */
+function warmvast_config_value( $key, $default = '', $env_path = null ) {
+	$env = getenv( $key );
+	if ( false !== $env && '' !== trim( (string) $env ) ) {
+		return trim( (string) $env );
+	}
+
+	$file_values = warmvast_env_file_values( $env_path );
+	if ( isset( $file_values[ $key ] ) && '' !== trim( $file_values[ $key ] ) ) {
+		return trim( $file_values[ $key ] );
+	}
+
+	return $default;
+}
+
 /**
  * Contact details. Override in a child theme or via a real options page later.
  * Defaults are placeholders — replace with the real Warmvast data before launch.
@@ -130,11 +215,11 @@ if ( ! defined( 'WARMVAST_WARRANTY_YEARS' ) ) {
 if ( ! defined( 'WARMVAST_N8N_LEAD_WEBHOOK_URL' ) ) {
 	define(
 		'WARMVAST_N8N_LEAD_WEBHOOK_URL',
-		getenv( 'WARMVAST_N8N_LEAD_WEBHOOK_URL' ) ?: 'https://n8n.warmvastisolatie.nl/webhook/warmvast-site-lead'
+		warmvast_config_value( 'WARMVAST_N8N_LEAD_WEBHOOK_URL', 'https://n8n.warmvastisolatie.nl/webhook/warmvast-site-lead' )
 	);
 }
 if ( ! defined( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' ) ) {
-	define( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET', getenv( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' ) ?: '' );
+	define( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET', warmvast_config_value( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' ) );
 }
 
 /**
@@ -149,7 +234,7 @@ if ( ! defined( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' ) ) {
  * this allowlist. Never set this from frontend JavaScript.
  */
 if ( ! defined( 'WARMVAST_TRUSTED_PROXY_IPS' ) ) {
-	define( 'WARMVAST_TRUSTED_PROXY_IPS', getenv( 'WARMVAST_TRUSTED_PROXY_IPS' ) ?: '' );
+	define( 'WARMVAST_TRUSTED_PROXY_IPS', warmvast_config_value( 'WARMVAST_TRUSTED_PROXY_IPS' ) );
 }
 
 /**

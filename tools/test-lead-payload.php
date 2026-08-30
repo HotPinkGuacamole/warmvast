@@ -117,6 +117,74 @@ function wv_test_clear_log() {
 	file_put_contents( $GLOBALS['wv_test_logfile'], '' );
 }
 
+function wv_temp_env_file( $contents ) {
+	$file = tempnam( sys_get_temp_dir(), 'wvenv' );
+	file_put_contents( $file, $contents );
+	return $file;
+}
+
+function wv_clear_env( $key ) {
+	putenv( $key );
+	unset( $_ENV[ $key ], $_SERVER[ $key ] );
+}
+
+function wv_missing_config_probe() {
+	$script = tempnam( sys_get_temp_dir(), 'wvprobe' );
+	$env    = tempnam( sys_get_temp_dir(), 'wvmissing' );
+	unlink( $env );
+
+	$code = <<<'PHP'
+<?php
+define( 'ABSPATH', __DIR__ . '/' );
+define( 'WARMVAST_ENV_FILE', getenv( 'WV_MISSING_ENV_FILE' ) );
+ini_set( 'error_log', getenv( 'WV_MISSING_LOG_FILE' ) );
+function add_action() {}
+function register_rest_route() {}
+function __( $text ) { return $text; }
+function is_wp_error( $thing ) { return $thing instanceof WP_Error; }
+function wp_json_encode( $data, $options = 0 ) { return json_encode( $data, $options ); }
+function wp_remote_retrieve_response_code( $res ) { return 0; }
+function wp_remote_post( $url, $args ) { return array( 'response' => array( 'code' => 200 ) ); }
+class WP_Error {
+	private $code;
+	private $message;
+	private $data;
+	public function __construct( $code = '', $message = '', $data = array() ) {
+		$this->code = $code;
+		$this->message = $message;
+		$this->data = $data;
+	}
+	public function get_error_code() { return $this->code; }
+	public function get_error_data() { return $this->data; }
+}
+putenv( 'WARMVAST_N8N_LEAD_WEBHOOK_URL' );
+putenv( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' );
+putenv( 'WARMVAST_TRUSTED_PROXY_IPS' );
+require getenv( 'WV_THEME_DIR' ) . '/inc/config.php';
+require getenv( 'WV_THEME_DIR' ) . '/inc/lead.php';
+$res = warmvast_lead_dispatch( array( 'name' => 'Config Probe' ), 'config-probe' );
+echo is_wp_error( $res ) ? $res->get_error_code() : 'sent';
+PHP;
+
+	file_put_contents( $script, $code );
+	$cmd = '"' . PHP_BINARY . '" "' . $script . '"';
+	$old_theme = getenv( 'WV_THEME_DIR' );
+	$old_env   = getenv( 'WV_MISSING_ENV_FILE' );
+	$old_log   = getenv( 'WV_MISSING_LOG_FILE' );
+	$log       = tempnam( sys_get_temp_dir(), 'wvprobe-log' );
+	putenv( 'WV_THEME_DIR=' . realpath( __DIR__ . '/../wp-content/themes/warmvast' ) );
+	putenv( 'WV_MISSING_ENV_FILE=' . $env );
+	putenv( 'WV_MISSING_LOG_FILE=' . $log );
+	$output = trim( shell_exec( $cmd ) );
+	false === $old_theme ? putenv( 'WV_THEME_DIR' ) : putenv( 'WV_THEME_DIR=' . $old_theme );
+	false === $old_env ? putenv( 'WV_MISSING_ENV_FILE' ) : putenv( 'WV_MISSING_ENV_FILE=' . $old_env );
+	false === $old_log ? putenv( 'WV_MISSING_LOG_FILE' ) : putenv( 'WV_MISSING_LOG_FILE=' . $old_log );
+	unlink( $script );
+	unlink( $log );
+
+	return $output;
+}
+
 // ---------------------------------------------------------------------------
 // Subject under test.
 // ---------------------------------------------------------------------------
@@ -340,7 +408,45 @@ same( '+31647551893', warmvast_lead_normalize_phone( '+31 (0)6 47551893' ), 'int
 same( '0647551893', warmvast_lead_normalize_phone( '06-47551893' ), 'a national number is tidied but not rewritten to +31' );
 same( '', warmvast_lead_normalize_phone( '123' ), 'a too-short phone number is rejected' );
 
-section( '7. Webhook signature' );
+section( '7. Production dotenv config fallback' );
+
+$env_file = wv_temp_env_file(
+	"# Warmvast production secrets\n"
+	. "WARMVAST_N8N_LEAD_WEBHOOK_URL=https://file.example/webhook\n"
+	. "WARMVAST_N8N_LEAD_WEBHOOK_SECRET=file-secret\n"
+	. "WARMVAST_TRUSTED_PROXY_IPS=10.0.0.5,2001:db8::/48\n"
+	. "export WARMVAST_N8N_LEAD_WEBHOOK_SECRET=export-syntax-is-not-php-dotenv\n"
+	. "UNRELATED_SECRET=must-be-ignored\n"
+	. "BROKEN_LINE_WITHOUT_EQUALS\n"
+	. "WARMVAST_N8N_LEAD_WEBHOOK_URL=\"https://quoted.example/webhook\"\n"
+);
+
+wv_clear_env( 'WARMVAST_N8N_LEAD_WEBHOOK_URL' );
+wv_clear_env( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' );
+wv_clear_env( 'WARMVAST_TRUSTED_PROXY_IPS' );
+
+$file_values = warmvast_env_file_values( $env_file );
+same( 'https://quoted.example/webhook', warmvast_config_value( 'WARMVAST_N8N_LEAD_WEBHOOK_URL', '', $env_file ), 'file fallback reads dotenv URL value' );
+same( 'file-secret', warmvast_config_value( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET', '', $env_file ), 'file fallback reads dotenv secret value' );
+same( '10.0.0.5,2001:db8::/48', warmvast_config_value( 'WARMVAST_TRUSTED_PROXY_IPS', '', $env_file ), 'file fallback reads trusted proxy config' );
+ok( ! isset( $file_values['UNRELATED_SECRET'] ), 'unrelated dotenv entries are ignored' );
+ok( false === strpos( implode( '|', $file_values ), 'export-syntax-is-not-php-dotenv' ), 'export-style lines are rejected by the PHP parser' );
+
+putenv( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET=env-secret' );
+same( 'env-secret', warmvast_config_value( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET', '', $env_file ), 'environment variable wins over dotenv file' );
+wv_clear_env( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' );
+
+$missing_env_file = tempnam( sys_get_temp_dir(), 'wvmissing' );
+unlink( $missing_env_file );
+same( '', warmvast_config_value( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET', '', $missing_env_file ), 'missing secret remains empty when env and file are absent' );
+same( 'warmvast_lead_not_configured', wv_missing_config_probe(), 'missing runtime config still fails closed before dispatch' );
+
+wv_test_clear_log();
+warmvast_config_value( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET', '', $env_file );
+ok( false === strpos( wv_test_read_log(), 'file-secret' ), 'dotenv secret is not logged by config resolution' );
+unlink( $env_file );
+
+section( '8. Webhook signature' );
 
 $body = warmvast_lead_encode( $payload );
 $ts   = '1730000000';
@@ -372,7 +478,7 @@ ok( 'application/json; charset=utf-8' === $sent['args']['headers']['Content-Type
 ok( ! empty( $sent['args']['headers']['X-Warmvast-Request-Id'] ), 'a correlation id is sent for tracing' );
 ok( false === strpos( $sent_body, 'test-secret' ), 'the secret is never part of the body' );
 
-section( '8. Failure is never reported as success' );
+section( '9. Failure is never reported as success' );
 
 wv_test_clear_log();
 $GLOBALS['wv_test_http'] = array( 'response' => array( 'code' => 500 ) );
@@ -394,7 +500,7 @@ foreach ( array( 'Alexander', 'alexotvnl', '47551893', 'Sluiswaard', 'test123', 
 	ok( false === strpos( $log, $secret_ish ), "logs do not leak '" . substr( $secret_ish, 0, 12 ) . "'" );
 }
 
-section( '9. Secrets never reach the frontend' );
+section( '10. Secrets never reach the frontend' );
 
 $frontend = array(
 	$theme . '/assets/js/woningscan.js',
@@ -422,7 +528,7 @@ ok( false === strpos( $tpl, 'data-endpoint' ), 'no submission endpoint is printe
 ok( false !== strpos( $tpl, '_gotcha' ), 'the honeypot field is still rendered' );
 ok( false !== strpos( $tpl, 'privacy_akkoord' ), 'the privacy consent checkbox is still rendered' );
 
-section( '10. Trusted-proxy client IP detection and rate limit buckets' );
+section( '11. Trusted-proxy client IP detection and rate limit buckets' );
 
 same(
 	'10.0.0.5',

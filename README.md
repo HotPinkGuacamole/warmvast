@@ -121,7 +121,9 @@ those downloads WordPress core itself, and neither imports any content — this 
   ```
 - Production secrets live in `/home/container/.warmvast-env`, outside Git. `start.sh` exports
   that file before PHP/nginx/WordPress services start, so use shell assignments such as
-  `WARMVAST_N8N_LEAD_WEBHOOK_SECRET=...` there.
+  `WARMVAST_N8N_LEAD_WEBHOOK_SECRET=...` there; do not use `export` prefixes or commit the file.
+  If PHP-FPM does not preserve inherited environment variables, the theme config reads the same
+  file directly as a conservative dotenv fallback.
 
 **WordPress core is committed** (see `.gitignore`), so `generic/latest.sh` pulls an immediately
 servable webroot — no separate install step. Update core with wp-cli (`wp core update`) and
