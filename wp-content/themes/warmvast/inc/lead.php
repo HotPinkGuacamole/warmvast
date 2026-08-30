@@ -400,7 +400,7 @@ function warmvast_lead_log( $reason, $status, $request_id ) {
  * @return bool True when the request may proceed.
  */
 function warmvast_lead_rate_limit_ok() {
-	$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+	$ip = warmvast_get_client_ip();
 	if ( '' === $ip ) {
 		return true; // can't identify the caller; don't block a possibly real lead.
 	}

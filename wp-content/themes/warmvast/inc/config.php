@@ -138,6 +138,172 @@ if ( ! defined( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' ) ) {
 }
 
 /**
+ * Trusted reverse proxies for client-IP detection.
+ *
+ * Empty by default, which means REMOTE_ADDR is always used. On production,
+ * set this in the host environment/server config to Endurer's real proxy
+ * IP/CIDR values, comma-separated, e.g.:
+ *   WARMVAST_TRUSTED_PROXY_IPS=10.0.0.5,10.0.0.6,2001:db8::/48
+ *
+ * Forwarded headers are inspected only when the immediate REMOTE_ADDR is in
+ * this allowlist. Never set this from frontend JavaScript.
+ */
+if ( ! defined( 'WARMVAST_TRUSTED_PROXY_IPS' ) ) {
+	define( 'WARMVAST_TRUSTED_PROXY_IPS', getenv( 'WARMVAST_TRUSTED_PROXY_IPS' ) ?: '' );
+}
+
+/**
+ * Test whether an IP address belongs to a CIDR range.
+ *
+ * @param string $ip   Valid IP address.
+ * @param string $cidr CIDR block, e.g. 192.0.2.0/24 or 2001:db8::/32.
+ * @return bool
+ */
+function warmvast_ip_in_cidr( $ip, $cidr ) {
+	$parts = explode( '/', (string) $cidr, 2 );
+	if ( 2 !== count( $parts ) || '' === trim( $parts[0] ) || '' === trim( $parts[1] ) || ! ctype_digit( trim( $parts[1] ) ) ) {
+		return false;
+	}
+
+	$range = trim( $parts[0] );
+	$bits  = (int) trim( $parts[1] );
+	if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) || ! filter_var( $range, FILTER_VALIDATE_IP ) ) {
+		return false;
+	}
+
+	$ip_packed    = @inet_pton( $ip );
+	$range_packed = @inet_pton( $range );
+	if ( false === $ip_packed || false === $range_packed || strlen( $ip_packed ) !== strlen( $range_packed ) ) {
+		return false;
+	}
+
+	$max_bits = 4 === strlen( $ip_packed ) ? 32 : 128;
+	if ( $bits < 0 || $bits > $max_bits ) {
+		return false;
+	}
+
+	$full_bytes = intdiv( $bits, 8 );
+	$remainder  = $bits % 8;
+	if ( $full_bytes > 0 && substr( $ip_packed, 0, $full_bytes ) !== substr( $range_packed, 0, $full_bytes ) ) {
+		return false;
+	}
+	if ( 0 === $remainder ) {
+		return true;
+	}
+
+	$mask = ( 0xff << ( 8 - $remainder ) ) & 0xff;
+	return ( ord( $ip_packed[ $full_bytes ] ) & $mask ) === ( ord( $range_packed[ $full_bytes ] ) & $mask );
+}
+
+/**
+ * Parse trusted proxy configuration into valid exact IPs and CIDR ranges.
+ *
+ * Invalid entries are ignored so a typo does not make arbitrary forwarded
+ * headers trusted.
+ *
+ * @param string|null $trusted_proxy_ips Optional raw config for tests.
+ * @return array<int,string>
+ */
+function warmvast_trusted_proxy_entries( $trusted_proxy_ips = null ) {
+	$raw     = null === $trusted_proxy_ips && defined( 'WARMVAST_TRUSTED_PROXY_IPS' ) ? WARMVAST_TRUSTED_PROXY_IPS : (string) $trusted_proxy_ips;
+	$entries = array();
+
+	foreach ( explode( ',', (string) $raw ) as $entry ) {
+		$entry = trim( $entry );
+		if ( '' === $entry ) {
+			continue;
+		}
+		if ( false !== strpos( $entry, '/' ) ) {
+			$parts = explode( '/', $entry, 2 );
+			if ( 2 === count( $parts ) && warmvast_ip_in_cidr( trim( $parts[0] ), $entry ) ) {
+				$entries[] = $entry;
+			}
+			continue;
+		}
+		if ( filter_var( $entry, FILTER_VALIDATE_IP ) ) {
+			$entries[] = $entry;
+		}
+	}
+
+	return $entries;
+}
+
+/**
+ * Check whether an IP is configured as a trusted immediate proxy.
+ *
+ * @param string      $ip                IP address to test.
+ * @param string|null $trusted_proxy_ips Optional raw config for tests.
+ * @return bool
+ */
+function warmvast_ip_is_trusted_proxy( $ip, $trusted_proxy_ips = null ) {
+	if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+		return false;
+	}
+
+	foreach ( warmvast_trusted_proxy_entries( $trusted_proxy_ips ) as $entry ) {
+		if ( false !== strpos( $entry, '/' ) ) {
+			if ( warmvast_ip_in_cidr( $ip, $entry ) ) {
+				return true;
+			}
+			continue;
+		}
+		if ( $ip === $entry ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Return the safest client IP for server-side throttling.
+ *
+ * REMOTE_ADDR is always the fallback. X-Forwarded-For is inspected only when
+ * REMOTE_ADDR is a configured trusted proxy. The full chain is then walked
+ * from the trusted/right side back toward the client, returning the first
+ * untrusted valid IP. Malformed or uncertain headers fall back to REMOTE_ADDR.
+ *
+ * @param array<string,mixed>|null $server            Optional server array for tests.
+ * @param string|null              $trusted_proxy_ips Optional raw config for tests.
+ * @return string
+ */
+function warmvast_get_client_ip( $server = null, $trusted_proxy_ips = null ) {
+	$server     = null === $server ? $_SERVER : $server;
+	$remote_raw = isset( $server['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $server['REMOTE_ADDR'] ) ) : '';
+	$remote     = filter_var( $remote_raw, FILTER_VALIDATE_IP ) ? $remote_raw : '';
+
+	if ( '' === $remote ) {
+		return $remote_raw;
+	}
+	if ( ! warmvast_ip_is_trusted_proxy( $remote, $trusted_proxy_ips ) ) {
+		return $remote;
+	}
+
+	$xff_raw = isset( $server['HTTP_X_FORWARDED_FOR'] ) ? trim( (string) wp_unslash( $server['HTTP_X_FORWARDED_FOR'] ) ) : '';
+	if ( '' === $xff_raw ) {
+		return $remote;
+	}
+
+	$chain = array();
+	foreach ( explode( ',', $xff_raw ) as $part ) {
+		$ip = trim( $part );
+		if ( '' === $ip || ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			return $remote;
+		}
+		$chain[] = $ip;
+	}
+	$chain[] = $remote;
+
+	for ( $i = count( $chain ) - 1; $i >= 0; $i-- ) {
+		if ( ! warmvast_ip_is_trusted_proxy( $chain[ $i ], $trusted_proxy_ips ) ) {
+			return $chain[ $i ];
+		}
+	}
+
+	return $remote;
+}
+
+/**
  * EP-Online Public API key for registered energy labels.
  *
  * Request a key via EP-Online/RVO and define it here or in wp-config.php. When

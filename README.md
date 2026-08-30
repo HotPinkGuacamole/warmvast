@@ -68,8 +68,12 @@ php -c <custom-ini> wp-cli.phar --path=<repo> <command>
   Measures cross the wire as keys and are mapped to labels server-side against
   `warmvast_isde_rates()`, so a client cannot invent a service. Signature n8n must verify:
   `HMAC_SHA256("<X-Warmvast-Timestamp>.<raw JSON body>", secret)`. Only a 2xx from n8n is
-  reported to the visitor as success. Run `php tools/test-lead-payload.php` after touching any
-  of this.
+  reported to the visitor as success. The lead endpoint is rate-limited at 5 submissions per
+  600 seconds with transient keys shaped as `warmvast_lead_rl_<md5(client-ip)>`. Client IPs use
+  `REMOTE_ADDR` unless the immediate peer is configured as a trusted reverse proxy via
+  `WARMVAST_TRUSTED_PROXY_IPS` (comma-separated exact IPs/CIDRs, for example
+  `10.0.0.5,10.0.0.6,2001:db8::/48`); only then is `X-Forwarded-For` parsed from the trusted
+  side back toward the visitor. Run `php tools/test-lead-payload.php` after touching any of this.
 - **Page templates**: `template-service.php` (slug-driven, all 4 services), `template-subsidie.php`,
   `template-scan.php`, `template-isolatie.php`, `template-contact.php`, `template-kennisbank.php`,
   `template-over-warmvast.php`, `template-ons-werk.php`, `template-gemeente(s).php`,
@@ -156,7 +160,9 @@ repo. **Items 1 and 2 are blockers — they are legal text, not cosmetics.**
    tracked default, and `WARMVAST_N8N_LEAD_WEBHOOK_URL` is available only if it ever needs to be
    overridden. Until the secret is set the lead form cannot submit at all (by design — see Lead
    intake above). Confirm end to end that a test submission reaches n8n and lands as a Teamleader
-   Deal before relying on it.
+   Deal before relying on it. Also set `WARMVAST_TRUSTED_PROXY_IPS` to Endurer's real
+   reverse-proxy IP/CIDR allowlist before relying on per-visitor production lead throttling; do
+   not guess these values.
 5. **EP-Online label lookup** (`warmvast_ws_public_energylabel()` in `inc/woningscan.php`) scrapes
    EP-Online's public search page since no API key is configured
    (`WARMVAST_EP_ONLINE_API_KEY`). It falls back gracefully to a bouwjaar estimate, but a real

@@ -28,6 +28,7 @@ define( 'ABSPATH', __DIR__ . '/' );
 $GLOBALS['wv_test_http'] = null;   // canned wp_remote_post result.
 $GLOBALS['wv_test_sent'] = null;   // what wp_remote_post was called with.
 $GLOBALS['wv_test_logs'] = array();
+$GLOBALS['wv_test_transients'] = array();
 
 class WP_Error {
 	private $code;
@@ -54,6 +55,10 @@ function add_action() {}
 function register_rest_route() {}
 function __( $text ) {
 	return $text; }
+
+function wp_unslash( $value ) {
+	return is_array( $value ) ? array_map( 'wp_unslash', $value ) : stripslashes( (string) $value );
+}
 
 function sanitize_text_field( $str ) {
 	$str = strip_tags( (string) $str );
@@ -87,6 +92,18 @@ function wp_remote_retrieve_response_code( $res ) {
 	return isset( $res['response']['code'] ) ? $res['response']['code'] : 0;
 }
 
+function get_transient( $key ) {
+	return isset( $GLOBALS['wv_test_transients'][ $key ] ) ? $GLOBALS['wv_test_transients'][ $key ]['value'] : false;
+}
+
+function set_transient( $key, $value, $expiration = 0 ) {
+	$GLOBALS['wv_test_transients'][ $key ] = array(
+		'value'      => $value,
+		'expiration' => $expiration,
+	);
+	return true;
+}
+
 // error_log() is a PHP builtin and cannot be stubbed, so redirect it to a
 // scratch file and read that back instead.
 $GLOBALS['wv_test_logfile'] = tempnam( sys_get_temp_dir(), 'wvlead' );
@@ -108,6 +125,7 @@ function wv_test_clear_log() {
 // -- inc/config.php only fills in empty defaults for constants nobody set.
 define( 'WARMVAST_N8N_LEAD_WEBHOOK_URL', 'https://n8n.example/webhook/test' );
 define( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET', 'test-secret' );
+define( 'WARMVAST_TRUSTED_PROXY_IPS', '10.0.0.5,10.0.0.6,2001:db8::5,192.0.2.0/24,2001:db8:abcd::/48' );
 
 $theme = __DIR__ . '/../wp-content/themes/warmvast';
 require_once $theme . '/inc/config.php';
@@ -160,6 +178,19 @@ function wv_submission( $overrides = array() ) {
 		'privacyAccepted' => true,
 	);
 	return array_merge( $base, $overrides );
+}
+
+function wv_server( $remote_addr, $xff = null ) {
+	$server = array( 'REMOTE_ADDR' => $remote_addr );
+	if ( null !== $xff ) {
+		$server['HTTP_X_FORWARDED_FOR'] = $xff;
+	}
+	return $server;
+}
+
+function wv_reset_rate_limit_state() {
+	$GLOBALS['wv_test_transients'] = array();
+	unset( $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_X_FORWARDED_FOR'] );
 }
 
 // ---------------------------------------------------------------------------
@@ -390,6 +421,75 @@ ok( false === stripos( $tpl, 'formspree' ), 'no Formspree reference remains in t
 ok( false === strpos( $tpl, 'data-endpoint' ), 'no submission endpoint is printed into the markup' );
 ok( false !== strpos( $tpl, '_gotcha' ), 'the honeypot field is still rendered' );
 ok( false !== strpos( $tpl, 'privacy_akkoord' ), 'the privacy consent checkbox is still rendered' );
+
+section( '10. Trusted-proxy client IP detection and rate limit buckets' );
+
+same(
+	'10.0.0.5',
+	warmvast_get_client_ip( wv_server( '10.0.0.5', '198.51.100.10' ), '' ),
+	'no trusted proxies configured uses REMOTE_ADDR'
+);
+same(
+	'203.0.113.9',
+	warmvast_get_client_ip( wv_server( '203.0.113.9', '198.51.100.10' ), '10.0.0.5' ),
+	'direct internet request spoofing X-Forwarded-For is ignored'
+);
+same(
+	'198.51.100.10',
+	warmvast_get_client_ip( wv_server( '10.0.0.5', '198.51.100.10' ), '10.0.0.5' ),
+	'trusted immediate proxy extracts the real client IP'
+);
+same(
+	'198.51.100.20',
+	warmvast_get_client_ip( wv_server( '10.0.0.6', '198.51.100.20, 10.0.0.5' ), '10.0.0.5,10.0.0.6' ),
+	'multiple trusted proxy hops are walked from the right'
+);
+same(
+	'10.0.0.5',
+	warmvast_get_client_ip( wv_server( '10.0.0.5', '198.51.100.20, not-an-ip' ), '10.0.0.5' ),
+	'malformed X-Forwarded-For values fall back to REMOTE_ADDR'
+);
+same(
+	'10.0.0.5',
+	warmvast_get_client_ip( wv_server( '10.0.0.5', '   ' ), '10.0.0.5' ),
+	'empty X-Forwarded-For falls back to REMOTE_ADDR'
+);
+same(
+	'198.51.100.30',
+	warmvast_get_client_ip( wv_server( '192.0.2.25', '198.51.100.30' ), '192.0.2.0/24' ),
+	'IPv4 CIDR trusted proxy is supported'
+);
+same(
+	'2001:db8:ffff::10',
+	warmvast_get_client_ip( wv_server( '2001:db8::5', '2001:db8:ffff::10' ), '2001:db8::5' ),
+	'IPv6 exact trusted proxy is supported'
+);
+same(
+	'2001:db8:ffff::20',
+	warmvast_get_client_ip( wv_server( '2001:db8:abcd::99', '2001:db8:ffff::20' ), '2001:db8:abcd::/48' ),
+	'IPv6 CIDR trusted proxy is supported'
+);
+
+wv_reset_rate_limit_state();
+$_SERVER['REMOTE_ADDR']          = '10.0.0.5';
+$_SERVER['HTTP_X_FORWARDED_FOR'] = '198.51.100.41';
+for ( $i = 0; $i < WARMVAST_LEAD_RATE_LIMIT; $i++ ) {
+	ok( warmvast_lead_rate_limit_ok(), 'client A request ' . ( $i + 1 ) . ' is allowed' );
+}
+
+$_SERVER['HTTP_X_FORWARDED_FOR'] = '198.51.100.42';
+ok( warmvast_lead_rate_limit_ok(), 'client B is not blocked by client A through the same trusted proxy' );
+
+$_SERVER['HTTP_X_FORWARDED_FOR'] = '198.51.100.41';
+ok( ! warmvast_lead_rate_limit_ok(), 'client A sixth request is still rate limited' );
+
+$client_a_key = 'warmvast_lead_rl_' . md5( '198.51.100.41' );
+$client_b_key = 'warmvast_lead_rl_' . md5( '198.51.100.42' );
+$proxy_key    = 'warmvast_lead_rl_' . md5( '10.0.0.5' );
+same( WARMVAST_LEAD_RATE_LIMIT, $GLOBALS['wv_test_transients'][ $client_a_key ]['value'], 'client A has its own 5-request bucket' );
+same( 1, $GLOBALS['wv_test_transients'][ $client_b_key ]['value'], 'client B has a distinct bucket behind the same proxy' );
+ok( ! isset( $GLOBALS['wv_test_transients'][ $proxy_key ] ), 'trusted proxy REMOTE_ADDR is not used as the shared bucket key' );
+same( WARMVAST_LEAD_RATE_WINDOW, $GLOBALS['wv_test_transients'][ $client_a_key ]['expiration'], 'rate-limit window remains 600 seconds' );
 
 // ---------------------------------------------------------------------------
 
