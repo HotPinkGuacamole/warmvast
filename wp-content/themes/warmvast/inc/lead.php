@@ -6,7 +6,7 @@
  *
  * The browser never talks to n8n. It posts the raw form input here; this file
  * validates it, builds the canonical payload and forwards it server-to-server
- * with an HMAC signature. That indirection exists for one reason: the webhook
+ * with n8n Header Auth. That indirection exists for one reason: the webhook
  * secret must not be reachable from frontend JavaScript, and anything shipped
  * to the browser is reachable.
  *
@@ -267,38 +267,7 @@ function warmvast_lead_build_payload( $raw ) {
 }
 
 /**
- * Sign the exact body being transmitted.
- *
- * Signing "<timestamp>.<body>" (rather than the body alone) is what lets n8n
- * reject a replayed request: the timestamp is covered by the signature, so it
- * cannot be rewritten without the secret.
- *
- * @param string $timestamp Unix timestamp, as sent in X-Warmvast-Timestamp.
- * @param string $body      Raw JSON body, byte for byte as sent.
- * @param string $secret    Shared secret.
- * @return string Hex HMAC-SHA256.
- */
-function warmvast_lead_signature( $timestamp, $body, $secret ) {
-	return hash_hmac( 'sha256', warmvast_lead_signed_message( $timestamp, $body ), $secret );
-}
-
-/**
- * Build the exact message covered by the webhook HMAC.
- *
- * @param string $timestamp Unix timestamp, as sent in X-Warmvast-Timestamp.
- * @param string $body      Raw JSON body, byte for byte as sent.
- * @return string Signed message.
- */
-function warmvast_lead_signed_message( $timestamp, $body ) {
-	return $timestamp . '.' . $body;
-}
-
-/**
  * Encode the payload exactly as it will be transmitted.
- *
- * One function so the signed bytes and the sent bytes can never diverge:
- * re-encoding for the signature would risk a different escaping of the same
- * data, and n8n would then reject every legitimate request.
  *
  * @param array<string,mixed> $payload Canonical payload.
  * @return string|false JSON, or false when encoding fails.
@@ -337,19 +306,16 @@ function warmvast_lead_dispatch( $payload, $request_id ) {
 		);
 	}
 
-	$timestamp = (string) time();
-
 	$res = wp_remote_post(
 		$url,
 		array(
 			'timeout'     => WARMVAST_LEAD_TIMEOUT,
 			'redirection' => 0,
 			'headers'     => array(
-				'Content-Type'          => 'application/json; charset=utf-8',
-				'Accept'                => 'application/json',
-				'X-Warmvast-Timestamp'  => $timestamp,
-				'X-Warmvast-Signature'  => warmvast_lead_signature( $timestamp, $body, $secret ),
-				'X-Warmvast-Request-Id' => $request_id,
+				'Content-Type'                 => 'application/json; charset=utf-8',
+				'Accept'                       => 'application/json',
+				'X-Warmvast-Webhook-Secret'    => $secret,
+				'X-Warmvast-Request-Id'        => $request_id,
 			),
 			'body'        => $body,
 		)
@@ -383,7 +349,7 @@ function warmvast_lead_dispatch( $payload, $request_id ) {
  * Log a lead-webhook failure.
  *
  * Deliberately records only what is needed to debug the integration: never the
- * payload, the customer's details, the secret, the signature or the headers.
+ * payload, the customer's details, the secret or the headers.
  * The correlation id is the join key -- it is sent to n8n as
  * X-Warmvast-Request-Id, so a failure here can be traced there without either
  * side logging personal data.

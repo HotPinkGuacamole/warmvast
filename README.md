@@ -53,12 +53,12 @@ php -c <custom-ini> wp-cli.phar --path=<repo> <command>
   The older manual multi-step form (`template-parts/isolatiescan.php` / `assets/js/isolatiescan.js`)
   described in the blueprint has been removed — it was fully superseded and no longer enqueued.
 - **Lead intake**: `inc/lead.php` (`POST /wp-json/warmvast/v1/lead`). The browser posts the form
-  to *this site*, which validates it and forwards a minimal, HMAC-signed JSON payload to n8n;
+  to *this site*, which validates it and forwards a minimal, Header-Auth-protected JSON payload to n8n;
   n8n creates/reuses the Teamleader Contact and its Deal. WordPress knows nothing about
   Teamleader — no OAuth, no API endpoints, no IDs, no pipelines — and the webhook URL/secret
   never reach the browser. The production webhook URL defaults to
   `https://n8n.warmvastisolatie.nl/webhook/warmvast-site-lead` and can be overridden with
-  `WARMVAST_N8N_LEAD_WEBHOOK_URL`; the HMAC key must be supplied outside Git as
+  `WARMVAST_N8N_LEAD_WEBHOOK_URL`; the header-auth secret must be supplied outside Git as
   `WARMVAST_N8N_LEAD_WEBHOOK_SECRET` (host environment preferred, or gitignored `wp-config.php`).
   While either is empty the form refuses to submit and tells the visitor to phone, rather than
   dropping a lead. **Only the six canonical fields are sent** — name, email, phone,
@@ -66,8 +66,8 @@ php -c <custom-ini> wp-cli.phar --path=<repo> <command>
   energielabel, m² per bouwdeel, ISDE, besparing, verdubbeling) stay on the site on purpose:
   they are indications, and indications are the wrong thing to store as authoritative CRM data.
   Measures cross the wire as keys and are mapped to labels server-side against
-  `warmvast_isde_rates()`, so a client cannot invent a service. Signature n8n must verify:
-  `HMAC_SHA256("<X-Warmvast-Timestamp>.<raw JSON body>", secret)`. Only a 2xx from n8n is
+  `warmvast_isde_rates()`, so a client cannot invent a service. n8n verifies
+  `X-Warmvast-Webhook-Secret` with its Webhook node Header Auth. Only a 2xx from n8n is
   reported to the visitor as success. The lead endpoint is rate-limited at 5 submissions per
   600 seconds with transient keys shaped as `warmvast_lead_rl_<md5(client-ip)>`. Client IPs use
   `REMOTE_ADDR` unless the immediate peer is configured as a trusted reverse proxy via

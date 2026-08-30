@@ -198,19 +198,18 @@ if ( ! defined( 'WARMVAST_WARRANTY_YEARS' ) ) {
  *
  * The browser does NOT call n8n. It posts to this site's own REST route
  * (see inc/lead.php), which validates the submission and forwards a minimal,
- * HMAC-signed payload server-to-server. n8n owns everything downstream:
+ * Header-Auth-protected payload server-to-server. n8n owns everything downstream:
  * contact matching, deal creation, Teamleader OAuth and IDs. WordPress knows
  * none of that on purpose.
  *
- * The webhook URL is public routing information; the HMAC secret is not.
+ * The webhook URL is public routing information; the header-auth secret is not.
  * Prefer host environment variables so deployment can recreate wp-config.php
  * without losing the integration. While either value is empty the lead endpoint
  * refuses the submission and the visitor is told to phone us instead --
  * deliberately loud, because the one thing that must never happen is a lead
  * silently vanishing.
  *
- * The signature n8n must verify is:
- *   HMAC_SHA256( "<X-Warmvast-Timestamp>.<raw JSON body>", <secret> )
+ * n8n's Webhook node verifies X-Warmvast-Webhook-Secret before the workflow runs.
  */
 if ( ! defined( 'WARMVAST_N8N_LEAD_WEBHOOK_URL' ) ) {
 	define(

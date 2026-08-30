@@ -8,8 +8,8 @@
  * This repository has no PHPUnit/WP test-suite setup, and standing one up to
  * cover one endpoint would be a bigger change than the endpoint itself. So
  * this is a dependency-free runner over the parts worth pinning down: what
- * ends up in the payload, what can never end up in it, and that the HMAC is
- * computed over exactly the bytes that get transmitted.
+ * ends up in the payload, what can never end up in it, and what authentication
+ * headers are sent server-to-server.
  *
  * The WordPress functions below are stubs, so this does NOT prove that real
  * WP sanitisation behaves identically -- the stubs are deliberately no more
@@ -446,61 +446,26 @@ warmvast_config_value( 'WARMVAST_N8N_LEAD_WEBHOOK_SECRET', '', $env_file );
 ok( false === strpos( wv_test_read_log(), 'file-secret' ), 'dotenv secret is not logged by config resolution' );
 unlink( $env_file );
 
-section( '8. Webhook signature' );
+section( '8. Webhook header auth' );
 
 $body = warmvast_lead_encode( $payload );
-$ts   = '1730000000';
-$sig  = warmvast_lead_signature( $ts, $body, 'test-secret' );
+ok( ! function_exists( 'warmvast_lead_signature' ), 'custom HMAC helper is removed' );
+ok( ! function_exists( 'warmvast_lead_signed_message' ), 'custom signed-message helper is removed' );
 
-same( hash_hmac( 'sha256', $ts . '.' . $body, 'test-secret' ), $sig, 'signature is HMAC-SHA256 over "<timestamp>.<body>"' );
-ok( $sig !== warmvast_lead_signature( '1730000001', $body, 'test-secret' ), 'changing the timestamp changes the signature (replay protection)' );
-ok( $sig !== warmvast_lead_signature( $ts, $body . ' ', 'test-secret' ), 'changing one byte of the body changes the signature' );
-ok( $sig !== warmvast_lead_signature( $ts, $body, 'other-secret' ), 'a different secret produces a different signature' );
-
-$fixture_payload = array(
-	'name'            => 'Zoë van Dijk',
-	'email'           => 'zoe@example.test',
-	'phone'           => '+31612345678',
-	'address'         => array(
-		'street'     => 'Prinsengracht 10',
-		'postalCode' => '1015AB',
-		'city'       => 'Amsterdam',
-	),
-	'measures'        => array( 'Dakisolatie', 'HR++ glas' ),
-	'customerComment' => "Dak + glas, budget € 5000. Nieuwe regel:\nAkkoord.",
-);
-$fixture_body     = warmvast_lead_encode( $fixture_payload );
-$fixture_ts       = '1700000000';
-$fixture_secret   = 'test-secret-not-production';
-$fixture_message  = warmvast_lead_signed_message( $fixture_ts, $fixture_body );
-$fixture_expected = '{"name":"Zoë van Dijk","email":"zoe@example.test","phone":"+31612345678","address":{"street":"Prinsengracht 10","postalCode":"1015AB","city":"Amsterdam"},"measures":["Dakisolatie","HR++ glas"],"customerComment":"Dak + glas, budget € 5000. Nieuwe regel:\nAkkoord."}';
-$fixture_hmac     = 'e978070bb75a02b2698866813d5295d8ef3fd426e88e83951fa37ba637ca8a0f';
-
-same( $fixture_expected, $fixture_body, 'fixture body is exact deterministic JSON, including UTF-8 and escaped newline' );
-same( $fixture_ts . '.' . $fixture_expected, $fixture_message, 'fixture signed message is exactly "<timestamp>.<body>"' );
-same( $fixture_hmac, warmvast_lead_signature( $fixture_ts, $fixture_body, $fixture_secret ), 'fixture HMAC is stable' );
-ok( $fixture_hmac !== warmvast_lead_signature( $fixture_ts, $fixture_body . ' ', $fixture_secret ), 'fixture HMAC changes when the body changes' );
-ok( $fixture_hmac !== warmvast_lead_signature( '1700000001', $fixture_body, $fixture_secret ), 'fixture HMAC changes when the timestamp changes' );
-
-// The signature must cover the exact transmitted bytes: re-encoding the
-// payload separately for signing could differ from what is sent.
 $GLOBALS['wv_test_http'] = array( 'response' => array( 'code' => 200 ) );
 $result = warmvast_lead_dispatch( $payload, 'req-123' );
 ok( true === $result, 'a 2xx from n8n is a successful dispatch' );
 
 $sent      = $GLOBALS['wv_test_sent'];
 $sent_body = $sent['args']['body'];
-$sent_ts   = $sent['args']['headers']['X-Warmvast-Timestamp'];
-$sent_sig  = $sent['args']['headers']['X-Warmvast-Signature'];
+$headers   = $sent['args']['headers'];
 
-same(
-	hash_hmac( 'sha256', $sent_ts . '.' . $sent_body, 'test-secret' ),
-	$sent_sig,
-	'the transmitted signature verifies against the exact transmitted body'
-);
 same( $payload, json_decode( $sent_body, true ), 'the transmitted body decodes back to the canonical payload' );
-ok( 'application/json; charset=utf-8' === $sent['args']['headers']['Content-Type'], 'body is sent as JSON' );
-ok( ! empty( $sent['args']['headers']['X-Warmvast-Request-Id'] ), 'a correlation id is sent for tracing' );
+ok( 'application/json; charset=utf-8' === $headers['Content-Type'], 'body is sent as JSON' );
+same( 'test-secret', $headers['X-Warmvast-Webhook-Secret'], 'configured secret is sent in the n8n header-auth header' );
+ok( ! isset( $headers['X-Warmvast-Timestamp'] ), 'custom timestamp header is not sent' );
+ok( ! isset( $headers['X-Warmvast-Signature'] ), 'custom signature header is not sent' );
+ok( ! empty( $headers['X-Warmvast-Request-Id'] ), 'a correlation id is sent for tracing' );
 ok( false === strpos( $sent_body, 'test-secret' ), 'the secret is never part of the body' );
 
 section( '9. Failure is never reported as success' );
@@ -521,7 +486,7 @@ $log = wv_test_read_log();
 ok( '' !== $log, 'failures are logged' );
 ok( false !== strpos( $log, 'HTTP status: 500' ), 'the log records the HTTP status' );
 ok( false !== strpos( $log, 'req-500' ), 'the log records the correlation id' );
-foreach ( array( 'Alexander', 'alexotvnl', '47551893', 'Sluiswaard', 'test123', 'test-secret', $sent_sig ) as $secret_ish ) {
+foreach ( array( 'Alexander', 'alexotvnl', '47551893', 'Sluiswaard', 'test123', 'test-secret' ) as $secret_ish ) {
 	ok( false === strpos( $log, $secret_ish ), "logs do not leak '" . substr( $secret_ish, 0, 12 ) . "'" );
 }
 
