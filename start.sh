@@ -11,6 +11,12 @@
 # then handing off.
 set -e
 
+if [ -f /home/container/.warmvast-env ]; then
+  set -a
+  . /home/container/.warmvast-env
+  set +a
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/warmvast-db.sql" ]; then
   cp "$SCRIPT_DIR/warmvast-db.sql" /home/container/warmvast-db.sql

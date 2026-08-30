@@ -119,6 +119,9 @@ those downloads WordPress core itself, and neither imports any content — this 
   ```
   curl -fsSL https://startup.endurerhosting.com/generic/latest.sh | bash && bash /home/container/www/start.sh
   ```
+- Production secrets live in `/home/container/.warmvast-env`, outside Git. `start.sh` exports
+  that file before PHP/nginx/WordPress services start, so use shell assignments such as
+  `WARMVAST_N8N_LEAD_WEBHOOK_SECRET=...` there.
 
 **WordPress core is committed** (see `.gitignore`), so `generic/latest.sh` pulls an immediately
 servable webroot — no separate install step. Update core with wp-cli (`wp core update`) and
@@ -156,7 +159,7 @@ repo. **Items 1 and 2 are blockers — they are legal text, not cosmetics.**
    rows were reaching visitors). Flip to `true` only once `items`, `rating` and `count` are real:
    publishing invented reviews is an oneerlijke handelspraktijk, not a placeholder.
 4. **Verify ISDE 2026 tariffs against RVO** (`warmvast_isde_rates()`), and set
-   `WARMVAST_N8N_LEAD_WEBHOOK_SECRET` in the server environment. The production n8n URL is the
+   `WARMVAST_N8N_LEAD_WEBHOOK_SECRET` in `/home/container/.warmvast-env`. The production n8n URL is the
    tracked default, and `WARMVAST_N8N_LEAD_WEBHOOK_URL` is available only if it ever needs to be
    overridden. Until the secret is set the lead form cannot submit at all (by design — see Lead
    intake above). Confirm end to end that a test submission reaches n8n and lands as a Teamleader

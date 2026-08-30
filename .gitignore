@@ -9,6 +9,7 @@
 # (or by wp-cli locally); must never contain committed real credentials.
 /wp-config.php
 /.htaccess
+/.warmvast-env
 
 # Local dev tooling, not needed on the server.
 /wp-cli.phar
