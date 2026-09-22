@@ -86,6 +86,25 @@ php -c <custom-ini> wp-cli.phar --path=<repo> <command>
   into — so CSS never has to guess a crop and clip someone's head. Regenerate with
   `python tools/build-images.py` (see that file's header for the reasoning); the camera originals
   are gitignored, only the derived variants are committed.
+- **Logo SVGs in the theme must be outlined, never live text.** The brandkit lockups
+  (`Warmvast Brandkit/Logo/Full Color/Warmvast-Logo-FullColor-OnWhite.svg` = dark ink,
+  `-OnDark.svg` = white ink) carry the wordmark as `<text font-family="SpaceGrotesk-Bold">`.
+  An SVG loaded through `<img src>` is an isolated document: it cannot see the page's
+  `@font-face`, so such a file only renders correctly on a machine that has Space Grotesk
+  installed *system-wide* — which the design machine does and visitors don't. Everywhere else
+  the browser silently substitutes a fallback face and the wordmark comes out in the wrong type
+  (the giveaway is the `VA` of WARMVAST closing up). The two copies under
+  `assets/img/warmvast-logo-horizontal-*.svg` are therefore those exact brandkit files with the
+  type converted to `<path>` geometry at identical coordinates, using the brandkit's own
+  `Fonts/Space Grotesk/static/*.ttf`. **The brandkit itself is left as delivered** — it is the
+  design source, not a web asset. **After any re-delivery of the brandkit, redo that conversion**
+  (Illustrator: Type → Create Outlines) and check with `grep -l "<text" ` over the theme's SVGs
+  that nothing came back. Note that `Logo/*/Warmvast-Logo-*-Outlined.svg` in the brandkit are
+  *wordmark-only* lockups with no icon — despite the name they are not outlined versions of the
+  full logo, and not drop-in replacements.
+- **Favicon**: `warmvast_favicon_links()` in `inc/seo.php` ships both brandkit favicon SVGs
+  (identical geometry, different shield fill) behind mutually exclusive `prefers-color-scheme`
+  media queries, dark-scheme link first. See the comment there for why the order matters.
 - **Shared layout components**: `.story-row` (small photo + copy, alternating sides, used by
   Over Warmvast, Ons werk and Subsidie service) and `.team-card`, both in `assets/css/main.css`.
   Motion is split across separate elements on purpose — `.story-row__media` takes the
