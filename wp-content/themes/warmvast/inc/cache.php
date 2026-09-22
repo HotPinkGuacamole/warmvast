@@ -199,3 +199,46 @@ add_action( 'trashed_post', 'warmvast_page_cache_purge_all' );
 add_action( 'wp_update_nav_menu', 'warmvast_page_cache_purge_all' );
 add_action( 'switch_theme', 'warmvast_page_cache_purge_all' );
 add_action( 'customize_save_after', 'warmvast_page_cache_purge_all' );
+
+/**
+ * Auto-purge on deploy. Every purge trigger above is a WordPress hook, and a
+ * `git pull` that changes theme PHP directly on disk (see the deploy note at
+ * the top of .gitignore -- the hosting panel does exactly this on every
+ * restart) fires none of them: a page edited in this deploy keeps serving
+ * its pre-deploy cached HTML for up to WARMVAST_PAGE_CACHE_TTL after the new
+ * code is live.
+ *
+ * Detected via .git/FETCH_HEAD's mtime, which a `git pull` always rewrites
+ * regardless of whether the branch fast-forwarded or refs ended up packed
+ * (unlike refs/heads/<branch>, which git may omit from disk after a gc).
+ * One stat() call, so it runs on every request -- including cache HITS --
+ * without reintroducing the per-request cost a page cache exists to avoid;
+ * the compare-and-maybe-purge itself only does real work the first request
+ * after a deploy.
+ */
+function warmvast_page_cache_deploy_fingerprint() {
+	$git_marker = ABSPATH . '.git/FETCH_HEAD';
+	if ( is_file( $git_marker ) ) {
+		return (string) filemtime( $git_marker );
+	}
+	// No .git present (e.g. a non-git deploy) -- fall back to this file's
+	// own mtime so the cache still self-heals after a manual file edit.
+	return (string) filemtime( __FILE__ );
+}
+
+function warmvast_page_cache_maybe_purge_on_deploy() {
+	$marker  = trailingslashit( WARMVAST_PAGE_CACHE_DIR ) . '.deploy-fingerprint';
+	$current = warmvast_page_cache_deploy_fingerprint();
+	$known   = is_file( $marker ) ? file_get_contents( $marker ) : null; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local cache file.
+	if ( $known === $current ) {
+		return;
+	}
+	warmvast_page_cache_purge_all();
+	if ( wp_mkdir_p( WARMVAST_PAGE_CACHE_DIR ) ) {
+		file_put_contents( $marker, $current, LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+	}
+}
+// Priority -1: before warmvast_page_cache_maybe_serve()'s priority-0 HIT
+// check, so a deploy purges its own stale cache before anything is served
+// from it, on the very first request after that deploy.
+add_action( 'template_redirect', 'warmvast_page_cache_maybe_purge_on_deploy', -1 );
