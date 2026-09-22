@@ -58,7 +58,6 @@ $faqs = array(
 warmvast_the_hero(
 	array(
 		'variant' => 'home',
-		'eyebrow' => 'Gratis isolatiescan · resultaat in 2 minuten',
 		'title'   => 'Zit u er warmpjes bij? <em>Wij houden die warmte vast.</em>',
 		'lead'    => 'Eén technische opname aan huis, één heldere offerte per m², en een ISDE-subsidie die verdubbelt zodra u twee maatregelen combineert. Ontdek binnen 2 minuten wat isoleren uw woning oplevert.',
 		'actions' => array(
