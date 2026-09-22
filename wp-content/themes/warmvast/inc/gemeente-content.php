@@ -48,10 +48,20 @@ if ( ! defined( 'ABSPATH' ) ) {
  * De 7 gemeenten van de regio Zaanstreek-Waterland, inclusief hun eigen
  * NIP-gefinancierde lokale isolatiesubsidie ("gemeentesubsidie").
  *
+ * `karakter`, `aandacht` and every `gemeentesubsidie` field are editable
+ * per gemeente from that gemeente's own page edit screen in wp-admin (a
+ * "Warmvast — gemeente-inhoud" meta box, see inc/admin.php) rather than
+ * from a global settings page -- this content only ever applies to ONE
+ * page, so it belongs on that page, the standard WordPress pattern for
+ * page-specific structured content. Same overlay pattern as everywhere
+ * else in this codebase: the literal text below is the default, a saved
+ * postmeta field overlays on top of it field by field, and an empty field
+ * always means "use the default" rather than "show nothing".
+ *
  * @return array<string,array<string,mixed>>
  */
 function warmvast_zaanstreek_gemeenten() {
-	return array(
+	$defaults = array(
 
 		'zaanstad' => array(
 			'naam'     => 'Zaanstad',
@@ -194,6 +204,31 @@ function warmvast_zaanstreek_gemeenten() {
 		),
 
 	);
+
+	foreach ( $defaults as $key => $gemeente ) {
+		$page = get_page_by_path( 'subsidie-' . $key, OBJECT, 'page' );
+		if ( ! $page ) {
+			continue;
+		}
+		$get = static function ( $field ) use ( $page ) {
+			$val = get_post_meta( $page->ID, '_warmvast_' . $field, true );
+			return is_string( $val ) && '' !== trim( $val ) ? $val : null;
+		};
+		foreach ( array( 'karakter', 'aandacht' ) as $field ) {
+			$val = $get( $field );
+			if ( null !== $val ) {
+				$defaults[ $key ][ $field ] = $val;
+			}
+		}
+		foreach ( array( 'naam', 'bedrag_max', 'bedrag', 'bedrag_laag', 'voorwaarden', 'looptijd', 'bron_url', 'gecontroleerd' ) as $field ) {
+			$val = $get( 'gs_' . $field );
+			if ( null !== $val ) {
+				$defaults[ $key ]['gemeentesubsidie'][ $field ] = $val;
+			}
+		}
+	}
+
+	return $defaults;
 }
 
 /**

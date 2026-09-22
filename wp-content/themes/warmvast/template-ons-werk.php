@@ -60,16 +60,20 @@ $filmstrip = array(
 );
 ?>
 
-<header class="page-hero">
-	<div class="container page-hero__inner">
-		<nav class="breadcrumb" aria-label="Kruimelpad">
-			<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span aria-hidden="true">/</span><span>Ons werk</span>
-		</nav>
-		<p class="kicker">Ons werk</p>
-		<h1 class="page-hero__title">Achter de schermen bij een dakisolatie</h1>
-		<p class="page-hero__sub">Geen stockfoto's — dit is hoe een dakisolatie er bij Warmvast daadwerkelijk uitziet, van sporen tot afgewerkte nok.</p>
-	</div>
-</header>
+<?php
+warmvast_the_hero(
+	array(
+		'variant'    => 'bedrijf',
+		'breadcrumb' => array(
+			array( 'label' => 'Home', 'url' => home_url( '/' ) ),
+			array( 'label' => 'Ons werk' ),
+		),
+		'eyebrow'    => 'Ons werk',
+		'title'      => 'Achter de schermen bij een dakisolatie',
+		'lead'       => "Geen stockfoto's — dit is hoe een dakisolatie er bij Warmvast daadwerkelijk uitziet, van sporen tot afgewerkte nok.",
+	)
+);
+?>
 
 <!-- ============ STORY ROWS ============ -->
 <section class="section section--surface">

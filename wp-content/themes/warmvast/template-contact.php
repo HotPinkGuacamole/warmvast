@@ -9,17 +9,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 get_header();
+
+warmvast_the_hero(
+	array(
+		'variant'    => 'bedrijf',
+		'breadcrumb' => array(
+			array( 'label' => 'Home', 'url' => home_url( '/' ) ),
+			array( 'label' => 'Contact' ),
+		),
+		'eyebrow'    => 'Contact',
+		'title'      => 'Persoonlijk contact met Warmvast',
+		'lead'       => 'Liever direct de scan doen? Dat gaat het snelst. Wilt u ons spreken? Bel of mail: we reageren binnen 24 uur op werkdagen.',
+	)
+);
 ?>
-<header class="page-hero">
-	<div class="container page-hero__inner">
-		<nav class="breadcrumb" aria-label="Kruimelpad">
-			<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span aria-hidden="true">/</span><span>Contact</span>
-		</nav>
-		<p class="kicker">Contact</p>
-		<h1 class="page-hero__title">Persoonlijk contact met Warmvast</h1>
-		<p class="page-hero__sub">Liever direct de scan doen? Dat gaat het snelst. Wilt u ons spreken? Bel of mail: we reageren binnen 24 uur op werkdagen.</p>
-	</div>
-</header>
 
 <section class="section section--surface">
 	<div class="container grid grid--2" style="align-items:start;gap:clamp(1.5rem,4vw,3rem)">

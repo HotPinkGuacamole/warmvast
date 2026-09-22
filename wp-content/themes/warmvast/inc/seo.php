@@ -189,6 +189,28 @@ function warmvast_favicon_links() {
 	printf( '<link rel="icon" href="%s" sizes="any">' . "\n", warmvast_asset( $d . '/favicon.ico' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- warmvast_asset escapes.
 	printf( '<link rel="icon" type="image/png" sizes="32x32" href="%s">' . "\n", warmvast_asset( $d . '/favicon-32x32.png' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	printf( '<link rel="icon" type="image/png" sizes="16x16" href="%s">' . "\n", warmvast_asset( $d . '/favicon-16x16.png' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
+	/*
+	 * Scalable icon, in both brand variants, copied verbatim from
+	 * `Warmvast Brandkit/Icon/Favicon (512x512)/`. The two files are identical
+	 * geometry and differ only in the shield fill (#242422 vs #fff), so which
+	 * one is correct depends entirely on the colour of the browser's tab strip:
+	 * the white mark is invisible on a light tab, the dark one on a dark tab.
+	 *
+	 * Both links therefore carry an explicit, mutually exclusive `media`, and
+	 * the dark-scheme one is listed FIRST. That ordering is the important part:
+	 * support for `media` on an icon link is uneven, and a browser that ignores
+	 * it sees two equally valid candidates and takes the last — which here is
+	 * the dark-ink variant, i.e. the same icon the site shipped before this and
+	 * the safe one on the light tab strip most people have. So the worst case
+	 * is today's behaviour, never an invisible icon.
+	 *
+	 * Where an SVG icon is supported at all it also wins over the .ico/.png
+	 * above, which stay as the universal fallback.
+	 */
+	printf( '<link rel="icon" type="image/svg+xml" media="(prefers-color-scheme: dark)" href="%s">' . "\n", warmvast_asset( $d . '/favicon-white.svg' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	printf( '<link rel="icon" type="image/svg+xml" media="(prefers-color-scheme: light)" href="%s">' . "\n", warmvast_asset( $d . '/favicon-black.svg' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
 	printf( '<link rel="apple-touch-icon" sizes="180x180" href="%s">' . "\n", warmvast_asset( $d . '/apple-touch-icon.png' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	printf( '<link rel="manifest" href="%s">' . "\n", warmvast_asset( $d . '/site.webmanifest' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }

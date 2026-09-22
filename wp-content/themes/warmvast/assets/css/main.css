@@ -26,7 +26,7 @@
 	--ink:            #1b1f21;
 	--ink-2:          #3c4348;
 	--ink-3:          #666e74; /* WCAG AA vs both --paper (4.79:1) and --surface (5.19:1); was #6c757b at 4.34:1 on paper (fails) */
-	--paper:          #f6f6f2;
+	--paper:          #f4f4ef; /* corrected: what the page has always actually been painted */
 	--surface:        #ffffff;
 	--surface-2:      #fbfbf9;
 	--line:           #e6e7e1;
@@ -59,21 +59,13 @@
 	--shadow:     0 6px 20px rgba(20,40,36,.08), 0 2px 6px rgba(20,40,36,.05);
 	--shadow-lg:  0 24px 60px rgba(12,40,34,.16), 0 6px 18px rgba(12,40,34,.08);
 
-	/* Ambient thermal depth: the SAME soft teal/amber light the hero and
-	   CTA band glow with, just cast onto a light backdrop instead of a dark
-	   one -- so light sections read as part of one continuous atmosphere
-	   instead of a different, flatter material. Was deliberately faint
-	   ("lit paper, never coloured") which is exactly why it read as a
-	   mismatch next to the hero's rich glow; turned up so it's actually felt. */
-	--ambient-cool: rgba(11,107,91,.12);
-	--ambient-warm: rgba(254,208,61,.13);
 
 	/* Fine paper-grain only -- the ruled engineering-grid layer that used to
 	   sit under this (measurement lines every 32px) read as technical
 	   "kladpapier" against the hero/CTA's soft glow, a mismatched visual
 	   language no amount of edge-fading could fix. Zero image requests: a
 	   tiny inline SVG feTurbulence data-URI. */
-	--noise-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+	--noise-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.028 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
 
 	/* Glass system: a gradient hairline (cool->warm, echoing the thermal theme)
 	   over a near-opaque fill so text contrast is never sacrificed for the effect. */
@@ -106,7 +98,19 @@
 	--step-4:  clamp(2.1rem, 1.7rem + 1.9vw, 3.2rem);
 	--step-5:  clamp(2.5rem, 1.9rem + 2.8vw, 3.9rem);
 
-	--header-h: 74px;
+	--header-h: 70px;
+	/* Logo render height. Below ~55px the ISOLATIE descriptor's hairline stem
+	   (8.359 units inside a 462.07-unit viewBox, so its bars are only
+	   (h / 462.07) * 8.359 px wide) drops under 1 physical pixel and gets a
+	   soft antialiasing fringe instead of a crisp edge -- see warmvast_logo_svg()
+	   in inc/template-tags.php for why that no longer means a fully smeared
+	   mark (inlining fixed the worse bug where the whole logo rasterised soft).
+	   46px is a deliberate trade of that one fine descriptor line for a more
+	   compact header: the icon and WARMVAST wordmark are both heavy enough to
+	   stay clean at this size, only the small tagline picks up the fringe. Do
+	   not go materially below this without re-checking that line is still
+	   legible. */
+	--logo-h: 46px;
 
 	/* Ambient haze channels, set by main.js. --wv-mx/my = smoothed pointer;
 	   --wv-fx/fy = card autonomous float; --wv-gx/gy = CTA autonomous float.
@@ -117,6 +121,109 @@
 	--wv-fy: 0;
 	--wv-gx: 0;
 	--wv-gy: 0;
+
+	/* ==================================================================
+	   SEMANTIC ROLES - components reference these, never the primitives.
+	   Surface-scoped: the dark block below redefines the same names.
+	   ================================================================== */
+	--surface-base:    var(--paper);
+	--surface-raised:  var(--surface);
+	--surface-sunken:  var(--surface-2);
+	--text-primary:    var(--ink);
+	--text-secondary:  var(--ink-2);
+	--text-quiet:      var(--ink-3);
+	--border-hairline: var(--line);
+	--border-strong:   var(--ink-3);   /* not --line-strong: 1.44:1 fails WCAG 1.4.11 */
+	--accent-hover:    var(--accent-strong);
+	--accent-text:     var(--accent-ink);
+	--focus-ring:      var(--primary);
+	--error:           #a3201c;        /* the one added colour; sibling of --warn */
+
+	/* ---- Ambient light: the brand's two atmospheric colours ----
+	   The cool teal and warm amber the hero used to glow with. Restored at
+	   their original values after the step-5 demolition removed them along
+	   with the per-section gradients they were feeding. */
+	--ambient-cool: rgba(11,107,91,.22);
+	--ambient-warm: rgba(254,208,61,.24);
+
+	/* ---- The page background. Owned by .page-canvas, nothing else. ----
+	   Two soft radial washes anchored to the TOP of the document, where the
+	   hero sits, dissolving into --paper within ~1.4 viewport heights.
+
+	   Sized in vh, not px and not %: a % stretches with document length (the
+	   bug the step-5 pools had), and a fixed px ramp spread over 4000px
+	   renders as FLAT on a 1,900px page -- which is exactly how the previous
+	   linear version failed on /contact/, where the whole visible page was
+	   one beige. vh ties the wash to the opening screen instead, so the same
+	   proportion of the first view carries colour on a short page and a long
+	   one alike.
+
+	   Radial, not a vertical linear ramp, so the colour has depth and no
+	   horizontal banding. Each gradient reaches full transparency well
+	   inside its own 140vh box (cool by ~60vh, warm by ~92vh), so the layer
+	   never terminates on a visible straight edge -- the failure mode the
+	   whole canvas exists to avoid.
+
+	   Position/size/repeat live INSIDE the token, per gradient: the token
+	   expands into two background layers, so a single trailing `/ size` on
+	   the shorthand would attach to the last layer only and silently leave
+	   the first one auto-sized. */
+	--canvas-wash:
+		radial-gradient(120% 95% at 88% -8%, var(--ambient-cool), transparent 72%)
+			top center / 100% 140vh no-repeat,
+		radial-gradient(100% 85% at 0% 25%, var(--ambient-warm), transparent 78%)
+			top center / 100% 140vh no-repeat;
+
+	/* The one owned dark gradient, defined here and reused. Value is the
+	   homepage hero's existing stack, extracted verbatim so the frozen hero
+	   renders byte-identically. */
+	--dark-gradient:
+		radial-gradient(120% 80% at 85% -10%, rgba(11,107,91,.55), transparent 55%),
+		radial-gradient(90% 70% at 10% 110%, rgba(254,208,61,.10), transparent 50%),
+		linear-gradient(180deg, #171b1d, #1d2426);
+
+	/* ---- Spacing: 4px scale ---- */
+	--space-1: .25rem;  --space-2: .5rem;   --space-3: .75rem;  --space-4: 1rem;
+	--space-5: 1.5rem;  --space-6: 2rem;    --space-7: 3rem;    --space-8: 4rem;
+	--space-9: 6rem;    --space-10: 8rem;
+	--rhythm-tight:  clamp(2rem, 4vw, 3rem);
+	--rhythm-normal: clamp(3rem, 6vw, 5rem);
+	--rhythm-loose:  clamp(5rem, 9vw, 8rem);
+
+	/* ---- Type: base 17px, ratio 1.25. Steps 2-5 compress one step on phones. ---- */
+	--text--1: .85rem;
+	--text-0:  1.0625rem;
+	--text-1:  1.3281rem;
+	--text-2:  clamp(1.3281rem, 1.198rem + .577vw, 1.6602rem);
+	--text-3:  clamp(1.6602rem, 1.498rem + .722vw, 2.0752rem);
+	--text-4:  clamp(2.0752rem, 1.872rem + .902vw, 2.594rem);
+	--text-5:  clamp(2.594rem,  2.340rem + 1.128vw, 3.2425rem);
+	--tracking--1: 0;      --tracking-0: 0;      --tracking-1: -.005em;
+	--tracking-2: -.01em;  --tracking-3: -.02em; --tracking-4: -.025em; --tracking-5: -.03em;
+	--leading--1: 1.6;     --leading-0: 1.6;     --leading-1: 1.5;
+	--leading-2: 1.35;     --leading-3: 1.22;    --leading-4: 1.12;     --leading-5: 1.05;
+	--measure: 65ch;
+
+	/* One shared floor for every LIGHT hero's content box. Sized against the
+	   shortest real case (breadcrumb + h1 + lead, no aside -- e.g. contact) so
+	   it is a safety net, not a forced height: pages with more content (an
+	   aside, a longer lead) simply exceed it. This is what replaces heights
+	   that used to be pure accidents of content length (454px on contact,
+	   642px on spouwmuurisolatie, for no designed reason). The dark home hero
+	   keeps its own 100svh sizing -- unrelated mechanism, see .hero--dark. */
+	--hero-min: 21rem;
+
+	/* ---- Radius: 4px nested scale. Outer = child radius + padding between. ---- */
+	--radius-1: 4px;  --radius-2: 8px;  --radius-3: 12px;
+	--radius-4: 16px; --radius-5: 20px; --radius-6: 24px;
+
+	/* ---- Elevation: exactly two. Hairline is default, shadow the exception. ---- */
+	--elevation-1: 0 1px 2px rgba(20,30,28,.06), 0 2px 6px rgba(20,30,28,.05);
+	--elevation-2: 0 4px 8px rgba(12,40,34,.08), 0 12px 24px rgba(12,40,34,.10);
+
+	/* ---- Motion ---- */
+	--duration-1: 120ms; --duration-2: 180ms; --duration-3: 240ms;
+	--ease-in-out: var(--ease-io);
 }
 
 /* ---------- Reset / base ---------- */
@@ -133,7 +240,7 @@
    position:sticky (it stopped pinning to the top at all -- verified
    locally). `overflow-x: clip` gives the same paint-time clipping without
    turning the element into a scroll container, so sticky keeps working. */
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; overflow-x: clip; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; overflow-x: clip; background-color: var(--surface-base); }
 /* anchor targets clear the sticky header when jumped to */
 :target, #warmvast-woningscan, [id].section { scroll-margin-top: 90px; }
 @media (prefers-reduced-motion: reduce) {
@@ -146,20 +253,87 @@ body {
 	font-family: var(--font-sans);
 	font-size: var(--step-0);
 	line-height: 1.62;
-	color: var(--ink);
-	background-color: #f4f4ef;
-	background-image: var(--noise-texture);
-	background-size: 220px 220px;
-	background-repeat: repeat;
+	color: var(--text-primary);
+	/* No background here. body's own background paints in the block-background
+	   phase, which is ABOVE a z-index:-1 child -- an opaque body would hide
+	   .page-canvas completely. position:relative makes body the canvas's
+	   containing block, so the canvas spans the full document height. */
+	position: relative;
+	background: transparent;
 	-webkit-font-smoothing: antialiased;
 	text-rendering: optimizeLegibility;
 }
+
+/* ---------- The page canvas ----------
+   ONE element owns the entire page background. Absolute, not fixed, so it
+   spans the document's full scroll height rather than the viewport -- and
+   not on <body>, because main.js pins body with position:fixed during the
+   mobile nav scroll-lock, which would jump a body background by the whole
+   scroll offset the moment the menu opens.
+
+   Layer order is gradient -> noise -> content. The FIRST listed background
+   image paints on top, so noise is listed first and sits over the gradient;
+   both sit under every element in normal flow.
+
+   z-index:-1 makes this its own stacking context, but as a SIBLING of the
+   header -- it is an ancestor of nothing, so it traps no sticky header, no
+   dropdown, no off-canvas panel. No new z-index value is introduced. */
+.page-canvas {
+	position: absolute;
+	inset: 0;
+	min-height: 100vh;      /* short pages (404, legal) still get full cover */
+	z-index: -1;
+	pointer-events: none;
+	background:
+		var(--noise-texture) 0 0 / 220px 220px repeat,
+		var(--canvas-wash),
+		var(--surface-base);
+}
+
+/* ---------- Surface scopes ----------
+   A component asks for --text-secondary; the surface decides the value.
+   Dark is rare and deliberate: homepage hero, CTA band, footer.
+   .hero--dark, not bare .hero: .hero is now the universal hero wrapper for
+   EVERY variant (see template-parts/hero.php), light included -- scoping
+   this to bare .hero forced every light hero dark too (white text on white
+   data-card values, exactly the white-on-white failure the comment below
+   warns about, just triggered from the opposite direction). */
+.surface--dark, .hero--dark, .cta-band, .site-footer {
+	--surface-base:    var(--ink);
+	--text-primary:    #fff;
+	--text-secondary:  #b9c4c0;
+	--text-quiet:      #8b9893;
+	--border-hairline: rgba(255,255,255,.12);
+	--border-strong:   var(--line);
+	--focus-ring:      var(--accent);   /* --primary is 2.58:1 on --ink, fails 3:1 */
+}
+/* Light islands sitting INSIDE a dark surface must re-assert paper, or a
+   white card inherits --text-primary:#fff and goes white-on-white.
+   .usp-bar__notch belongs here too, easy to miss because it's a sibling of
+   .usp-bar__grid rather than its descendant: its ::after fill reads
+   --surface-base to blend into the page below the hero, and without this it
+   inherited --ink from .hero--dark same as the card would have -- the
+   concave fillet meant to read as "page" painted as solid dark instead,
+   right at the one edge (the mask curve) where it wasn't already covered by
+   the hero's own background showing through the transparent two-thirds of
+   the mask. Same failure as the white-on-white one above, just dark-on-dark
+   and easier to miss since most of the shape still looked right. */
+.surface--light, .ws, .usp-bar__grid, .usp-bar__notch {
+	--surface-base:    var(--paper);
+	--text-primary:    var(--ink);
+	--text-secondary:  var(--ink-2);
+	--text-quiet:      var(--ink-3);
+	--border-hairline: var(--line);
+	--border-strong:   var(--ink-3);
+	--focus-ring:      var(--primary);
+}
+
 h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.1; margin: 0 0 .5em; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
 /* numeric "instrument" elements: display font + tabular figures */
-.hero__title, .section-head__title, .page-hero__title,
-.verdub__amount, .facts dd, .tariff__value,
+.hero__title, .section-head__title,
+.verdub__amount, .tariff__value,
 .stat__num { font-family: var(--font-display); }
-.verdub__amount, .facts dd, .tariff__value, .stat__num {
+.verdub__amount, .tariff__value, .stat__num {
 	font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; letter-spacing: -.01em;
 }
 h1 { font-size: var(--step-4); }
@@ -193,50 +367,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .section { padding-block: clamp(2.5rem, 5vw, 4.5rem); }
 .section--tight { padding-block: clamp(2rem, 4vw, 3.5rem); }
 
-/* ---- One continuous glowing sheet ----
-   The whole light content area is a single unbroken surface: base paper
-   tone + grain + several large, soft ambient light pools in the SAME
-   teal/amber the hero and CTA band glow with -- so light sections read as
-   the same atmosphere continuing at a brighter exposure, not a different,
-   flatter material next to it. Because it lives on <main> (not per-section)
-   the pools drift across section boundaries with no paper<->surface seams
-   to smooth. Dark sections (hero, cta, footer, --ink) sit opaque on top and
-   hide it. */
-.site-main {
-	position: relative;
-	background-color: #f4f4ef;
-	background-image:
-		var(--noise-texture),
-		radial-gradient(1900px 1300px at 102% 0%, var(--ambient-cool), transparent 72%),
-		radial-gradient(1700px 1200px at -10% 26%, var(--ambient-warm), transparent 70%),
-		radial-gradient(1800px 1250px at 110% 55%, var(--ambient-cool), transparent 70%),
-		radial-gradient(1650px 1150px at -8% 80%, var(--ambient-warm), transparent 68%),
-		radial-gradient(1750px 1200px at 102% 104%, var(--ambient-cool), transparent 70%);
-	background-size: 220px 220px, auto, auto, auto, auto, auto;
-	background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
-}
-/* light sections are now transparent windows onto the continuous sheet */
-.section--paper,
-.section--surface { background: transparent; }
-.section--ink { background: var(--ink); color: #eef1ef; }
+/* .site-main no longer paints anything. The page background belongs to
+   .page-canvas; this is now just a positioning context. */
+.site-main { position: relative; }
 .section--ink h2, .section--ink h3 { color: #fff; }
 
-/* .site-main's ambient-cool/-warm pools (see .site-main) are positioned by
-   PERCENTAGE of the whole page's height, so how strongly one happens to
-   tint the pixels right below the hero varies with how long the rest of
-   the page is. The homepage is long enough that this was never visible --
-   .usp-bar__grid's flat matched color already lines up there -- but the
-   much shorter scan landing page lands a pool close enough to visibly
-   mismatch it. Scoped to that page specifically: applying the same fade
-   site-wide painted an unnecessary flat patch over the homepage's own
-   already-correct blend, creating a new seam that hadn't been there.
-   130px, not 48: measured, the tint keeps drifting until ~80px down before
-   it settles at its true (cooler/greener) value -- a shorter fade only
-   smoothed the first few pixels and still handed off into a visibly
-   different flat tone right after, which read as its own color step even
-   without a hard edge. */
-body.is-scan-landing .hero + .section,
-body.is-story-hero .hero + .section { background-image: linear-gradient(180deg, #f4f4ef 0%, transparent 100%); background-size: 100% 130px; background-position: top; background-repeat: no-repeat; }
 
 .section-head { max-width: 62ch; margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
 .section-head--center { margin-inline: auto; text-align: center; }
@@ -307,7 +442,7 @@ body.is-story-hero .hero + .section { background-image: linear-gradient(180deg, 
    backdrop-filter (like transform/filter/perspective) makes the element that
    carries it a new containing block for any position:fixed descendant --
    which trapped the off-canvas mobile nav (a real descendant, #primary-nav)
-   inside the header's own ~74px box instead of the viewport, collapsing it
+   inside the header's own ~70px box instead of the viewport, collapsing it
    to a sliver. A ::before has no descendants of its own, so it can carry
    the same visual effect without turning .site-header into that trap. */
 .site-header::before {
@@ -324,7 +459,7 @@ body.is-story-hero .hero + .section { background-image: linear-gradient(180deg, 
    frosted-white fill and dark text back. position:fixed (not the sticky
    above) so it's removed from flow and the hero can render full-bleed from
    y:0 underneath it instead of being pushed down by the header's own box --
-   .hero's own top padding (88-128px) already clears the 74px header
+   .hero's own top padding (88-128px) already clears the 70px header
    comfortably, so no further adjustment was needed there. */
 body.has-dark-hero .site-header {
 	position: fixed; left: 0; right: 0;
@@ -363,7 +498,7 @@ body.has-dark-hero .site-header.is-scrolled::before { opacity: 1; }
    for that state instead of leaving it illegible. */
 .brand { position: relative; display: inline-flex; align-items: center; }
 .brand__logo--light {
-	position: absolute; inset: 0; opacity: 0; pointer-events: none;
+	position: absolute; left: 0; top: 0; opacity: 0; pointer-events: none;
 	transition: opacity var(--dur-2) var(--ease-out);
 }
 .brand__logo--dark { transition: opacity var(--dur-2) var(--ease-out); }
@@ -378,8 +513,8 @@ body.has-dark-hero .site-header:not(.is-scrolled) .nav-toggle { background: rgba
 body.has-dark-hero .site-header:not(.is-scrolled) .nav-toggle__bars span { background: #fff; }
 
 .brand { display: inline-flex; align-items: center; }
-.brand__logo { display: block; height: 48px; width: auto; }
-.brand__logo--footer { height: 60px; }
+.brand__logo { display: block; height: var(--logo-h); width: auto; }
+.brand__logo--footer { height: var(--logo-h); }
 
 .site-nav { display: contents; }
 .nav__list { display: flex; align-items: center; gap: .25rem; list-style: none; margin: 0; padding: 0; }
@@ -465,19 +600,26 @@ body.has-dark-hero .site-header:not(.is-scrolled) .nav-toggle__bars span { backg
    header (see .site-header), bottom reserves the USP bar's real height
    (main.js measures it live and writes --usp-clearance, since the bar's
    height depends on wrapped text that varies by viewport/content). */
+/* ---------- Hero: one component, two surfaces ----------
+   .hero is the shared wrapper for every hero on the site. Bare .hero is the
+   LIGHT default (home does not use it bare). .hero--dark is the single
+   documented dark exception (see docs/DESIGN-SYSTEM.md #1) -- its own rule
+   below carries the homepage hero's existing values UNCHANGED; nothing in
+   this split alters what the homepage renders. */
 .hero {
-	position: relative; background: var(--ink); color: #eef2f0; overflow: hidden;
-	min-height: 100vh; min-height: 100svh;
+	position: relative; overflow: hidden;
 	display: flex; flex-direction: column; justify-content: center;
+	min-height: var(--hero-min);
+}
+.hero--dark {
+	background: var(--ink); color: #eef2f0;
+	min-height: 100vh; min-height: 100svh;
 	padding-top: clamp(5.5rem, 10vh, 8rem);
 	padding-bottom: var(--usp-clearance, clamp(7rem, 14vh, 10rem));
 }
-.hero::before {
+.hero--dark::before {
 	content: ""; position: absolute; inset: 0; z-index: 0;
-	background:
-		radial-gradient(120% 80% at 85% -10%, rgba(11,107,91,.55), transparent 55%),
-		radial-gradient(90% 70% at 10% 110%, rgba(254,208,61,.10), transparent 50%),
-		linear-gradient(180deg, #171b1d, #1d2426);
+	background: var(--dark-gradient);
 }
 .hero__thermal {
 	position: absolute; inset: 0; z-index: 0; opacity: .5; mix-blend-mode: screen;
@@ -526,19 +668,111 @@ body.has-dark-hero .site-header:not(.is-scrolled) .nav-toggle__bars span { backg
 	   comes for free: flex items default to align-self:stretch on the cross
 	   axis (horizontal, since .hero is flex-direction:column). */
 }
-.hero__eyebrow {
-	display: inline-flex; align-items: center; gap: .55rem;
-	font-size: var(--step--1); font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-	color: var(--accent); background: rgba(254,208,61,.1); border: 1px solid rgba(254,208,61,.25);
-	padding: .4rem .8rem; border-radius: var(--radius-pill); margin-bottom: 1.2rem;
+/* Shared across every variant -- the ONLY h1, the action row, the trust
+   row. text-wrap:balance + display tracking per docs/DESIGN-SYSTEM.md #3.
+   .hero--dark below restates the homepage's pre-existing exact values. */
+.hero__title {
+	font-size: var(--text-4); letter-spacing: var(--tracking-4); line-height: var(--leading-4);
+	color: var(--text-primary); text-wrap: balance; max-width: 20ch; margin: 0;
 }
-.hero__title { font-size: var(--step-5); color: #fff; margin-bottom: .8rem; }
 .hero__title em { font-style: normal; color: var(--accent); }
-.hero__sub { font-size: var(--step-1); color: #c6d0cc; max-width: 44ch; margin-bottom: 1.6rem; }
-.hero__actions { display: flex; flex-wrap: wrap; gap: .9rem; margin-bottom: 1.6rem; }
-.hero__trust { display: flex; flex-wrap: wrap; gap: 1.2rem; font-size: var(--step--1); color: #aeb9b5; }
+.hero--dark .hero__title {
+	/* Restates the frozen original exactly -- including what it DIDN'T set:
+	   no letter-spacing of its own (inherits -.02em from the global h1 reset,
+	   not the shared rule's --tracking-4), and text-wrap:wrap, not balance
+	   (balance can change where lines break; on every other variant that's a
+	   pure improvement, but home's wrap is explicitly frozen). */
+	font-size: var(--step-5); letter-spacing: -.02em; line-height: 1.1; text-wrap: wrap;
+	color: #fff; max-width: none; margin-bottom: .8rem;
+}
+/* .hero__sub: home's lead paragraph. Frozen values, unchanged -- the light
+   variants' lead uses .hero__lead (own rule above) instead of this class, so
+   there is no shared base to restate here, only home's own original numbers.
+   (This rule was dropped by mistake during the initial split and caught by
+   the same pixel-diff: with it gone, .hero__sub fell back to plain <p>
+   spacing/size, wrapped at the full column width instead of 44ch, and came
+   out 17px shorter -- which is what actually produced the vertical shift
+   the earlier version of this comment mis-blamed on the h1.) */
+.hero--dark .hero__sub { font-size: var(--step-1); color: #c6d0cc; max-width: 44ch; margin-bottom: 1.6rem; }
+.hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin: 0; }
+.hero--dark .hero__actions { gap: .9rem; margin-bottom: 1.6rem; }
+.hero__phone { display: inline-flex; align-items: center; gap: .5rem; font-weight: 700; color: var(--text-primary); }
+.hero__phone .wv-icon { color: var(--primary); }
+.hero__trust { display: flex; flex-wrap: wrap; gap: var(--space-3); font-size: var(--text--1); color: var(--text-quiet); margin: 0; }
 .hero__trust span { display: inline-flex; align-items: center; gap: .45rem; }
-.hero__trust .wv-icon { width: 16px; height: 16px; color: var(--accent); }
+.hero__trust .wv-icon { width: 16px; height: 16px; color: var(--primary); }
+.hero--dark .hero__trust { gap: 1.2rem; font-size: var(--step--1); color: #aeb9b5; }
+.hero--dark .hero__trust .wv-icon { color: var(--accent); }
+
+/* ---------- Light hero: grid, body, lead, eyebrow, aside ----------
+   .hero__grid replaces .hero__inner for every non-dark variant (dark keeps
+   its own .hero__inner, untouched, below). One shared padding pair from
+   the spacing scale, per docs/DESIGN-SYSTEM.md #4 -- this is what makes
+   hero height a function of content, not of an accidental clamp(). */
+/* The grid has exactly TWO states, and both are fluid -- every track is an
+   fr or a minmax, never a fixed pixel width.
+
+   STATE 1 (default) -- WITHOUT aside: one fluid column, capped at the
+   reading measure. The cap is what stops the column spanning the full
+   1100px container and leaving the copy stranded beside ~560px of dead
+   space. One track, so there is no empty second column to leave behind.
+
+   STATE 2 -- WITH aside (.hero--has-aside): two fluid columns. The measure
+   cap is lifted, because here the container width is shared rather than
+   given over to one run of text.
+
+   Both states start their first column at the same x -- the container's
+   own padding edge -- because a max-width on a block-level grid trims from
+   the END, never the start. Verified: h1 left edge is identical on
+   /contact/ (no aside) and /spouwmuurisolatie/ (aside). */
+.hero__grid {
+	position: relative; z-index: 1;
+	display: grid;
+	/* The TRACK is capped at the measure, not the element: .hero__grid IS
+	   the .container element, so a max-width here would fight .container's
+	   own max-width + margin-inline:auto -- it centres the single-column
+	   state and lets the two-column state escape the container entirely.
+	   min(100%,...) also guarantees the track can never exceed the space
+	   available, so it cannot overflow a narrow viewport. */
+	grid-template-columns: min(100%, var(--measure));
+	justify-content: start;
+	gap: var(--space-8);
+	align-items: start;
+	padding-block: var(--rhythm-normal);
+	width: 100%;
+}
+.hero--has-aside .hero__grid {
+	grid-template-columns: minmax(0, 1.35fr) minmax(280px, .95fr);
+	gap: clamp(1.5rem, 4vw, 3rem);
+}
+.hero__body {
+	min-width: 0; display: flex; flex-direction: column; align-items: flex-start;
+	gap: var(--space-5);
+}
+/* every direct child manages spacing via the flex gap above, never its own
+   margin -- so the gap between slots is identical regardless of which
+   optional slots are present (rule: "vertical rhythm... identical on
+   every page"). */
+.hero__body > * { margin: 0; }
+.hero__eyebrow-row { display: flex; align-items: center; gap: var(--space-3); }
+.hero__icon {
+	display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
+	width: 40px; height: 40px; border-radius: var(--radius-3);
+	background: var(--primary); color: #fff;
+}
+.hero__icon .wv-icon { width: 20px; height: 20px; }
+.breadcrumb {
+	display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
+	font-size: var(--text--1); color: var(--text-quiet);
+}
+.breadcrumb a { color: var(--text-quiet); }
+.breadcrumb a:hover { color: var(--primary); }
+.hero__lead {
+	font-size: var(--text-1); letter-spacing: var(--tracking-1); line-height: var(--leading-1);
+	color: var(--text-secondary); max-width: var(--measure); text-align: left;
+}
+.hero__meta { font-size: var(--text--1); color: var(--text-quiet); }
+.hero__aside { min-width: 0; }
 .hero__scan {
 	position: relative;
 	z-index: 0;
@@ -837,44 +1071,17 @@ a.trust-facts__item:hover { background: var(--primary-050); }
 .faq__item .faq__answer p:last-child { margin-bottom: 0; }
 
 /* ---------- CTA band ---------- */
-/* The same calming, warm dark backdrop as the hero (radial teal + amber over a
-   dark base) — no grid here, and the ambient orbs instead of the house/steam. */
+/* Same dark surface as the hero, from the same token -- not a second,
+   slightly-different copy of it. The hairline is the one deliberate line
+   between this band and the footer, which share a colour. */
 .cta-band {
 	position: relative;
 	overflow: clip;
-	background:
-		radial-gradient(120% 92% at 82% -25%, rgba(11,107,91,.5), transparent 56%),
-		radial-gradient(96% 82% at 14% 125%, rgba(254,208,61,.12), transparent 54%),
-		linear-gradient(180deg, #171b1d, #1d2426);
+	background-color: var(--ink);
+	background-image: var(--dark-gradient);
 	color: #fff;
+	border-bottom: 1px solid var(--border-hairline);
 }
-/* drifting thermal haze (the hero's warm shimmer, reduced-motion aware) */
-.cta-band::before {
-	content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-	opacity: .5; mix-blend-mode: screen; filter: blur(6px);
-	background:
-		radial-gradient(closest-side at 80% 16%, rgba(254,208,61,.28), transparent),
-		radial-gradient(closest-side at 92% 64%, rgba(226,88,34,.20), transparent),
-		radial-gradient(closest-side at 64% 6%, rgba(11,107,91,.30), transparent);
-	animation: hero-drift 16s ease-in-out infinite alternate;
-}
-@media (prefers-reduced-motion: reduce) { .cta-band::before { animation: none; } }
-/* the hero's ambient orbs (teal + amber), drifting with pointer + autonomous float */
-.cta-band__orb {
-	position: absolute; z-index: 0; border-radius: 50%; pointer-events: none;
-	filter: blur(90px); mix-blend-mode: screen; will-change: transform;
-}
-.cta-band__orb--1 {
-	width: 44vw; height: 44vw; max-width: 560px; max-height: 560px; top: -58%; right: -4%;
-	background: radial-gradient(circle at center, rgba(11,107,91,.6), transparent 68%);
-	transform: translate3d(calc(var(--wv-mx) * 90px + var(--wv-gx) * 46px), calc(var(--wv-my) * 60px + var(--wv-gy) * 34px), 0);
-}
-.cta-band__orb--2 {
-	width: 36vw; height: 36vw; max-width: 460px; max-height: 460px; bottom: -58%; left: -3%;
-	background: radial-gradient(circle at center, rgba(254,208,61,.22), transparent 68%);
-	transform: translate3d(calc(var(--wv-mx) * -104px + var(--wv-fx) * 54px), calc(var(--wv-my) * -52px + var(--wv-fy) * 38px), 0);
-}
-@media (prefers-reduced-motion: reduce) { .cta-band__orb { transform: none !important; } }
 
 /* Focused split: message left, one prominent action right, vertically aligned. */
 .cta-band__inner {
@@ -946,17 +1153,10 @@ a.trust-facts__item:hover { background: var(--primary-050); }
 .site-footer__bar-inner { display: flex; justify-content: space-between; gap: 1rem; padding-block: 1.2rem; font-size: .8rem; color: #8b9893; flex-wrap: wrap; }
 .site-footer__bar p { margin: 0; }
 
-/* ---------- Page hero / prose ---------- */
-.page-hero { background: var(--surface); border-bottom: 1px solid var(--line); }
-.page-hero--article { background: var(--paper); }
-.page-hero__inner { padding-block: clamp(2rem, 4vw, 3.2rem); }
-.page-hero__title { font-size: var(--step-4); max-width: 20ch; }
-.page-hero__sub { font-size: var(--step-1); color: var(--ink-2); max-width: 60ch; }
-.page-hero__meta { color: var(--ink-3); font-size: var(--step--1); }
-.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: var(--step--1); color: var(--ink-3); margin-bottom: 1rem; }
-.breadcrumb a { color: var(--ink-3); }
-.breadcrumb a:hover { color: var(--primary); }
-
+/* ---------- Prose ---------- */
+/* .page-hero is retired -- see .hero/.hero__grid earlier in this file,
+   built from template-parts/hero.php. One template, one component, every
+   page (see docs/DESIGN-SYSTEM.md). */
 .page-body { padding-block: clamp(2.2rem, 5vw, 3.5rem); }
 .prose { max-width: 760px; }
 .prose > * + * { margin-top: 1.1rem; }
@@ -1010,22 +1210,42 @@ a.trust-facts__item:hover { background: var(--primary-050); }
 .u-mt-0 { margin-top: 0; }
 .u-center { text-align: center; }
 .hidden { display: none !important; }
+/* A small trailing note inside a card or block -- replaces the retired
+   .facts__note for its two non-hero uses (deliberately NOT .data-card__note,
+   which is a hero-aside-specific component; coupling unrelated body content
+   to it would make a future edit to one silently affect the other). */
+.u-note { font-size: var(--text--1); color: var(--text-quiet); margin: var(--space-4) 0 0; }
 
-/* ---------- Service page ---------- */
-.service-hero__grid { display: grid; grid-template-columns: 1.4fr .9fr; gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
-.service-hero__icon { display: inline-flex; width: 56px; height: 56px; align-items: center; justify-content: center; border-radius: var(--radius); background: var(--primary); color: #fff; margin-bottom: 1rem; }
-.service-hero__icon .wv-icon { width: 28px; height: 28px; }
-.service-hero__actions { display: flex; align-items: center; gap: 1.2rem; margin-top: 1.5rem; flex-wrap: wrap; }
-.service-hero__phone { display: inline-flex; align-items: center; gap: .5rem; font-weight: 700; color: var(--ink); }
-.service-hero__phone .wv-icon { color: var(--primary); }
-.service-hero__facts { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 1.5rem; }
-.facts { margin: 1rem 0 0; display: grid; gap: 0; }
-.facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid var(--line); }
-.facts > div:last-child { border-bottom: 0; }
-.facts dt { color: var(--ink-3); font-size: var(--step--1); margin: 0; }
-.facts dd { margin: 0; font-weight: 800; font-size: var(--step-1); letter-spacing: -.02em; }
-.facts__hot { color: var(--primary); }
-.facts__note { font-size: .78rem; color: var(--ink-3); margin: .8rem 0 0; }
+/* ---------- Data card ----------
+   A tabular label/value surface, not a marketing card. Used as the hero
+   aside on maatregel (ISDE tariffs) and gemeente (local facts) pages --
+   same component, different rows, per docs/DESIGN-SYSTEM.md's "everything
+   that differs is a parameter." Hairline rows, elevation-1 maximum, no
+   gradient; --accent reserved for the single headline figure, if any. */
+.data-card {
+	background: var(--surface-raised); border: 1px solid var(--border-hairline);
+	border-radius: var(--radius-4); box-shadow: var(--elevation-1);
+	padding: var(--space-5);
+}
+.data-card__kicker { margin: 0 0 var(--space-3); }
+.data-card__rows { margin: var(--space-3) 0 0; display: grid; gap: 0; }
+.data-card__row {
+	display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4);
+	padding: var(--space-3) 0; border-bottom: 1px solid var(--border-hairline);
+}
+.data-card__row:last-child { border-bottom: 0; }
+.data-card__label { margin: 0; color: var(--text-quiet); font-size: var(--text--1); }
+/* the fix: "10 m2" and "170 m2" wobble against each other because digits
+   are proportionally spaced by default -- tabular-nums gives every digit
+   the same advance width, lining-nums keeps them all on the same baseline
+   (no old-style figures with descenders). */
+.data-card__value {
+	margin: 0; font-family: var(--font-display); font-weight: 800;
+	font-size: var(--text-1); letter-spacing: var(--tracking-1); color: var(--text-primary);
+	font-variant-numeric: tabular-nums lining-nums;
+}
+.data-card__value--headline { color: var(--accent); }
+.data-card__note { font-size: var(--text--1); color: var(--text-quiet); margin: var(--space-4) 0 0; }
 
 .tariff { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
 .tariff__cell { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.3rem; display: flex; flex-direction: column; gap: .5rem; }
@@ -1288,13 +1508,40 @@ a.trust-facts__item:hover { background: var(--primary-050); }
 .stars { display: inline-flex; gap: 2px; }
 .star { width: 18px; height: 18px; fill: var(--line-strong); }
 .star--on { fill: var(--accent-strong); }
-.review { display: flex; flex-direction: column; gap: .8rem; }
+/* position:relative so .review__link (a full-card overlay link, see below)
+   has something to fill. A CSS grid row stretches every cell in it to the
+   tallest one by default, so clamping the blockquote to a fixed line count
+   is what actually keeps a one-sentence review and a five-paragraph one the
+   same card height -- the grid stretch alone can't do that when the content
+   itself is what varies. */
+.review { display: flex; flex-direction: column; gap: .8rem; position: relative; }
 .review .stars .star { width: 16px; height: 16px; }
-.review blockquote { margin: 0; font-size: 1.02rem; color: var(--ink); line-height: 1.55; }
+/* -webkit-line-clamp (despite the name, supported in every current engine,
+   not just WebKit) truncates to a fixed number of lines with an ellipsis --
+   6 lines is roughly the height the shortest real review already renders
+   at, so short reviews are visually unaffected and long ones stop growing
+   the card past that. */
+.review blockquote {
+	margin: 0; font-size: 1.02rem; color: var(--ink); line-height: 1.55;
+	display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* Purely a visual affordance, NOT its own link -- .review__link below (the
+   one real, whole-card link) already covers this text, and two overlapping
+   links to the same place would just double the focus stops for a screen
+   reader / keyboard user for no benefit. */
+.review__cta { font-size: .82rem; font-weight: 700; color: var(--primary); }
 .review figcaption { display: flex; align-items: center; gap: .7rem; margin-top: auto; }
 .review__avatar { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--primary); color: #fff; font-weight: 700; font-family: var(--font-display); }
 .review figcaption strong { display: block; }
 .review figcaption em { font-style: normal; color: var(--ink-3); font-size: var(--step--1); }
+/* The whole-card "stretched link" pattern: inset:0 over a position:relative
+   .review makes the entire card one click target, same as clicking a blog
+   card. It's transparent, so the text underneath still renders and reads
+   normally -- clicking IT also activates the link, which is the expected
+   behaviour for a clickable card, not a bug. aria-label carries the link's
+   purpose since it has no visible text of its own -- see
+   template-parts/reviews.php. */
+.review__link { position: absolute; inset: 0; border-radius: inherit; }
 
 /* ---------- USP bar ---------- */
 /* A centred, rounded overview card that floats fully inside the hero,
@@ -1341,7 +1588,7 @@ a.trust-facts__item:hover { background: var(--primary-050); }
 }
 .usp-bar__notch::after {
 	content: ""; position: absolute; inset: 1px;
-	background: var(--noise-texture) 0 0 / 220px 220px, #f4f4ef;
+	background: var(--noise-texture) 0 0 / 220px 220px, var(--surface-base);
 }
 .usp-bar__notch--left {
 	right: calc(50% + 470px);
@@ -1399,7 +1646,7 @@ a.trust-facts__item:hover { background: var(--primary-050); }
 	   average, and this flat background didn't have that same grain --
 	   without it, the seam was still visible as a faint but real color
 	   step even with matching base colors. */
-	background: #f4f4ef var(--noise-texture); background-size: 220px 220px;
+	background: var(--surface-base) var(--noise-texture); background-size: 220px 220px;
 	/* no border-bottom: a full 1px border on all four sides drew a visible
 	   grey hairline right across the seam -- exactly the cut the color-match
 	   was meant to erase. Top/sides still get one, for definition against
@@ -1410,21 +1657,30 @@ a.trust-facts__item:hover { background: var(--primary-050); }
 	   card that happens to touch it. */
 	border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 	/* var(--shadow-lg) is tuned for light backgrounds and all but disappears
-	   against the hero's own near-black tone. Heavier alone wasn't enough
-	   either: .hero's overflow:hidden clips right at this card's own bottom
-	   edge, so any shadow layer reaching past it got sliced mid-fade -- a
-	   second hard line, on top of the border one, on the light page right
-	   below (only actually visible where that page happens to be light
-	   enough for a dark smudge to stand out -- true on both the homepage
-	   and the scan landing page, but only obvious on the latter). Negative
-	   Y offsets + spread need every layer's reach (offset + blur + spread)
-	   at or BELOW 0 for that to hold -- the two side layers were still
-	   landing at +16 (a real miscalculation, not just theoretical) until
-	   corrected here, which is what was actually leaking. */
+	   against the hero's own near-black tone, so this card gets its own,
+	   dark-tuned shadow instead. Two things this needs to keep true:
+	   1) spread 0 on every layer -- a box-shadow's own corners follow the
+	      element's border-radius shrunk by the spread (max(0, radius +
+	      spread)), so any negative spread here would give the shadow a
+	      tighter corner than the card's real one and it would show as a
+	      flat/square nick under the curve. At spread 0 they always match,
+	      at any blur.
+	   2) every layer's reach (offset + blur/2) safely below 0 -- .hero's
+	      overflow:hidden clips right at this card's own bottom edge, so a
+	      layer reaching past that gets sliced mid-fade into a hard line.
+	   The top layer is centred and vertical-only, so it reads across the
+	   whole top edge, not just the middle. The two side layers are
+	   horizontal-only (no Y offset) rather than diagonal from the top
+	   corners, so the card reads as shadowed along its FULL height on both
+	   sides, not just near the top -- a diagonal pair fades out well before
+	   reaching the bottom. Their own reach past the clip line only matters
+	   in the last ~8px above it, which the corner notch (z-index above this
+	   card) already covers regardless. Kept deliberately light -- enough to
+	   read as "the dark hero sits behind this card", not a heavy cutout. */
 	box-shadow:
-		0 -32px 44px -14px rgba(0,0,0,.5),
-		-26px -26px 44px -20px rgba(0,0,0,.4),
-		26px -26px 44px -20px rgba(0,0,0,.4);
+		0 -14px 20px 0 rgba(0,0,0,.22),
+		-14px 0 16px 0 rgba(0,0,0,.16),
+		14px 0 16px 0 rgba(0,0,0,.16);
 	overflow: hidden;
 }
 .usp { display: flex; align-items: center; gap: .8rem; padding: 1.15rem 1.4rem; position: relative; }
@@ -1562,15 +1818,16 @@ a.trust-facts__item:hover { background: var(--primary-050); }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {
-	/* .hero's flex-centering (see .hero) is a desktop-only trick to balance
-	   space around .hero__inner while .usp-bar floats absolutely outside
-	   the flex flow. Below this breakpoint the bar drops into normal flow
-	   as a second flex item (see .usp-bar's own mobile rule) -- centering
-	   both together would bunch them in the middle instead of the expected
-	   top-to-bottom stack, so back to plain block flow with a modest fixed
-	   bottom gap instead of reserving the bar's full height. */
-	.hero { display: block; padding-bottom: clamp(2.5rem, 6vw, 3.5rem); }
+	/* .hero--dark's flex-centering is a desktop-only trick to balance space
+	   around .hero__inner while .usp-bar floats absolutely outside the flex
+	   flow. Below this breakpoint the bar drops into normal flow as a second
+	   flex item (see .usp-bar's own mobile rule) -- centering both together
+	   would bunch them in the middle instead of the expected top-to-bottom
+	   stack, so back to plain block flow with a modest fixed bottom gap
+	   instead of reserving the bar's full height. */
+	.hero--dark { display: block; padding-bottom: clamp(2.5rem, 6vw, 3.5rem); }
 	.hero__inner { grid-template-columns: 1fr; }
+	.hero--has-aside .hero__grid { grid-template-columns: 1fr; }
 	.verdub { grid-template-columns: 1fr; }
 	.grid--4 { grid-template-columns: repeat(2, 1fr); }
 	.grid--3 { grid-template-columns: repeat(2, 1fr); }
@@ -1578,7 +1835,6 @@ a.trust-facts__item:hover { background: var(--primary-050); }
 	.post-grid { grid-template-columns: repeat(2, 1fr); }
 	.site-footer__grid { grid-template-columns: 1fr 1fr; }
 	.site-footer__brand { grid-column: 1 / -1; }
-	.service-hero__grid { grid-template-columns: 1fr; }
 	.tariff { grid-template-columns: repeat(2, 1fr); }
 	.steps--4 { grid-template-columns: repeat(2, 1fr); }
 	.usp-bar__grid { grid-template-columns: repeat(2, 1fr); }
@@ -1758,8 +2014,8 @@ body.nav-open { overflow: hidden; }
 
 /* ==========================================================================
    OVER WARMVAST + ONS WERK — page makeovers
-   Both pages open on the SAME plain .page-hero every other inner page uses
-   (Contact, Subsidie, Kwaliteit, ...) -- no bespoke dark hero, no full-bleed
+   Both pages open on the SAME bedrijf-variant .hero every other inner page
+   uses (Contact, Subsidie, Kwaliteit, ...) -- no aside, no full-bleed
    banner. Photos throughout are deliberately SMALL: one shared .story-row
    component (photo max 300px wide, text beside it, sides alternating) used by
    About's origin story, Ons Werk's process story, and Subsidie's
@@ -1789,14 +2045,31 @@ body.nav-open { overflow: hidden; }
    its 40-60% range. Never a percentage of the VIEWPORT -- that is what turns a
    photo into a banner on a wide screen. */
 .story-row {
+	/* The media column is a custom property, not a literal, so a variant can
+	   widen it by redefining ONE value instead of restating the whole
+	   grid-template-columns -- which would need a compound selector
+	   (.story-row--lead.story-row--alt) that then outranks the single-class
+	   mobile reset below and strands the row in two columns on a phone. */
+	--story-media: clamp(240px, 40%, 470px);
 	display: grid;
-	grid-template-columns: clamp(240px, 40%, 470px) minmax(0, 1fr);
+	grid-template-columns: var(--story-media) minmax(0, 1fr);
 	gap: clamp(1.5rem, 4vw, 3.5rem);
 	align-items: center;
 }
-.story-row--alt { grid-template-columns: minmax(0, 1fr) clamp(240px, 40%, 470px); }
+.story-row--alt { grid-template-columns: minmax(0, 1fr) var(--story-media); }
+/* Lead variant: the homepage intro photo is the first photograph a visitor
+   sees and carries the handshake, so it gets more room than the standard
+   column. Nothing else about the component changes. */
+.story-row--lead { --story-media: clamp(260px, 46%, 560px); }
 .story-row--alt .story-row__media { order: 2; }
 .story-row + .story-row { margin-top: clamp(2.5rem, 6vw, 4.5rem); }
+/* Same gap when a row follows the werkwijze step list, or when a block
+   follows a row, so the homepage needs no inline styles to space these. */
+.steps + .story-row,
+.story-row + .trust-grid { margin-top: clamp(2.5rem, 6vw, 4.5rem); }
+/* A closing action under a section's grid -- replaces the inline
+   style="margin-top:2rem" this pattern used to carry. */
+.section__foot { margin-top: var(--space-6); }
 
 .story-row__media { position: relative; isolation: isolate; }
 .story-row__drift { position: relative; z-index: 1; will-change: transform; }
@@ -1827,6 +2100,21 @@ body.nav-open { overflow: hidden; }
 .story-row__step::before { content: ""; width: 22px; height: 2px; background: var(--accent); border-radius: 2px; }
 .story-row h3 { font-size: var(--step-2); margin-bottom: .5rem; }
 .story-row p { color: var(--ink-2); margin: 0; max-width: 58ch; }
+/* A story row that opens a page carries an h2 and a bold standfirst above
+   the body copy. The emphasised clause is --primary, NOT --accent: accent
+   yellow on paper measures 1.36:1 and the design system bans it as text
+   (docs/DESIGN-SYSTEM.md 2.4). --primary is 5.82:1 on paper. */
+/* balance so the emphasised clause is not split across a line break -- an
+   <em> that starts mid-line and finishes on the next reads as a wrapping
+   accident rather than a deliberate second phrase. */
+.story-row h2 { font-size: var(--step-3); margin-bottom: .5rem; text-wrap: balance; }
+.story-row h2 em { font-style: normal; color: var(--primary); }
+/* .story-row p is (0,1,1), so the standfirst needs two classes to win. */
+.story-row .story-row__sub {
+	font-size: var(--step-1); font-weight: 700; color: var(--ink);
+	margin: 0 0 .9rem; max-width: 58ch;
+}
+.story-row__actions { display: flex; flex-wrap: wrap; align-items: center; gap: .9rem 1.5rem; margin-top: 1.5rem; }
 
 @media (max-width: 720px) {
 	.story-row, .story-row--alt { grid-template-columns: 1fr; gap: 1.4rem; }
@@ -1836,6 +2124,13 @@ body.nav-open { overflow: hidden; }
 	.story-row__media { max-width: 340px; }
 	.story-row__media::after, .story-row--alt .story-row__media::after { inset: 12px -12px -12px 12px; }
 }
+
+/* Two related work photos side by side, one section -- reuses .story-row__media
+   for the photo treatment (crop, radius, accent plate) but stacks heading/copy
+   below rather than beside, since a 2-up grid has no room for a text column
+   next to each. Collapses to one column with .grid--2's existing breakpoint. */
+.work-pair__title { font-size: var(--step-1); margin: 1rem 0 .5rem; }
+.work-pair__item p { color: var(--ink-2); margin: 0; max-width: 58ch; }
 
 /* ---------- Story pull-quote ---------- */
 .about-story__quote {

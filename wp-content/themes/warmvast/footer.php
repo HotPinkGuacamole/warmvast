@@ -13,8 +13,6 @@ $services = warmvast_services();
 </main><!-- #main -->
 
 <section class="cta-band">
-	<span class="cta-band__orb cta-band__orb--1" aria-hidden="true"></span>
-	<span class="cta-band__orb cta-band__orb--2" aria-hidden="true"></span>
 	<div class="container cta-band__inner">
 		<div class="cta-band__copy" data-reveal>
 			<p class="kicker kicker--light">Klaar om te beginnen?</p>
@@ -43,7 +41,7 @@ $services = warmvast_services();
 	<div class="container site-footer__grid">
 
 		<div class="site-footer__brand">
-			<img class="brand__logo brand__logo--footer" src="<?php echo warmvast_asset( '/assets/img/warmvast-logo-horizontal-white.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper escapes. ?>" width="730" height="212" alt="Warmvast Isolatie" loading="lazy" decoding="async">
+			<?php warmvast_the_logo( 'white', 'brand__logo--footer', 'Warmvast Isolatie' ); ?>
 			<p class="site-footer__tag">Wij houden de warmte in uw woning vast. Technische opname, helder m²-overzicht en een realistische ISDE-indicatie.</p>
 			<ul class="site-footer__contact">
 				<li><?php warmvast_phone_link(); ?></li>

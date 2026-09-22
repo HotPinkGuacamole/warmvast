@@ -13,20 +13,24 @@ get_header();
 while ( have_posts() ) :
 	the_post();
 	?>
-	<header class="page-hero page-hero--article">
-		<div class="container page-hero__inner">
-			<nav class="breadcrumb" aria-label="Kruimelpad">
-				<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a>
-				<span aria-hidden="true">/</span>
-				<a href="<?php echo esc_url( home_url( '/kennisbank/' ) ); ?>">Kennisbank</a>
-				<span aria-hidden="true">/</span>
-				<span><?php the_title(); ?></span>
-			</nav>
-			<p class="kicker">Kennisbank</p>
-			<h1 class="page-hero__title"><?php the_title(); ?></h1>
-			<p class="page-hero__meta"><?php echo esc_html( get_the_date() ); ?> &middot; <?php echo esc_html( ceil( str_word_count( wp_strip_all_tags( get_the_content() ) ) / 200 ) ); ?> min lezen</p>
-		</div>
-	</header>
+	<?php
+	// No eyebrow: the breadcrumb already carries "Kennisbank" as the category,
+	// so a duplicate label above the h1 would say it a second time. The date
+	// and read time take the meta slot instead of a lead -- they're a fact
+	// line, not prose.
+	warmvast_the_hero(
+		array(
+			'variant'    => 'artikel',
+			'breadcrumb' => array(
+				array( 'label' => 'Home', 'url' => home_url( '/' ) ),
+				array( 'label' => 'Kennisbank', 'url' => home_url( '/kennisbank/' ) ),
+				array( 'label' => get_the_title() ),
+			),
+			'title'      => get_the_title(),
+			'meta'       => esc_html( get_the_date() ) . ' &middot; ' . esc_html( ceil( str_word_count( wp_strip_all_tags( get_the_content() ) ) / 200 ) ) . ' min lezen',
+		)
+	);
+	?>
 
 	<article <?php post_class( 'page-body' ); ?>>
 		<div class="container prose">

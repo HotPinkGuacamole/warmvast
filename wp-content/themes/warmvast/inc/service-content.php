@@ -138,5 +138,48 @@ function warmvast_service_detail( $key ) {
 		return null;
 	}
 
-	return array_merge( $services[ $key ], $content[ $key ] );
+	$detail = array_merge( $services[ $key ], $content[ $key ] );
+
+	// Overlay: h1/intro/technical/symptoms/suitable/faqs are editable from
+	// this service's own page edit screen in wp-admin (a "Warmvast —
+	// dienst-inhoud" meta box, see inc/admin.php). Same pattern as the
+	// gemeente pages (see inc/gemeente-content.php): page-specific content
+	// lives as postmeta on that page, an empty field means "use the
+	// default" below. `process` (the 4-step how-it-works sequence) is
+	// deliberately NOT overlaid here -- see the meta box's own note.
+	$page = get_page_by_path( $services[ $key ]['slug'], OBJECT, 'page' );
+	if ( $page ) {
+		$get = static function ( $field ) use ( $page ) {
+			$val = get_post_meta( $page->ID, '_warmvast_' . $field, true );
+			return is_string( $val ) && '' !== trim( $val ) ? $val : null;
+		};
+		foreach ( array( 'h1', 'intro', 'technical' ) as $field ) {
+			$val = $get( $field );
+			if ( null !== $val ) {
+				$detail[ $field ] = $val;
+			}
+		}
+		foreach ( array( 'symptoms', 'suitable' ) as $field ) {
+			$val = $get( $field );
+			if ( null !== $val ) {
+				$lines = preg_split( '/\r\n|\r|\n/', $val );
+				$detail[ $field ] = array_values( array_filter( array_map( 'trim', $lines ) ) );
+			}
+		}
+		$q1 = $get( 'faqs_q1' );
+		if ( null !== $q1 ) {
+			$detail['faqs'] = array(
+				array(
+					'q' => $q1,
+					'a' => (string) $get( 'faqs_a1' ),
+				),
+				array(
+					'q' => (string) $get( 'faqs_q2' ),
+					'a' => (string) $get( 'faqs_a2' ),
+				),
+			);
+		}
+	}
+
+	return $detail;
 }

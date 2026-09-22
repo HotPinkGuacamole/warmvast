@@ -43,9 +43,10 @@ function warmvast_env_file_values( $path = null ) {
 	}
 
 	$allowed = array(
-		'WARMVAST_N8N_LEAD_WEBHOOK_URL'    => true,
-		'WARMVAST_N8N_LEAD_WEBHOOK_SECRET' => true,
-		'WARMVAST_TRUSTED_PROXY_IPS'       => true,
+		'WARMVAST_N8N_LEAD_WEBHOOK_URL'     => true,
+		'WARMVAST_N8N_LEAD_WEBHOOK_SECRET'  => true,
+		'WARMVAST_TRUSTED_PROXY_IPS'        => true,
+		'WARMVAST_GOOGLE_PLACES_API_KEY'    => true,
 	);
 	$values  = array();
 
@@ -103,23 +104,63 @@ function warmvast_config_value( $key, $default = '', $env_path = null ) {
 }
 
 /**
- * Contact details. Override in a child theme or via a real options page later.
- * Defaults are placeholders — replace with the real Warmvast data before launch.
+ * Contact details, address, social links and the two "scale-proof claim"
+ * numbers (founding year, homes insulated) -- all editable at Warmvast ->
+ * Bedrijfsgegevens in wp-admin (see inc/admin.php) without touching code.
+ *
+ * THE OVERLAY PATTERN (used everywhere in this file for content that is now
+ * wp-admin editable): the literal array below is the DEFAULT -- what the
+ * site shows on a fresh install where nobody has saved anything yet, and
+ * what a field falls back to when someone clears it in wp-admin. A saved
+ * `warmvast_opt_company` option is merged on top, key by key
+ * (wp_parse_args), so an empty/never-touched field always reads as "use the
+ * default" rather than silently going blank sitewide.
+ *
+ * @return array<string,mixed>
  */
+function warmvast_company_defaults() {
+	return array(
+		'phone'           => '085 800 5070',
+		'phone_raw'       => '+31858005070',
+		'email'           => 'info@warmvastisolatie.nl',
+		'hours'           => 'Ma t/m vr 08:30 - 17:30',
+		'region'          => 'Noord-Holland en Noord-Zuid-Holland',
+		'address_street'  => 'Albert Schweitzerlaan 37',
+		'address_postal'  => '1902 EG',
+		'address_city'    => 'Castricum',
+		'whatsapp'        => '',
+		'twitter_handle'  => 'warmvast',
+		'facebook_url'    => 'https://www.facebook.com/profile.php?id=61593140505102',
+		'founded'         => 2026,
+		'homes_insulated' => 0,
+		'warranty_years'  => 0,
+	);
+}
+
+/**
+ * @return array<string,mixed>
+ */
+function warmvast_company() {
+	$saved = get_option( 'warmvast_opt_company', array() );
+	return wp_parse_args( is_array( $saved ) ? $saved : array(), warmvast_company_defaults() );
+}
+
+$warmvast_company_data = warmvast_company();
+
 if ( ! defined( 'WARMVAST_PHONE' ) ) {
-	define( 'WARMVAST_PHONE', '085 800 5070' );
+	define( 'WARMVAST_PHONE', $warmvast_company_data['phone'] );
 }
 if ( ! defined( 'WARMVAST_PHONE_RAW' ) ) {
-	define( 'WARMVAST_PHONE_RAW', '+31858005070' );
+	define( 'WARMVAST_PHONE_RAW', $warmvast_company_data['phone_raw'] );
 }
 if ( ! defined( 'WARMVAST_EMAIL' ) ) {
-	define( 'WARMVAST_EMAIL', 'info@warmvastisolatie.nl' );
+	define( 'WARMVAST_EMAIL', $warmvast_company_data['email'] );
 }
 if ( ! defined( 'WARMVAST_HOURS' ) ) {
-	define( 'WARMVAST_HOURS', 'Ma t/m vr 08:30 - 17:30' );
+	define( 'WARMVAST_HOURS', $warmvast_company_data['hours'] );
 }
 if ( ! defined( 'WARMVAST_REGION' ) ) {
-	define( 'WARMVAST_REGION', 'Noord-Holland en Noord-Zuid-Holland' );
+	define( 'WARMVAST_REGION', $warmvast_company_data['region'] );
 }
 
 /**
@@ -128,13 +169,13 @@ if ( ! defined( 'WARMVAST_REGION' ) ) {
  * rather than "bezoek ons".
  */
 if ( ! defined( 'WARMVAST_ADDRESS_STREET' ) ) {
-	define( 'WARMVAST_ADDRESS_STREET', 'Albert Schweitzerlaan 37' );
+	define( 'WARMVAST_ADDRESS_STREET', $warmvast_company_data['address_street'] );
 }
 if ( ! defined( 'WARMVAST_ADDRESS_POSTAL' ) ) {
-	define( 'WARMVAST_ADDRESS_POSTAL', '1902 EG' );
+	define( 'WARMVAST_ADDRESS_POSTAL', $warmvast_company_data['address_postal'] );
 }
 if ( ! defined( 'WARMVAST_ADDRESS_CITY' ) ) {
-	define( 'WARMVAST_ADDRESS_CITY', 'Castricum' );
+	define( 'WARMVAST_ADDRESS_CITY', $warmvast_company_data['address_city'] );
 }
 
 /**
@@ -144,7 +185,7 @@ if ( ! defined( 'WARMVAST_ADDRESS_CITY' ) ) {
  * is filled in.
  */
 if ( ! defined( 'WARMVAST_WHATSAPP' ) ) {
-	define( 'WARMVAST_WHATSAPP', '' );
+	define( 'WARMVAST_WHATSAPP', $warmvast_company_data['whatsapp'] );
 }
 
 /**
@@ -155,32 +196,32 @@ if ( ! defined( 'WARMVAST_WHATSAPP' ) ) {
  * rule (same reasoning as reviews and the homes-insulated count).
  */
 if ( ! defined( 'WARMVAST_TWITTER_HANDLE' ) ) {
-	define( 'WARMVAST_TWITTER_HANDLE', 'warmvast' );
+	define( 'WARMVAST_TWITTER_HANDLE', $warmvast_company_data['twitter_handle'] );
 }
 if ( ! defined( 'WARMVAST_TWITTER_URL' ) ) {
-	define( 'WARMVAST_TWITTER_URL', 'https://x.com/' . WARMVAST_TWITTER_HANDLE );
+	define( 'WARMVAST_TWITTER_URL', WARMVAST_TWITTER_HANDLE ? 'https://x.com/' . WARMVAST_TWITTER_HANDLE : '' );
 }
 if ( ! defined( 'WARMVAST_FACEBOOK_URL' ) ) {
-	define( 'WARMVAST_FACEBOOK_URL', 'https://www.facebook.com/profile.php?id=61593140505102' );
+	define( 'WARMVAST_FACEBOOK_URL', $warmvast_company_data['facebook_url'] );
 }
 
 /**
  * Founding year and total homes insulated. Both scale-proof claims that every
  * major competitor states explicitly (Takkenkamp: sinds 1935; Isotech: 32.000
  * woningen) -- and exactly the kind of number this brand must never guess at.
- * WARMVAST_FOUNDED is real (confirmed by the owner). WARMVAST_HOMES_INSULATED
- * stays at 0 until a real count exists -- deliberately NOT filled with a
- * placeholder number: an exact-sounding figure like "112" reads as a factual
- * claim to consumers, and a false one is an oneerlijke handelspraktijk under
- * Dutch/EU consumer law, not just a cosmetic placeholder. Every place that
- * would show it checks for a truthy value first, so it simply stays invisible
- * rather than showing a fake number.
+ * WARMVAST_HOMES_INSULATED stays at 0 until a real count is entered in
+ * wp-admin -- deliberately NOT defaulted to a placeholder number: an
+ * exact-sounding figure like "112" reads as a factual claim to consumers,
+ * and a false one is an oneerlijke handelspraktijk under Dutch/EU consumer
+ * law, not just a cosmetic placeholder. Every place that would show it
+ * checks for a truthy value first, so it simply stays invisible rather than
+ * showing a fake number.
  */
 if ( ! defined( 'WARMVAST_FOUNDED' ) ) {
-	define( 'WARMVAST_FOUNDED', 2026 );
+	define( 'WARMVAST_FOUNDED', (int) $warmvast_company_data['founded'] );
 }
 if ( ! defined( 'WARMVAST_HOMES_INSULATED' ) ) {
-	define( 'WARMVAST_HOMES_INSULATED', 0 );
+	define( 'WARMVAST_HOMES_INSULATED', (int) $warmvast_company_data['homes_insulated'] );
 }
 
 /**
@@ -190,8 +231,9 @@ if ( ! defined( 'WARMVAST_HOMES_INSULATED' ) ) {
  * tonen totdat een echte garantietermijn is vastgesteld.
  */
 if ( ! defined( 'WARMVAST_WARRANTY_YEARS' ) ) {
-	define( 'WARMVAST_WARRANTY_YEARS', 0 );
+	define( 'WARMVAST_WARRANTY_YEARS', (int) $warmvast_company_data['warranty_years'] );
 }
+unset( $warmvast_company_data );
 
 /**
  * n8n lead webhook — where a woningscan lead goes.
@@ -399,6 +441,17 @@ if ( ! defined( 'WARMVAST_EP_ONLINE_API_KEY' ) ) {
 }
 
 /**
+ * Google Places API key, for live reviews (see inc/reviews.php). Same
+ * resolution chain as the n8n webhook secret: host environment preferred,
+ * then the production dotenv file, then empty. Server-to-server only --
+ * the browser never sees this key. Empty = the reviews section falls back
+ * to the wp-admin-maintained list (Warmvast -> Reviews).
+ */
+if ( ! defined( 'WARMVAST_GOOGLE_PLACES_API_KEY' ) ) {
+	define( 'WARMVAST_GOOGLE_PLACES_API_KEY', warmvast_config_value( 'WARMVAST_GOOGLE_PLACES_API_KEY' ) );
+}
+
+/**
  * Google Tag Manager container ID (e.g. "GTM-XXXXXXX").
  *
  * Every conversion event (scan_start, scan_subsidy_seen, scan_submit_success,
@@ -414,10 +467,18 @@ if ( ! defined( 'WARMVAST_GTM_ID' ) ) {
 /**
  * ISDE 2026 tariff table (basisbedrag per m2, min/max m2).
  *
+ * Editable at Warmvast -> ISDE-tarieven in wp-admin (see inc/admin.php),
+ * but ONLY the numeric fields (baseRate/minM2/maxM2) -- label/short/field/
+ * slug always come from the literal array below and are never overlaid, on
+ * purpose. `slug` in particular drives page-template routing (see
+ * warmvast_page_template_fallback() in functions.php) and `field` drives
+ * the woningscan's m²-per-bouwdeel mapping; those are wiring, not content,
+ * and a typo there breaks the app rather than just reading oddly.
+ *
  * @return array<string,array<string,mixed>>
  */
 function warmvast_isde_rates() {
-	return array(
+	$defaults = array(
 		'spouw' => array(
 			'label'    => 'Spouwmuurisolatie',
 			'short'    => 'Spouw',
@@ -455,6 +516,29 @@ function warmvast_isde_rates() {
 			'slug'     => 'dakisolatie',
 		),
 	);
+
+	$saved = get_option( 'warmvast_opt_isde_rates', array() );
+	if ( ! is_array( $saved ) ) {
+		return $defaults;
+	}
+	foreach ( $defaults as $key => $rate ) {
+		if ( ! isset( $saved[ $key ] ) || ! is_array( $saved[ $key ] ) ) {
+			continue;
+		}
+		if ( isset( $saved[ $key ]['baseRate'] ) ) {
+			$defaults[ $key ]['baseRate'] = max( 0, (float) $saved[ $key ]['baseRate'] );
+		}
+		if ( isset( $saved[ $key ]['minM2'] ) ) {
+			$defaults[ $key ]['minM2'] = max( 0, (int) $saved[ $key ]['minM2'] );
+		}
+		if ( isset( $saved[ $key ]['maxM2'] ) ) {
+			// Never allow a saved value to leave maxM2 below minM2 -- the
+			// admin form's own clamp is the first line of defense, this is
+			// the one that actually matters (it runs on every read).
+			$defaults[ $key ]['maxM2'] = max( $defaults[ $key ]['minM2'], (int) $saved[ $key ]['maxM2'] );
+		}
+	}
+	return $defaults;
 }
 
 /**
@@ -472,25 +556,46 @@ function warmvast_measure_order() {
 }
 
 /**
- * Reviews shown on the site.
+ * Reviews shown on the site, in priority order:
  *
- * ⚠️ SAMPLE DATA — replace `items`, `rating`, `count` with real Warmvast reviews
- * (e.g. from Google) before go-live. Brand rule: no fabricated reviews live.
+ *  1. Live from Google Places API, if WARMVAST_GOOGLE_PLACES_API_KEY and a
+ *     Place ID are both configured (see inc/reviews.php). `verified` is
+ *     implied true here -- data read live from Google needs no separate
+ *     human flag the way hand-typed content does.
+ *  2. The wp-admin-maintained list (Warmvast -> Reviews, see inc/admin.php),
+ *     if saved. This is also the fallback when the Google fetch fails.
+ *  3. The array below: a pre-launch SAMPLE SHAPE, `verified => false`, kept
+ *     only as a shape reference and never shown to a visitor -- see the
+ *     overlay-pattern note on warmvast_company() for why an empty/untouched
+ *     field always falls through like this rather than showing nothing.
  *
- * `verified` must stay false until every field here is real. While it is
- * false the reviews section does not render AT ALL (see
+ * Whichever source wins, `verified` staying false is what actually matters:
+ * while false the reviews section does not render AT ALL (see
  * template-parts/reviews.php) and no AggregateRating schema is emitted --
- * the sample rows below are kept only as a shape reference for whoever fills
- * in the real ones, and are never shown to a visitor.
+ * enforced in code (inc/admin.php's save handler, and unconditionally here
+ * for the Google path), not just by convention.
  *
  * @return array<string,mixed>
  */
 function warmvast_reviews() {
-	return array(
-		'verified' => false, // set true once `items` are real -> enables review schema.
+	$google = warmvast_google_reviews_fetch();
+	if ( is_array( $google ) && ! empty( $google['items'] ) ) {
+		return array(
+			'verified' => true,
+			'source'   => 'Google',
+			'rating'   => $google['rating'],
+			'count'    => $google['count'],
+			'items'    => $google['items'],
+			'url'      => $google['url'], // each review card links out here -- see template-parts/reviews.php.
+		);
+	}
+
+	$defaults = array(
+		'verified' => false, // set true (in wp-admin) once `items` are real -> enables review schema.
 		'source'   => 'Google',
 		'rating'   => 4.8,
 		'count'    => 127,
+		'url'      => '', // no Maps deep link for hand-entered/sample reviews -- the card just doesn't link out.
 		'items'    => array(
 			array(
 				'name'  => 'Familie de Vries',
@@ -512,29 +617,31 @@ function warmvast_reviews() {
 			),
 		),
 	);
+
+	$saved = get_option( 'warmvast_opt_reviews', null );
+	return is_array( $saved ) ? wp_parse_args( $saved, $defaults ) : $defaults;
 }
 
 /**
- * Afgeronde projecten voor de /ons-werk/ galerij.
+ * Afgeronde projecten voor de /ons-werk/ galerij. Editable at Warmvast ->
+ * Ons werk in wp-admin (see inc/admin.php).
  *
- * ⚠️ EMPTY BY DESIGN. Every competitor shows a project gallery with real
- * photos; Warmvast has none yet. Brand rule: no fabricated projects or stock
- * photography posing as real work. /ons-werk/ checks `empty()` and shows an
- * honest "binnenkort" state (with a CTA into the scan) instead of a populated
- * gallery until real projects are supplied.
- *
- * Add one as: array( 'titel' => 'Jaren 30-woning, spouw + vloer',
- * 'plaats' => 'Enschede', 'maatregelen' => array('spouw','vloer'),
- * 'datum' => '2026-08', 'foto' => WARMVAST_URI . '/assets/img/projecten/...jpg' ).
+ * ⚠️ EMPTY BY DESIGN until real ones are added. Every competitor shows a
+ * project gallery with real photos; Warmvast has none yet. Brand rule: no
+ * fabricated projects or stock photography posing as real work. /ons-werk/
+ * checks `empty()` and shows an honest "binnenkort" state (with a CTA into
+ * the scan) instead of a populated gallery until real projects exist.
  *
  * @return array<int,array<string,mixed>>
  */
 function warmvast_projecten() {
-	return array();
+	$saved = get_option( 'warmvast_opt_projecten', null );
+	return is_array( $saved ) ? $saved : array();
 }
 
 /**
  * Certificeringen / keurmerken (KOMO, VENIN, SKG-IKOB, VCA, ISO 9001, etc.).
+ * Editable at Warmvast -> Certificeringen in wp-admin (see inc/admin.php).
  *
  * Every top-5 Dutch insulation company shows these prominently and they are
  * legally meaningful marks — showing one Warmvast does not actually hold
@@ -544,28 +651,29 @@ function warmvast_projecten() {
  * `empty()` first and simply omits the block when there is nothing real to
  * show — never a placeholder badge.
  *
- * To add one once certified: array( 'naam' => 'KOMO', 'beschrijving' =>
- * 'Procescertificaat voor na-isolatie', 'url' => 'https://...', 'logo' =>
- * WARMVAST_URI . '/assets/img/keurmerken/komo.svg' ).
- *
  * @return array<int,array{naam:string,beschrijving:string,url:string,logo:string}>
  */
 function warmvast_certificeringen() {
-	return array();
+	$saved = get_option( 'warmvast_opt_certificeringen', null );
+	return is_array( $saved ) ? $saved : array();
 }
 
 /**
  * Het team achter Warmvast. Real people, real photos (assets/img/team/) —
- * no stock photography, no invented names. Order here is the order they
- * render in on /over-warmvast/ and wherever a team credit is shown.
+ * no stock photography, no invented names. Editable at Warmvast -> Team in
+ * wp-admin (see inc/admin.php); order there is the order they render in on
+ * /over-warmvast/ and wherever a team credit is shown.
  *
  * `foto` is a BASE path with no -<width>.webp suffix: each portrait ships as
- * width variants (400 / 960) consumed via warmvast_responsive_img().
+ * width variants (400 / 960) consumed via warmvast_responsive_img(). A photo
+ * added via the wp-admin media picker is a single full-size URL instead --
+ * warmvast_responsive_img() falls back to rendering that verbatim when no
+ * matching -<width>.webp variant exists (see inc/template-tags.php).
  *
  * @return array<int,array{key:string,naam:string,functie:string,bio:string,foto:string}>
  */
 function warmvast_team() {
-	return array(
+	$defaults = array(
 		array(
 			'key'     => 'levi',
 			'naam'    => 'Levi Kok',
@@ -588,6 +696,9 @@ function warmvast_team() {
 			'foto'    => '/assets/img/team/team-golvend-haar',
 		),
 	);
+
+	$saved = get_option( 'warmvast_opt_team', null );
+	return is_array( $saved ) ? $saved : $defaults;
 }
 
 /**
@@ -596,12 +707,13 @@ function warmvast_team() {
  * warmvast_certificeringen() these are NOT third-party certification claims
  * (no KOMO/VCA/InstallQ-style logos), so there is no trademark or misleading-
  * claim risk: it is just Warmvast's own true statements about how it works,
- * safe to show before any external certification is obtained.
+ * safe to show before any external certification is obtained. Editable at
+ * Warmvast -> Kernwaarden in wp-admin (see inc/admin.php).
  *
  * @return array<int,array{icon:string,naam:string}>
  */
 function warmvast_kernwaarden() {
-	return array(
+	$defaults = array(
 		array(
 			'icon' => 'ruler',
 			'naam' => 'Technische opname vooraf',
@@ -619,6 +731,9 @@ function warmvast_kernwaarden() {
 			'naam' => 'Actief in ' . WARMVAST_REGION,
 		),
 	);
+
+	$saved = get_option( 'warmvast_opt_kernwaarden', null );
+	return is_array( $saved ) ? $saved : $defaults;
 }
 
 /**

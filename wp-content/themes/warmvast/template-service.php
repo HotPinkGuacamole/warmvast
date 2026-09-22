@@ -30,46 +30,58 @@ while ( have_posts() ) :
 
 	if ( ! $detail ) :
 		// Fallback: render the page body if the slug doesn't match a service.
+		warmvast_the_hero( array( 'title' => get_the_title() ) );
 		?>
-		<header class="page-hero"><div class="container page-hero__inner"><h1 class="page-hero__title"><?php the_title(); ?></h1></div></header>
 		<div class="container page-body prose"><?php the_content(); ?></div>
 		<?php
 	else :
+		warmvast_the_hero(
+			array(
+				'variant'    => 'maatregel',
+				'breadcrumb' => array(
+					array( 'label' => 'Home', 'url' => home_url( '/' ) ),
+					array( 'label' => 'Isolatie', 'url' => home_url( '/isolatie/' ) ),
+					array( 'label' => $detail['label'] ),
+				),
+				'eyebrow'    => 'Isolatie',
+				'icon'       => $detail['icon'],
+				'title'      => $detail['h1'],
+				'lead'       => $detail['intro'],
+				'actions'    => array(
+					array(
+						'label' => 'Check deze maatregel',
+						'style' => 'accent',
+						'url'   => home_url( '/gratis-isolatiescan/?maatregel=' . $key ),
+					),
+				),
+				'phone'      => true,
+				'aside'      => array(
+					'type'   => 'data-card',
+					'kicker' => 'ISDE 2026',
+					'rows'   => array(
+						array(
+							'label' => 'Basisbedrag',
+							'value' => warmvast_rate( $detail['baseRate'] ) . '/m²',
+						),
+						array(
+							'label'     => 'Bij 2+ maatregelen',
+							'value'     => warmvast_rate( $detail['baseRate'] * 2 ) . '/m²',
+							'headline'  => true,
+						),
+						array(
+							'label' => 'Minimaal',
+							'value' => $detail['minM2'] . ' m²',
+						),
+						array(
+							'label' => 'Maximaal',
+							'value' => $detail['maxM2'] . ' m²',
+						),
+					),
+					'note'   => 'Indicatie onder voorbehoud van RVO-beoordeling.',
+				),
+			)
+		);
 		?>
-
-		<!-- Service hero -->
-		<header class="page-hero page-hero--service">
-			<div class="container page-hero__inner">
-				<nav class="breadcrumb" aria-label="Kruimelpad">
-					<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a>
-					<span aria-hidden="true">/</span>
-					<a href="<?php echo esc_url( home_url( '/isolatie/' ) ); ?>">Isolatie</a>
-					<span aria-hidden="true">/</span>
-					<span><?php echo esc_html( $detail['label'] ); ?></span>
-				</nav>
-				<div class="service-hero__grid">
-					<div>
-						<span class="service-hero__icon"><?php warmvast_the_icon( $detail['icon'] ); ?></span>
-						<h1 class="page-hero__title"><?php echo esc_html( $detail['h1'] ); ?></h1>
-						<p class="page-hero__sub"><?php echo esc_html( $detail['intro'] ); ?></p>
-						<div class="service-hero__actions">
-							<a class="btn btn--accent btn--lg" href="<?php echo esc_url( home_url( '/gratis-isolatiescan/?maatregel=' . $key ) ); ?>" data-track="cta_click">Check deze maatregel <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
-							<?php warmvast_phone_link( 'service-hero__phone' ); ?>
-						</div>
-					</div>
-					<aside class="service-hero__facts">
-						<p class="kicker">ISDE 2026</p>
-						<dl class="facts">
-							<div><dt>Basisbedrag</dt><dd><?php echo esc_html( warmvast_rate( $detail['baseRate'] ) ); ?>/m²</dd></div>
-							<div><dt>Bij 2+ maatregelen</dt><dd class="facts__hot"><?php echo esc_html( warmvast_rate( $detail['baseRate'] * 2 ) ); ?>/m²</dd></div>
-							<div><dt>Minimaal</dt><dd><?php echo esc_html( $detail['minM2'] ); ?> m²</dd></div>
-							<div><dt>Maximaal</dt><dd><?php echo esc_html( $detail['maxM2'] ); ?> m²</dd></div>
-						</dl>
-						<p class="facts__note">Indicatie onder voorbehoud van RVO-beoordeling.</p>
-					</aside>
-				</div>
-			</div>
-		</header>
 
 		<!-- Symptomen -->
 		<section class="section section--paper">
@@ -100,7 +112,7 @@ while ( have_posts() ) :
 							<li><?php echo esc_html( $item ); ?></li>
 						<?php endforeach; ?>
 					</ul>
-					<p class="facts__note">De technische opname geeft definitief uitsluitsel.</p>
+					<p class="u-note">De technische opname geeft definitief uitsluitsel.</p>
 				</div>
 			</div>
 		</section>

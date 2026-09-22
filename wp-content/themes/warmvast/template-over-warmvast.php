@@ -57,16 +57,20 @@ $verwacht = array(
 );
 ?>
 
-<header class="page-hero">
-	<div class="container page-hero__inner">
-		<nav class="breadcrumb" aria-label="Kruimelpad">
-			<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span aria-hidden="true">/</span><span>Over Warmvast</span>
-		</nav>
-		<p class="kicker">Over ons</p>
-		<h1 class="page-hero__title">Wij zijn Warmvast</h1>
-		<p class="page-hero__sub">Drie mensen die vonden dat het isoleren van een woning eerlijker en gestroomlijnder kon — en het zelf zijn gaan doen.</p>
-	</div>
-</header>
+<?php
+warmvast_the_hero(
+	array(
+		'variant'    => 'bedrijf',
+		'breadcrumb' => array(
+			array( 'label' => 'Home', 'url' => home_url( '/' ) ),
+			array( 'label' => 'Over Warmvast' ),
+		),
+		'eyebrow'    => 'Over ons',
+		'title'      => 'Wij zijn Warmvast',
+		'lead'       => 'Drie mensen die vonden dat het isoleren van een woning eerlijker en gestroomlijnder kon — en het zelf zijn gaan doen.',
+	)
+);
+?>
 
 <!-- ============ TEAM: compact cards ============ -->
 <section class="section section--surface">

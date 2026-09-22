@@ -38,21 +38,32 @@ $faqs = array(
 	array( 'q' => 'Moet ik zelf iets regelen voor de aanvraag?', 'a' => 'Nauwelijks. Warmvast bereidt het volledige dossier voor — meldcodes, m² en fotobewijs — en zet de aanvraag klaar. U dient in na uitvoering; RVO beoordeelt en beslist.' ),
 	array( 'q' => 'Kan ik de ISDE combineren met een regeling van mijn gemeente?', 'a' => 'In de meeste gevallen wel. Gemeenten bieden meestal geen aparte subsidie maar een duurzaamheidslening — geld dat u, anders dan bij de ISDE, wel terugbetaalt. Zo’n lening voor het bedrag dat na de ISDE-subsidie overblijft, is doorgaans geen probleem. Lees de volledige uitleg in onze kennisbank.' ),
 );
+warmvast_the_hero(
+	array(
+		'variant'    => 'bedrijf',
+		'breadcrumb' => array(
+			array( 'label' => 'Home', 'url' => home_url( '/' ) ),
+			array( 'label' => 'Subsidie service' ),
+		),
+		'eyebrow'    => 'ISDE-subsidie',
+		'title'      => 'ISDE-subsidie, van aanvraag tot toekenning uit handen genomen',
+		'lead'       => 'De ISDE beloont woningeigenaren die isoleren. Warmvast legt de systematiek eerlijk uit én regelt het hele traject: van advies en meldcodes tot een compleet dossier en de aanvraag. U hoeft zelf niets uit te zoeken.',
+		'actions'    => array(
+			array(
+				'label' => 'Bereken mijn indicatie',
+				'style' => 'accent',
+				'url'   => home_url( '/gratis-isolatiescan/' ),
+			),
+			array(
+				'label' => 'Zo ontzorgen wij u',
+				'style' => 'secondary',
+				'url'   => '#ontzorging',
+				'icon'  => false,
+			),
+		),
+	)
+);
 ?>
-<header class="page-hero">
-	<div class="container page-hero__inner">
-		<nav class="breadcrumb" aria-label="Kruimelpad">
-			<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span aria-hidden="true">/</span><span>Subsidie service</span>
-		</nav>
-		<p class="kicker">ISDE-subsidie</p>
-		<h1 class="page-hero__title">ISDE-subsidie, van aanvraag tot toekenning uit handen genomen</h1>
-		<p class="page-hero__sub">De ISDE beloont woningeigenaren die isoleren. Warmvast legt de systematiek eerlijk uit én regelt het hele traject: van advies en meldcodes tot een compleet dossier en de aanvraag. U hoeft zelf niets uit te zoeken.</p>
-		<div class="service-hero__actions">
-			<a class="btn btn--accent btn--lg" href="<?php echo esc_url( home_url( '/gratis-isolatiescan/' ) ); ?>" data-track="cta_click">Bereken mijn indicatie <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
-			<a class="btn btn--secondary btn--lg" href="#ontzorging" data-track="cta_click">Zo ontzorgen wij u</a>
-		</div>
-	</div>
-</header>
 
 <section class="section section--surface" id="ontzorging">
 	<div class="container">

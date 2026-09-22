@@ -14,20 +14,18 @@ get_header();
 while ( have_posts() ) :
 	the_post();
 	$subtitle = get_post_meta( get_the_ID(), 'wv_subtitle', true );
+	warmvast_the_hero(
+		array(
+			'variant'    => 'bedrijf',
+			'breadcrumb' => array(
+				array( 'label' => 'Home', 'url' => home_url( '/' ) ),
+				array( 'label' => get_the_title() ),
+			),
+			'title'      => get_the_title(),
+			'lead'       => $subtitle ? $subtitle : null,
+		)
+	);
 	?>
-	<header class="page-hero">
-		<div class="container page-hero__inner">
-			<nav class="breadcrumb" aria-label="Kruimelpad">
-				<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a>
-				<span aria-hidden="true">/</span>
-				<span><?php the_title(); ?></span>
-			</nav>
-			<h1 class="page-hero__title"><?php the_title(); ?></h1>
-			<?php if ( $subtitle ) : ?>
-				<p class="page-hero__sub"><?php echo esc_html( $subtitle ); ?></p>
-			<?php endif; ?>
-		</div>
-	</header>
 
 	<article <?php post_class( 'page-body' ); ?>>
 		<div class="container prose">

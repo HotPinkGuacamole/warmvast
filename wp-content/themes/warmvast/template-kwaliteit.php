@@ -23,35 +23,31 @@ $faqs = array(
 	array( 'q' => 'Is de ISDE-indicatie een garantie op subsidie?', 'a' => 'Nee. De scan en onze berekeningen zijn een indicatie op basis van de bekende ISDE-tarieven. RVO beoordeelt en beslist over elke aanvraag; aan een indicatie kunnen geen rechten worden ontleend.' ),
 	array( 'q' => 'Hoe weet ik dat de m²-berekening klopt?', 'a' => 'De online scan geeft een eerste indicatie op basis van uw adres. De technische opname meet de exacte m² ter plaatse — die opname is bepalend voor de definitieve offerte en subsidieaanvraag.' ),
 );
+warmvast_the_hero(
+	array(
+		'variant'    => 'bedrijf',
+		'breadcrumb' => array(
+			array( 'label' => 'Home', 'url' => home_url( '/' ) ),
+			array( 'label' => 'Kwaliteit & garantie' ),
+		),
+		'eyebrow'    => 'Kwaliteit & garantie',
+		'title'      => 'Hoe Warmvast kwaliteit waarborgt',
+		'lead'       => 'Geen loze garanties, maar een werkwijze die controleerbaar is: opname vooraf, materiaal op maat, en fotobewijs voor uw dossier.',
+		'actions'    => array(
+			array(
+				'label' => 'Start gratis isolatiescan',
+				'style' => 'accent',
+				'url'   => home_url( '/gratis-isolatiescan/' ),
+			),
+		),
+		'phone'      => true,
+		// No aside: the bedrijf variant carries none. The hero's old
+		// "In het kort" fact card (Opname/Materiaal/Bewijs) is dropped rather
+		// than relocated -- it restated, in three words each, the fuller
+		// "Waar kwaliteit uit bestaat" section immediately below.
+	)
+);
 ?>
-<header class="page-hero page-hero--service">
-	<div class="container page-hero__inner">
-		<nav class="breadcrumb" aria-label="Kruimelpad">
-			<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span aria-hidden="true">/</span><span>Kwaliteit &amp; garantie</span>
-		</nav>
-		<div class="service-hero__grid">
-			<div>
-				<span class="service-hero__icon"><?php warmvast_the_icon( 'award' ); ?></span>
-				<p class="kicker">Kwaliteit &amp; garantie</p>
-				<h1 class="page-hero__title">Hoe Warmvast kwaliteit waarborgt</h1>
-				<p class="page-hero__sub">Geen loze garanties, maar een werkwijze die controleerbaar is: opname vooraf, materiaal op maat, en fotobewijs voor uw dossier.</p>
-				<div class="service-hero__actions">
-					<?php warmvast_cta( 'Start gratis isolatiescan', 'accent', home_url( '/gratis-isolatiescan/' ) ); ?>
-					<?php warmvast_phone_link( 'service-hero__phone' ); ?>
-				</div>
-			</div>
-			<aside class="service-hero__facts">
-				<p class="kicker">In het kort</p>
-				<dl class="facts">
-					<div><dt>Opname</dt><dd style="font-size:var(--step-0)">Altijd vooraf, ter plaatse</dd></div>
-					<div><dt>Materiaal</dt><dd style="font-size:var(--step-0)">Gekozen op basis van de opname</dd></div>
-					<div><dt>Bewijs</dt><dd style="font-size:var(--step-0)">Foto en meldcode per project</dd></div>
-				</dl>
-				<p class="facts__note">ISDE-indicaties zijn onder voorbehoud van RVO-beoordeling.</p>
-			</aside>
-		</div>
-	</div>
-</header>
 
 <section class="section section--surface">
 	<div class="container">

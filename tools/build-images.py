@@ -46,9 +46,12 @@ SRC = os.path.join(REPO, "Graded photos")          # gitignored originals
 IMG = os.path.join(REPO, "wp-content", "themes", "warmvast", "assets", "img")
 PREVIEW = os.path.join(REPO, "tools", "_crops")    # gitignored crop previews
 
-# base name -> (source file, subdir, aspect, [widths])
+# base name -> (source file, subdir, aspect, [widths]) with an optional 5th
+# element: {"headroom": float} or {"focus": 0..1} for that one photo.
 #   3:2  = story rows (.story-row) and team cards (.team-card__photo)
 #   1:1  = the Ons werk filmstrip (.werk-filmstrip__item)
+# A source containing "/" is a path relative to the repo root instead of SRC,
+# so a shoot that lives in its own folder doesn't have to be moved first.
 # Widths are the rendered CSS size and its 2x twin -- keep them in step with
 # the `sizes` attributes in the templates.
 JOBS = {
@@ -63,6 +66,29 @@ JOBS = {
     "werk-dakisolatie-01":   ("P8240019.png",    "werk", "1:1", [160, 320]),
     "werk-dakisolatie-02":   ("P8240021.png",    "werk", "1:1", [160, 320]),
     "werk-dakisolatie-05":   ("P8240071.png",    "werk", "1:1", [160, 320]),
+
+    # --- homepage shoot (Website foto's/) ---------------------------------
+    # The three portrait sources are 3:4, so a 3:2 slot keeps roughly the
+    # middle half of the frame; face detection places that window.
+    # The kruipruimte shot is the exception: the bubble-wrap and foil texture
+    # fills most of the frame and Haar fires on it (5 "faces"), which dragged
+    # the crop to the very top of the image and cut the installer out of his
+    # own photo. It gets an explicit focus instead -- verified in _crops/.
+    "werk-opname-welkom": (
+        "Website foto's/inspecteur aan de deur schud hand met klant.png",
+        "werk", "3:2", [560, 1120]),
+    "werk-dakisolatie-montage": (
+        # Face detection anchored low in this one (cap + turned head under
+        # roof-beam shadow confuses Haar), which cropped the cap brim off
+        # the top of the frame. Explicit focus instead -- verified in _crops/.
+        "Website foto's/uitvoerder monteerd isolatie op het dak.png",
+        "werk", "3:2", [480, 960], {"focus": 0.28}),
+    "werk-vloerisolatie-kruipruimte": (
+        "Website foto's/uitvoerder in de kruipruimte plakt pif tape op isolatiemateriaal.png",
+        "werk", "3:2", [480, 960], {"focus": 0.50}),
+    "team-bakwagen": (
+        "Website foto's/uitvoerder staat voor een bakwagen met de warmvastlogo.png",
+        "team", "3:2", [560, 1120]),
 }
 
 FRONTAL = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
@@ -97,14 +123,25 @@ def detect_faces(pil):
     return merged
 
 
-def crop_box(pil, faces, ratio):
-    """Largest window of `ratio`, centred on the faces, with headroom above."""
+def crop_box(pil, faces, ratio, headroom=HEADROOM, focus=None):
+    """Largest window of `ratio`, centred on the faces, with headroom above.
+
+    `focus` overrides detection entirely: a 0..1 fraction of the source height
+    that the window is centred on. For frames where the subject is texture
+    rather than a face -- insulation, foil, bubble wrap -- Haar detection
+    fires on the pattern and drags the crop somewhere useless, so those get
+    an explicit anchor instead of a heuristic.
+    """
     W, H = pil.size
     cw = min(W, H * ratio)
     ch = cw / ratio
+    if focus is not None:
+        left = max(0, min(W / 2 - cw / 2, W - cw))
+        top = max(0, min(H * focus - ch / 2, H - ch))
+        return (round(left), round(top), round(left + cw), round(top + ch))
     if faces:
         cx = (min(f[0] for f in faces) + max(f[0] + f[2] for f in faces)) / 2
-        top = min(f[1] for f in faces) - ch * HEADROOM
+        top = min(f[1] for f in faces) - ch * headroom
     else:
         cx, top = W / 2, (H - ch) / 2
     left = max(0, min(cx - cw / 2, W - cw))
@@ -115,21 +152,32 @@ def crop_box(pil, faces, ratio):
 def main():
     os.makedirs(PREVIEW, exist_ok=True)
     manifest = {}
-    for base, (src, sub, aspect, widths) in JOBS.items():
-        path = os.path.join(SRC, src)
+    for base, job in JOBS.items():
+        src, sub, aspect, widths = job[0], job[1], job[2], job[3]
+        opts = job[4] if len(job) > 4 else {}
+        headroom = opts.get("headroom", HEADROOM)
+        focus = opts.get("focus")
+        path = os.path.join(REPO, src) if "/" in src else os.path.join(SRC, src)
         if not os.path.exists(path):
             print(f"!! missing original: {path}")
             continue
         master = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
         faces = detect_faces(master)
-        box = crop_box(master, faces, 3 / 2)
-        region = master.crop(box)
 
         if aspect == "1:1":
+            # unchanged two-step path: 3:2 face crop, then square from its
+            # centre -- kept verbatim so the committed filmstrip images do
+            # not shift when this function learned about other ratios.
+            box = crop_box(master, faces, 3 / 2, headroom, focus)
+            region = master.crop(box)
             s = min(region.size)
             cx, cy = region.width / 2, region.height / 2
             region = region.crop((round(cx - s / 2), round(cy - s / 2),
                                   round(cx + s / 2), round(cy + s / 2)))
+        else:
+            aw, ah = (float(v) for v in aspect.split(":"))
+            box = crop_box(master, faces, aw / ah, headroom, focus)
+            region = master.crop(box)
 
         os.makedirs(os.path.join(IMG, sub), exist_ok=True)
         for w in widths:

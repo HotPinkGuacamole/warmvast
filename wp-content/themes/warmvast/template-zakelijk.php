@@ -31,35 +31,32 @@ $faqs = array(
 	array( 'q' => 'Werkt Warmvast ook buiten regio Zaandam voor zakelijke opdrachtgevers?', 'a' => 'Warmvast is actief in ' . WARMVAST_REGION . '. Voor zakelijke trajecten kijken we per aanvraag naar de beste planning binnen dit werkgebied.' ),
 	array( 'q' => 'Hoe verloopt de facturatie bij meerdere eenheden?', 'a' => 'Dat stemmen we af op uw situatie: per wooneenheid, per bouwdeel of in één keer voor het hele complex. Bespreek dit tijdens de intake.' ),
 );
+warmvast_the_hero(
+	array(
+		'variant'    => 'bedrijf',
+		'breadcrumb' => array(
+			array( 'label' => 'Home', 'url' => home_url( '/' ) ),
+			array( 'label' => 'Zakelijk & VvE' ),
+		),
+		'eyebrow'    => 'Zakelijk & VvE',
+		'title'      => "Isolatie voor VvE's, vastgoedbeheerders en woningcorporaties",
+		'lead'       => 'Eén aanspreekpunt voor meerdere woningen of bouwdelen: technische opname, gefaseerde uitvoering en een compleet, collectief subsidiedossier.',
+		'actions'    => array(
+			array(
+				'label' => 'Adviesgesprek aanvragen',
+				'style' => 'accent',
+				'url'   => home_url( '/contact/' ),
+			),
+		),
+		'phone'      => true,
+		// No aside: the bedrijf variant carries none (docs/DESIGN-SYSTEM.md).
+		// The hero's old "Voor wie" fact card (VvE's/Beheerders/Corporaties)
+		// is dropped rather than relocated -- it was a terse restatement of
+		// the fuller "Vier soorten zakelijke opdrachtgevers" grid immediately
+		// below, not information that lived only in the hero.
+	)
+);
 ?>
-<header class="page-hero page-hero--service">
-	<div class="container page-hero__inner">
-		<nav class="breadcrumb" aria-label="Kruimelpad">
-			<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span aria-hidden="true">/</span><span>Zakelijk &amp; VvE</span>
-		</nav>
-		<div class="service-hero__grid">
-			<div>
-				<span class="service-hero__icon"><?php warmvast_the_icon( 'building' ); ?></span>
-				<p class="kicker">Zakelijk &amp; VvE</p>
-				<h1 class="page-hero__title">Isolatie voor VvE's, vastgoedbeheerders en woningcorporaties</h1>
-				<p class="page-hero__sub">Eén aanspreekpunt voor meerdere woningen of bouwdelen: technische opname, gefaseerde uitvoering en een compleet, collectief subsidiedossier.</p>
-				<div class="service-hero__actions">
-					<a class="btn btn--accent btn--lg" href="<?php echo esc_url( home_url( '/contact/' ) ); ?>" data-track="cta_click">Adviesgesprek aanvragen <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
-					<?php warmvast_phone_link( 'service-hero__phone' ); ?>
-				</div>
-			</div>
-			<aside class="service-hero__facts">
-				<p class="kicker">Voor wie</p>
-				<dl class="facts">
-					<div><dt>VvE's</dt><dd style="font-size:var(--step-0)">Gemeenschappelijke bouwdelen</dd></div>
-					<div><dt>Beheerders</dt><dd style="font-size:var(--step-0)">Meerdere panden</dd></div>
-					<div><dt>Corporaties</dt><dd style="font-size:var(--step-0)">Portefeuilleniveau</dd></div>
-				</dl>
-				<p class="facts__note">Eén planning, één dossier, per bouwdeel een eigen ISDE-indicatie.</p>
-			</aside>
-		</div>
-	</div>
-</header>
 
 <section class="section section--surface">
 	<div class="container">

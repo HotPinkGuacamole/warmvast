@@ -54,15 +54,38 @@ add_action(
  * HTTP GET a JSON endpoint via WP HTTP API.
  *
  * @param string $url URL.
+ * Cached: both callers (Locatieserver address lookup, BAG WFS pand lookup)
+ * hit PDOK on every scan with no caching of their own, which meant a slow or
+ * flaky PDOK held the PHP-FPM worker handling the request for the full
+ * request timeout -- under any real load that fills every worker with
+ * requests waiting on someone else's API, and the whole site stops
+ * responding even though nothing on this server is actually overloaded.
+ * Addresses and building footprints do not change day to day, so a
+ * successful lookup is cached for a month; a failure is cached far more
+ * briefly so a real PDOK outage self-heals instead of being locked in for
+ * a month, while still not hammering PDOK again on every single request
+ * while it is down. Keyed on the full URL, which already encodes the query
+ * (postcode/huisnummer or bbox), so different lookups never collide.
+ *
  * @return array|null Decoded JSON or null.
  */
 function warmvast_ws_get_json( $url ) {
+	$cache_key = 'warmvast_ws_http_' . md5( $url );
+	$cached    = get_transient( $cache_key );
+	if ( is_array( $cached ) && array_key_exists( 'data', $cached ) ) {
+		return $cached['data'];
+	}
+
 	$res = wp_remote_get( $url, array( 'timeout' => 8, 'headers' => array( 'Accept' => 'application/json' ) ) );
 	if ( is_wp_error( $res ) || 200 !== wp_remote_retrieve_response_code( $res ) ) {
+		set_transient( $cache_key, array( 'data' => null ), 5 * MINUTE_IN_SECONDS );
 		return null;
 	}
+
 	$data = json_decode( wp_remote_retrieve_body( $res ), true );
-	return is_array( $data ) ? $data : null;
+	$data = is_array( $data ) ? $data : null;
+	set_transient( $cache_key, array( 'data' => $data ), null === $data ? 5 * MINUTE_IN_SECONDS : MONTH_IN_SECONDS );
+	return $data;
 }
 
 /**
@@ -574,16 +597,26 @@ function warmvast_ws_aerial_polygon( $ring, $x, $y, $half_x = 32, $half_y = 24 )
 }
 
 /**
- * Simple per-IP rate limit for the public woningscan endpoint. Each request
- * proxies up to four external HTTP calls (PDOK Locatieserver + BAG WFS, and
- * EP-Online's home page + search), so this guards against the endpoint being
- * used to hammer those services through our own server. The ceiling is
- * generous enough for a real visitor retrying a typo'd address several times.
+ * Simple per-visitor rate limit for the public woningscan endpoint. Each
+ * request proxies up to four external HTTP calls (PDOK Locatieserver + BAG
+ * WFS, and EP-Online's home page + search), so this guards against the
+ * endpoint being used to hammer those services through our own server. The
+ * ceiling is generous enough for a real visitor retrying a typo'd address
+ * several times.
+ *
+ * The client IP comes from warmvast_get_client_ip() rather than REMOTE_ADDR
+ * directly, for the same reason as the lead limiter (see
+ * warmvast_lead_rate_limit_ok()): behind a reverse proxy REMOTE_ADDR is the
+ * proxy's own address and therefore identical for every visitor, which
+ * silently turns this per-visitor ceiling into a site-wide one -- twenty
+ * scans anywhere on the site and the next real visitor is refused. Forwarded
+ * headers are still only read from proxies listed in
+ * WARMVAST_TRUSTED_PROXY_IPS, so this cannot be spoofed to dodge the limit.
  *
  * @return bool True when the request may proceed.
  */
 function warmvast_ws_rate_limit_ok() {
-	$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+	$ip = warmvast_get_client_ip();
 	if ( '' === $ip ) {
 		return true; // can't identify the caller; don't block.
 	}

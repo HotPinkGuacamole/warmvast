@@ -11,17 +11,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 get_header();
+
+warmvast_the_hero(
+	array(
+		'variant'    => 'bedrijf',
+		'breadcrumb' => array(
+			array( 'label' => 'Home', 'url' => home_url( '/' ) ),
+			array( 'label' => 'Kennisbank' ),
+		),
+		'eyebrow'    => 'Kennisbank',
+		'title'      => 'Alles over ISDE-subsidie en isolatie',
+		'lead'       => 'Feitelijke uitleg over subsidie, maatregelen en uitvoering. Geschreven om u te helpen begrijpen en beslissen.',
+	)
+);
 ?>
-<header class="page-hero">
-	<div class="container page-hero__inner">
-		<nav class="breadcrumb" aria-label="Kruimelpad">
-			<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span aria-hidden="true">/</span><span>Kennisbank</span>
-		</nav>
-		<p class="kicker">Kennisbank</p>
-		<h1 class="page-hero__title">Alles over ISDE-subsidie en isolatie</h1>
-		<p class="page-hero__sub">Feitelijke uitleg over subsidie, maatregelen en uitvoering. Geschreven om u te helpen begrijpen en beslissen.</p>
-	</div>
-</header>
 
 <section class="section section--surface">
 	<div class="container">

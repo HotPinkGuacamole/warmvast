@@ -13,17 +13,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 get_header();
 $gemeenten = warmvast_zaanstreek_gemeenten();
+
+warmvast_the_hero(
+	array(
+		'variant'    => 'gemeente',
+		'breadcrumb' => array(
+			array( 'label' => 'Home', 'url' => home_url( '/' ) ),
+			array( 'label' => 'Gemeentes' ),
+		),
+		'eyebrow'    => 'ISDE-subsidie in regio Zaandam',
+		'title'      => 'Isolatie en ISDE-subsidie per gemeente in regio Zaandam',
+		'lead'       => 'De ISDE-subsidie is een landelijke regeling: het tarief per m² is overal in Nederland gelijk. Wat wél per gemeente verschilt, is het karakter van de woningvoorraad — en dus welke isolatiemaatregel bij úw woning het meeste oplevert. Kies uw gemeente voor lokale context, kernen en een directe subsidie-indicatie.',
+	)
+);
 ?>
-<header class="page-hero">
-	<div class="container page-hero__inner">
-		<nav class="breadcrumb" aria-label="Kruimelpad">
-			<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span aria-hidden="true">/</span><span>Gemeentes</span>
-		</nav>
-		<p class="kicker">ISDE-subsidie in regio Zaandam</p>
-		<h1 class="page-hero__title">Isolatie en ISDE-subsidie per gemeente in regio Zaandam</h1>
-		<p class="page-hero__sub">De ISDE-subsidie is een landelijke regeling: het tarief per m² is overal in Nederland gelijk. Wat wél per gemeente verschilt, is het karakter van de woningvoorraad — en dus welke isolatiemaatregel bij úw woning het meeste oplevert. Kies uw gemeente voor lokale context, kernen en een directe subsidie-indicatie.</p>
-	</div>
-</header>
 
 <section class="section section--tight section--paper">
 	<div class="container">

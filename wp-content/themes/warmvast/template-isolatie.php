@@ -16,20 +16,26 @@ $keuze = array(
 	array( 'Wij rekenen per maatregel', 'Direct zicht op ISDE-tarief, geschiktheid en indicatieve besparing.' ),
 	array( 'U kiest of combineert', 'Eén maatregel, of meerdere tegelijk voor het verdubbelde ISDE-tarief.' ),
 );
+warmvast_the_hero(
+	array(
+		'variant'    => 'bedrijf',
+		'breadcrumb' => array(
+			array( 'label' => 'Home', 'url' => home_url( '/' ) ),
+			array( 'label' => 'Isolatie' ),
+		),
+		'eyebrow'    => 'Isolatiemaatregelen',
+		'title'      => 'Welke isolatie past bij uw woning?',
+		'lead'       => 'Warmvast kijkt naar uw woning als een systeem: waar lekt warmte weg, welke maatregel lost dat op en wat levert combineren op qua comfort én subsidie?',
+		'actions'    => array(
+			array(
+				'label' => 'Start de keuzehulp',
+				'style' => 'accent',
+				'url'   => home_url( '/gratis-isolatiescan/' ),
+			),
+		),
+	)
+);
 ?>
-<header class="page-hero">
-	<div class="container page-hero__inner">
-		<nav class="breadcrumb" aria-label="Kruimelpad">
-			<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span aria-hidden="true">/</span><span>Isolatie</span>
-		</nav>
-		<p class="kicker">Isolatiemaatregelen</p>
-		<h1 class="page-hero__title">Welke isolatie past bij uw woning?</h1>
-		<p class="page-hero__sub">Warmvast kijkt naar uw woning als een systeem: waar lekt warmte weg, welke maatregel lost dat op en wat levert combineren op qua comfort én subsidie?</p>
-		<div class="service-hero__actions">
-			<a class="btn btn--accent btn--lg" href="<?php echo esc_url( home_url( '/gratis-isolatiescan/' ) ); ?>" data-track="cta_click">Start de keuzehulp <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
-		</div>
-	</div>
-</header>
 
 <section class="section section--tight section--paper">
 	<div class="container">

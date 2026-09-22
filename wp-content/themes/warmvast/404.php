@@ -16,14 +16,15 @@ $shortcuts = array(
 	array( 'doc', 'Kennisbank', 'Uitleg over ISDE-subsidie, m²-berekening en uitvoering.', home_url( '/kennisbank/' ) ),
 	array( 'phone', 'Contact', 'Liever direct iemand spreken? Bel of mail Warmvast.', home_url( '/contact/' ) ),
 );
+warmvast_the_hero(
+	array(
+		'variant' => 'bedrijf',
+		'eyebrow' => 'Pagina niet gevonden',
+		'title'   => 'Deze pagina bestaat niet (meer)',
+		'lead'    => 'De link klopt niet of de pagina is verplaatst. Hieronder komt u snel weer verder.',
+	)
+);
 ?>
-<header class="page-hero">
-	<div class="container page-hero__inner">
-		<p class="kicker">Pagina niet gevonden</p>
-		<h1 class="page-hero__title">Deze pagina bestaat niet (meer)</h1>
-		<p class="page-hero__sub">De link klopt niet of de pagina is verplaatst. Hieronder komt u snel weer verder.</p>
-	</div>
-</header>
 
 <section class="section section--surface">
 	<div class="container">

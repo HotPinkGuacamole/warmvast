@@ -12,15 +12,6 @@ get_header();
 
 $services = warmvast_services();
 
-$problems = array(
-	array( 'thermo', 'De woonkamer koelt snel af.' ),
-	array( 'floor', 'De vloer voelt koud aan.' ),
-	array( 'glass', 'Er is tocht of kou bij de ramen.' ),
-	array( 'euro', 'De energierekening blijft hoog.' ),
-	array( 'wall', 'De kruipruimte is vochtig.' ),
-	array( 'shield', 'U weet niet welke subsidie mogelijk is.' ),
-);
-
 $werkwijze = array(
 	array( 'Gratis isolatiescan', 'U vult online uw woninggegevens in en ziet direct een ISDE-indicatie.' ),
 	array( 'Telefonische check', 'We bellen u binnen 24 uur om uw situatie en wensen door te nemen.' ),
@@ -28,13 +19,6 @@ $werkwijze = array(
 	array( 'Heldere offerte', 'U ontvangt een offerte met exacte m² en de bijbehorende maatregelen.' ),
 	array( 'Vakkundige uitvoering', 'Ervaren monteurs voeren de isolatie uit volgens de subsidie-eisen.' ),
 	array( 'Subsidiedossier', 'Wij leggen meldcodes en fotobewijs vast voor uw ISDE-aanvraag.' ),
-);
-
-$trust = array(
-	array( 'wall', 'Materiaalkeuze op basis van uw woning' ),
-	array( 'doc', 'Vaste offerte na de opname, geen verrassingen achteraf' ),
-	array( 'shield', 'Ervaren monteurs voeren de uitvoering uit' ),
-	array( 'check', 'Onafhankelijk advies per maatregel' ),
 );
 
 $faqs = array(
@@ -70,70 +54,57 @@ $faqs = array(
 ?>
 
 <!-- ============ HERO + SCAN ============ -->
-<!-- ============ USP overview data (rendered as a floating card inside the hero) ============ -->
 <?php
-$usps = array(
-	array( 'ruler', 'Technische opname', 'vóór elke uitvoering' ),
-	array( 'euro', 'Helder m²-overzicht', 'u weet wat u betaalt' ),
-	array( 'doc', 'Subsidiedossier geregeld', 'meldcodes &amp; fotobewijs' ),
-	array( 'clock', 'Reactie binnen 24 uur', 'werkzaam in ' . WARMVAST_REGION ),
+warmvast_the_hero(
+	array(
+		'variant' => 'home',
+		'eyebrow' => 'Gratis isolatiescan · resultaat in 2 minuten',
+		'title'   => 'Zit u er warmpjes bij? <em>Wij houden die warmte vast.</em>',
+		'lead'    => 'Eén technische opname aan huis, één heldere offerte per m², en een ISDE-subsidie die verdubbelt zodra u twee maatregelen combineert. Ontdek binnen 2 minuten wat isoleren uw woning oplevert.',
+		'actions' => array(
+			'<a class="btn btn--accent btn--lg btn--sheen" href="#warmvast-woningscan" data-track="cta_click">Start gratis isolatiescan ' . warmvast_icon( 'arrow', 'wv-icon--end' ) . '</a>',
+			'<a class="btn btn--ghost btn--lg" href="#subsidievoordeel" data-track="cta_click">Bekijk uw ISDE-subsidie</a>',
+		),
+		'trust'   => array(
+			'Gratis, 2 minuten, geen verplichtingen',
+			'Spouw, vloer, glas &amp; dak',
+		),
+		'aside'   => array( 'type' => 'scan' ),
+		'usps'    => array(
+			array( 'ruler', 'Technische opname', 'vóór elke uitvoering' ),
+			array( 'euro', 'Helder m²-overzicht', 'u weet wat u betaalt' ),
+			array( 'doc', 'Subsidiedossier geregeld', 'meldcodes &amp; fotobewijs' ),
+			array( 'clock', 'Reactie binnen 24 uur', 'werkzaam in ' . WARMVAST_REGION ),
+		),
+	)
 );
 ?>
-<section class="hero">
-	<span class="hero__orb hero__orb--1" aria-hidden="true"></span>
-	<span class="hero__orb hero__orb--2" aria-hidden="true"></span>
-	<div class="hero__thermal" aria-hidden="true"></div>
-	<div class="container hero__inner">
-		<div class="hero__copy">
-			<h1 class="hero__title">Zit je er warmpjes bij? <em>Wij houden die warmte vast.</em></h1>
-			<p class="hero__sub">Ontdek waar uw woning warmte verliest en welke isolatie het meeste oplevert, met een directe ISDE-indicatie en besparing op basis van úw adres.</p>
-			<div class="hero__actions">
-				<a class="btn btn--accent btn--lg btn--sheen" href="#warmvast-woningscan" data-track="cta_click">Start gratis isolatiescan <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
-				<a class="btn btn--ghost btn--lg" href="#subsidievoordeel" data-track="cta_click">Bekijk subsidievoordeel</a>
-			</div>
-			<div class="hero__trust">
-				<span><?php warmvast_the_icon( 'check', 'wv-icon--sm' ); ?> Gratis, 2 minuten, geen verplichtingen</span>
-				<span><?php warmvast_the_icon( 'check', 'wv-icon--sm' ); ?> Spouw, vloer, glas &amp; dak</span>
-			</div>
-		</div>
 
-		<div class="hero__scan">
-			<?php get_template_part( 'template-parts/woningscan' ); ?>
-		</div>
-	</div>
-
-	<!-- floating USP overview: fully contained inside the hero, so it's always
-	     visible on first paint without scrolling, whatever the viewport height -->
-	<section class="usp-bar" aria-label="Waarom Warmvast">
-		<span class="usp-bar__notch usp-bar__notch--left" aria-hidden="true"></span>
-		<span class="usp-bar__notch usp-bar__notch--right" aria-hidden="true"></span>
-		<div class="container">
-			<div class="usp-bar__grid">
-				<?php foreach ( $usps as $u ) : ?>
-					<div class="usp">
-						<span class="usp__icon"><?php warmvast_the_icon( $u[0] ); ?></span>
-						<span class="usp__text"><strong><?php echo esc_html( $u[1] ); ?></strong><em><?php echo wp_kses_post( $u[2] ); ?></em></span>
-					</div>
-				<?php endforeach; ?>
-			</div>
-		</div>
-	</section>
-</section>
-
-<!-- ============ PROBLEEMHERKENNING ============ -->
+<!-- ============ INTRO ============ -->
 <section class="section section--paper">
 	<div class="container">
-		<?php warmvast_section_header( '', 'Herkent u dit in uw woning?', 'Kleine signalen wijzen vaak op onnodig warmteverlies. Warmvast kijkt naar uw woning als een systeem.' ); ?>
-		<div class="grid grid--3">
-			<?php foreach ( $problems as $p ) : ?>
-				<div class="card problem-card" data-reveal>
-					<span class="problem-card__icon"><?php warmvast_the_icon( $p[0] ); ?></span>
-					<p><?php echo esc_html( $p[1] ); ?></p>
+		<div class="story-row story-row--alt story-row--lead">
+			<div class="story-row__media" data-reveal="right">
+				<div class="story-row__drift">
+					<?php
+					warmvast_the_responsive_img(
+						'/assets/img/werk/werk-opname-welkom',
+						array( 560, 1120 ),
+						'(max-width: 720px) 340px, (max-width: 1180px) 46vw, 560px',
+						'Warmvast-monteur geeft een bewoner een hand bij de voordeur, aan het begin van de technische opname'
+					);
+					?>
 				</div>
-			<?php endforeach; ?>
-		</div>
-		<div style="margin-top:2rem">
-			<?php warmvast_cta( 'Laat Warmvast meekijken', 'primary', home_url( '/gratis-isolatiescan/' ) ); ?>
+			</div>
+			<div data-reveal="left">
+				<h2>Eerst meten. <em>Dan pas isoleren.</em></h2>
+				<p class="story-row__sub">Een technische opname vóór elke offerte, bij u thuis.</p>
+				<p>Isoleren levert pas op wat het belooft als de maatregel bij uw woning past. Daarom begint elk traject met een technische opname: een vakman controleert spouwbreedte, vocht, ventilatie en de staat van gevel, vloer of kap. Daarna ontvangt u één vaste offerte met de exacte m², de ISDE-subsidie die daarbij hoort en een planning. Wat wij niet kunnen onderbouwen, beloven wij niet.</p>
+				<div class="story-row__actions">
+					<?php warmvast_cta( 'Start de gratis isolatiescan', 'primary', home_url( '/gratis-isolatiescan/' ) ); ?>
+					<a class="link-arrow" href="<?php echo esc_url( home_url( '/subsidie-service/' ) ); ?>">Bekijk uw ISDE-subsidie <?php warmvast_the_icon( 'arrow', 'wv-icon--end' ); ?></a>
+				</div>
+			</div>
 		</div>
 	</div>
 </section>
@@ -155,9 +126,6 @@ $usps = array(
 					</div>
 				</article>
 			<?php endforeach; ?>
-		</div>
-		<div style="margin-top:2rem">
-			<?php warmvast_cta( 'Twijfelt u welke maatregel past? Start de scan', 'secondary', home_url( '/gratis-isolatiescan/' ) ); ?>
 		</div>
 	</div>
 </section>
@@ -221,25 +189,76 @@ $combo      = $spouw_dub + $vloer_dub;
 	</div>
 </section>
 
-<!-- ============ VERTROUWEN ============ -->
+<!-- ============ HET WERK DAT U NIET ZIET ============ -->
 <section class="section section--paper">
 	<div class="container">
-		<?php warmvast_section_header( '', 'Nuchter, technisch en transparant', 'Wij claimen alleen wat we kunnen uitleggen en vastleggen.' ); ?>
-		<div class="trust-grid">
-			<?php foreach ( $trust as $t ) : ?>
-				<div class="trust-item" data-reveal>
-					<span class="trust-item__icon"><?php warmvast_the_icon( $t[0] ); ?></span>
-					<span><?php echo esc_html( $t[1] ); ?></span>
+		<?php warmvast_section_header( '', 'Het werk dat u niet ziet' ); ?>
+		<div class="grid grid--2 work-pair">
+			<div class="work-pair__item" data-reveal>
+				<div class="story-row__media">
+					<div class="story-row__drift">
+						<?php
+						warmvast_the_responsive_img(
+							'/assets/img/werk/werk-dakisolatie-montage',
+							array( 480, 960 ),
+							'(max-width: 720px) 340px, (max-width: 1024px) 45vw, 440px',
+							'Warmvast-monteur bevestigt reflecterende isolatiefolie tussen de dakspanten'
+						);
+						?>
+					</div>
 				</div>
-			<?php endforeach; ?>
+				<h3 class="work-pair__title">Op de kap</h3>
+				<p>Isolatie doet zijn werk alleen als het overal sluit. Elke baan wordt strak tussen de sporen aangebracht en luchtdicht afgetapet, tot in de hoeken waar u nooit meer komt. Juist daar zit het verschil tussen een dak dat isoleert en een dak dat warmte laat lopen.</p>
+			</div>
+
+			<div class="work-pair__item" data-reveal>
+				<div class="story-row__media">
+					<div class="story-row__drift">
+						<?php
+						warmvast_the_responsive_img(
+							'/assets/img/werk/werk-vloerisolatie-kruipruimte',
+							array( 480, 960 ),
+							'(max-width: 720px) 340px, (max-width: 1024px) 45vw, 440px',
+							'Warmvast-monteur tapet in de kruipruimte de naden van de vloerisolatie luchtdicht af'
+						);
+						?>
+					</div>
+				</div>
+				<h3 class="work-pair__title">In de kruipruimte</h3>
+				<p>Een koude vloer begint vrijwel altijd in de kruipruimte. Onze monteurs werken daar liggend, op een dampremmende laag, en tapen elke naad dicht. Vuil werk — maar het is het verschil tussen een vloer die warm aanvoelt en een die dat nooit wordt.</p>
+			</div>
 		</div>
-		<?php warmvast_the_trust_facts(); ?>
-		<?php warmvast_the_keurmerken( 'u-center' ); ?>
 	</div>
 </section>
 
 <!-- ============ REVIEWS ============ -->
 <?php get_template_part( 'template-parts/reviews' ); ?>
+
+<!-- ============ WIE HET WERK DOET ============ -->
+<section class="section section--surface">
+	<div class="container">
+		<div class="story-row">
+			<div class="story-row__media" data-reveal="left">
+				<div class="story-row__drift">
+					<?php
+					warmvast_the_responsive_img(
+						'/assets/img/team/team-bakwagen',
+						array( 560, 1120 ),
+						'(max-width: 720px) 340px, 470px',
+						'Warmvast-monteur voor de bedrijfsbus met het Warmvast-logo'
+					);
+					?>
+				</div>
+			</div>
+			<div data-reveal="right">
+				<h2>Een vast team, <em>geen wisselende onderaannemers</em></h2>
+				<p>Bij Warmvast wisselt de bezetting niet per klus. Onze technisch specialist doet de opname, onze monteur voert uit — en beiden werken al sinds de start samen als vast team, niet als onderaannemers die per project worden ingehuurd. U weet vooraf wie er langskomt, en dat blijft zo tot de laatste foto in uw dossier.</p>
+			</div>
+		</div>
+
+		<?php warmvast_the_keurmerken( 'u-center' ); ?>
+	</div>
+</section>
 
 <!-- ============ FAQ ============ -->
 <section class="section section--surface">

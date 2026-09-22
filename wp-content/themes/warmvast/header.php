@@ -29,6 +29,10 @@ $gemeenten = warmvast_zaanstreek_gemeenten();
 <?php warmvast_gtm_body(); ?>
 <?php wp_body_open(); ?>
 
+<?php // The page background. One element owns it; no section, header or
+// band paints anything. See .page-canvas in main.css. ?>
+<div class="page-canvas" aria-hidden="true"></div>
+
 <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
 <a class="skip-link" href="#main"><?php esc_html_e( 'Naar hoofdinhoud', 'warmvast' ); ?></a>
 
@@ -39,11 +43,11 @@ $gemeenten = warmvast_zaanstreek_gemeenten();
 			<?php if ( has_custom_logo() ) : ?>
 				<?php the_custom_logo(); ?>
 			<?php else : ?>
-				<img class="brand__logo brand__logo--dark" src="<?php echo warmvast_asset( '/assets/img/warmvast-logo-horizontal-black.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper escapes. ?>" width="730" height="212" alt="Warmvast Isolatie" fetchpriority="high" decoding="async">
+				<?php warmvast_the_logo( 'black', 'brand__logo--dark', 'Warmvast Isolatie' ); ?>
 				<?php // Crossfades in over .brand__logo--dark while the header floats
 				// transparently over a dark hero (see body.has-dark-hero in
 				// main.css) -- invisible/inert everywhere else. ?>
-				<img class="brand__logo brand__logo--light" src="<?php echo warmvast_asset( '/assets/img/warmvast-logo-horizontal-white.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>" width="730" height="212" alt="" aria-hidden="true" decoding="async">
+				<?php warmvast_the_logo( 'white', 'brand__logo--light' ); ?>
 			<?php endif; ?>
 		</a>
 

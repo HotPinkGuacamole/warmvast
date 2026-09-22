@@ -10,6 +10,66 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Render a breadcrumb trail: the visible <nav> AND its matching
+ * BreadcrumbList JSON-LD, from ONE array, so the two can never drift apart
+ * the way two hand-maintained copies eventually would. Every template used
+ * to hand-roll its own <nav class="breadcrumb"> with no schema at all; this
+ * replaces all of those with one call each.
+ *
+ * @param array<int,array{label:string,url?:string}> $trail Ordered Home-first.
+ *        Omit 'url' (or leave it empty) on an entry to render it as plain
+ *        text instead of a link -- used for the current page, exactly like
+ *        every template already did by hand for its last crumb.
+ */
+function warmvast_the_breadcrumb( $trail ) {
+	if ( empty( $trail ) || ! is_array( $trail ) ) {
+		return;
+	}
+
+	echo '<nav class="breadcrumb" aria-label="Kruimelpad">';
+	$list_items = array();
+	foreach ( $trail as $item ) {
+		$label = isset( $item['label'] ) ? (string) $item['label'] : '';
+		$url   = ! empty( $item['url'] ) ? (string) $item['url'] : '';
+		if ( '' === $label ) {
+			continue;
+		}
+		if ( ! empty( $list_items ) ) {
+			echo '<span aria-hidden="true">/</span>';
+		}
+		if ( '' !== $url ) {
+			printf( '<a href="%s">%s</a>', esc_url( $url ), esc_html( $label ) );
+		} else {
+			printf( '<span>%s</span>', esc_html( $label ) );
+		}
+
+		$list_item = array(
+			'@type'    => 'ListItem',
+			'position' => count( $list_items ) + 1,
+			'name'     => $label,
+		);
+		// Schema.org / Google's rich-result guidance: every crumb except the
+		// current page needs an 'item' URL; the last one is allowed to omit
+		// it since it's the page the schema is already sitting on.
+		if ( '' !== $url ) {
+			$list_item['item'] = esc_url_raw( $url );
+		}
+		$list_items[] = $list_item;
+	}
+	echo '</nav>';
+
+	if ( empty( $list_items ) ) {
+		return;
+	}
+	$schema = array(
+		'@context'        => 'https://schema.org',
+		'@type'           => 'BreadcrumbList',
+		'itemListElement' => $list_items,
+	);
+	echo "\n" . '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . '</script>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode output, not raw user input.
+}
+
+/**
  * Theme asset URL with a filemtime cache-buster, so updated images/icons are
  * never served stale from the browser cache.
  *
@@ -34,7 +94,8 @@ function warmvast_asset( $relative ) {
  * the browser correctly-sized candidates plus `sizes` lets it pick one that
  * needs little or no rescaling, on 1x and 2x screens alike.
  *
- * @param string               $base   Theme-relative path WITHOUT the -<width>.webp suffix.
+ * @param string               $base   Theme-relative path WITHOUT the -<width>.webp suffix,
+ *                                     OR a full URL (see below).
  * @param array<int,int>       $widths Available variant widths; the first is the src fallback.
  * @param string               $sizes  CSS `sizes` attribute describing the rendered slot.
  * @param string               $alt    Alt text ('' for decorative).
@@ -42,6 +103,27 @@ function warmvast_asset( $relative ) {
  * @return string <img> markup.
  */
 function warmvast_responsive_img( $base, $widths, $sizes, $alt, $extra = array() ) {
+	// A full URL -- e.g. a team/project photo picked from the wp-admin media
+	// library (see inc/admin.php) rather than one of this theme's own
+	// pre-cropped assets -- has no -<width>.webp variants to build a srcset
+	// from; concatenating a width suffix onto it would just produce a
+	// broken path. Render it as a plain, single-source <img> instead of
+	// pretending it has variants it doesn't.
+	if ( 0 === strpos( $base, 'http://' ) || 0 === strpos( $base, 'https://' ) || 0 === strpos( $base, '//' ) ) {
+		$attrs = array_merge(
+			array(
+				'loading'  => 'lazy',
+				'decoding' => 'async',
+			),
+			$extra
+		);
+		$attr_html = '';
+		foreach ( $attrs as $k => $v ) {
+			$attr_html .= sprintf( ' %s="%s"', esc_attr( $k ), esc_attr( $v ) );
+		}
+		return sprintf( '<img src="%1$s" alt="%2$s"%3$s>', esc_url( $base ), esc_attr( $alt ), $attr_html ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_url/esc_attr above.
+	}
+
 	$srcset = array();
 	foreach ( $widths as $w ) {
 		// warmvast_asset() already esc_url()s and appends the filemtime buster.
@@ -73,6 +155,79 @@ function warmvast_responsive_img( $base, $widths, $sizes, $alt, $extra = array()
  */
 function warmvast_the_responsive_img( $base, $widths, $sizes, $alt, $extra = array() ) {
 	echo warmvast_responsive_img( $base, $widths, $sizes, $alt, $extra ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper escapes.
+}
+
+/**
+ * The Warmvast logo, INLINED as real SVG rather than loaded through <img src>.
+ *
+ * Why inline matters here, specifically: .site-header carries a
+ * backdrop-filter (on ::before), position:fixed over the hero, and two logo
+ * copies that crossfade with an opacity transition. Each of those promotes the
+ * header into a composited layer, and inside a composited layer the browser
+ * rasterises an <img>-loaded SVG into a bitmap before compositing it -- at
+ * whatever raster scale that layer happens to hold, and reusing it across
+ * relayouts. That is what made the mark look soft no matter how cleanly the
+ * file was exported: the vector was correct, but the browser was pasting a
+ * bitmap of it. An inline <svg> is not an image resource at all; it is page
+ * geometry, re-rasterised at full device resolution on every paint.
+ *
+ * The export is used verbatim -- these are still the outlined-path files, so
+ * the letterforms remain identical on every machine with no webfont involved.
+ *
+ * @param string $variant black|white.
+ * @param string $class   Extra class on the <svg>.
+ * @param string $label   Accessible name; empty renders the mark decorative.
+ * @return string Inline SVG markup, or '' when the file is missing.
+ */
+function warmvast_logo_svg( $variant = 'black', $class = '', $label = '' ) {
+	static $instance = 0;
+
+	$file = WARMVAST_DIR . '/assets/img/warmvast-logo-horizontal-' . $variant . '.svg';
+	if ( ! file_exists( $file ) ) {
+		return '';
+	}
+	$svg = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local theme asset, not a remote request.
+	if ( false === $svg ) {
+		return '';
+	}
+
+	++$instance;
+	$p = 'wvlogo' . $instance;
+
+	// The XML prolog is valid in a standalone .svg and invalid inside HTML.
+	$svg = preg_replace( '/^\s*<\?xml.*?\?>\s*/s', '', $svg );
+
+	// Namespace every id and class the export carries. Up to three copies of a
+	// logo appear on one page (header dark + header light + footer), and both
+	// variants ship the SAME gradient ids -- left alone, the second and third
+	// copies would resolve url(#linear-gradient) against the first copy's
+	// definition and silently lose the green swoosh.
+	$svg = str_replace( 'linear-gradient-2', $p . '-lg2', $svg );
+	$svg = str_replace( 'linear-gradient', $p . '-lg1', $svg );
+	$svg = str_replace( 'cls-', $p . '-c', $svg );
+	$svg = str_replace( ' id="NEW"', '', $svg );
+
+	// No width/height attributes: the size comes from CSS (--logo-h) applied
+	// against the viewBox aspect, so there is nothing to fall out of sync.
+	$attrs = ' class="' . esc_attr( trim( 'brand__logo ' . $class ) ) . '"';
+	if ( '' !== $label ) {
+		$attrs .= ' role="img" aria-label="' . esc_attr( $label ) . '"';
+	} else {
+		$attrs .= ' aria-hidden="true" focusable="false"';
+	}
+
+	$pos = strpos( $svg, '<svg' );
+	if ( false === $pos ) {
+		return '';
+	}
+	return substr_replace( $svg, '<svg' . $attrs, $pos, 4 );
+}
+
+/**
+ * Print warmvast_logo_svg().
+ */
+function warmvast_the_logo( $variant = 'black', $class = '', $label = '' ) {
+	echo warmvast_logo_svg( $variant, $class, $label ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- theme-owned SVG, attributes escaped above.
 }
 
 /**
@@ -286,9 +441,17 @@ function warmvast_the_keurmerken( $class = '' ) {
 function warmvast_trust_stats() {
 	$stats = array();
 	if ( WARMVAST_FOUNDED ) {
+		// One line, not value+label: "2026" (value) / "Actief sinds" (label)
+		// rendered value-first-then-label like the other two stats read as
+		// "2026 Actief sinds" -- backwards. "Woningen geïsoleerd" and
+		// "Garantie" work value-first because they're a count/duration
+		// followed by a noun describing it; a founding year followed by a
+		// temporal phrase does not. See warmvast_the_trust_facts(), which
+		// renders this stat as a single bold line (no caption) when 'label'
+		// is empty.
 		$stats[] = array(
-			'value' => (string) WARMVAST_FOUNDED,
-			'label' => 'Actief sinds',
+			'value' => 'Actief sinds ' . WARMVAST_FOUNDED,
+			'label' => '',
 		);
 	}
 	if ( WARMVAST_HOMES_INSULATED ) {
@@ -321,7 +484,8 @@ function warmvast_the_trust_facts( $class = '' ) {
 	$items = warmvast_kernwaarden();
 	echo '<ul class="trust-facts ' . esc_attr( $class ) . '" data-reveal>';
 	foreach ( $stats as $s ) {
-		echo '<li class="trust-facts__item trust-facts__item--stat"><strong>' . esc_html( $s['value'] ) . '</strong><span>' . esc_html( $s['label'] ) . '</span></li>';
+		$caption = '' !== $s['label'] ? '<span>' . esc_html( $s['label'] ) . '</span>' : '';
+		echo '<li class="trust-facts__item trust-facts__item--stat"><strong>' . esc_html( $s['value'] ) . '</strong>' . $caption . '</li>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $caption built from esc_html above.
 	}
 	foreach ( $items as $item ) {
 		echo '<li class="trust-facts__item">';
@@ -362,4 +526,149 @@ function warmvast_preview_amount() {
 	$rates = warmvast_isde_rates();
 	$total = ( 65 * $rates['spouw']['baseRate'] * 2 ) + ( 55 * $rates['vloer']['baseRate'] * 2 );
 	return warmvast_euro( $total );
+}
+
+/**
+ * The hero: one component, every page. Everything that differs between
+ * pages is a parameter here, never a second template -- see
+ * template-parts/hero.php and docs/DESIGN-SYSTEM.md.
+ *
+ * Slots render in this fixed order, each optional except title:
+ * breadcrumb, eyebrow (+icon), h1, lead, meta, actions (+phone), trust, aside.
+ *
+ * @param array{
+ *   variant?: string,      'home'|'maatregel'|'gemeente'|'bedrijf'|'artikel'. Default 'bedrijf'.
+ *   breadcrumb?: array,    Same shape warmvast_the_breadcrumb() takes.
+ *   eyebrow?: string,      A category label. Never rendered for 'home'.
+ *   icon?: string,         Icon key, paired with the eyebrow. 'maatregel' only --
+ *                          the one variant where it disambiguates otherwise-similar
+ *                          pages; everywhere else it repeated one generic icon
+ *                          and said nothing the eyebrow text didn't already say.
+ *   title: string,         The only h1 on the page. Required.
+ *   title_sr_only?: bool,  Visually hidden (template-scan.php's landing page).
+ *   lead?: string,
+ *   meta?: string,         Small quiet fact line (artikel: date · read time).
+ *                          Not one of the 7 contract slots -- metadata, not prose.
+ *   actions?: array,       Up to 2: array{label,style,url,event?}, passed to warmvast_cta().
+ *                          'home' only: raw pre-built <a class="btn ...">
+ *                          HTML strings instead -- its two buttons don't fit
+ *                          this schema (btn--lg/btn--sheen/icon vary per
+ *                          button), and home is already this system's one
+ *                          documented exception.
+ *   phone?: bool,          Quiet phone link beside the action(s). Not a competing
+ *                          button, so it doesn't count against the 1-primary/
+ *                          1-secondary cap.
+ *   trust?: array,         Small strings: certification, guarantee, response time.
+ *   aside?: array,         array{type:'scan'|'data-card'|'callback', ...}. See
+ *                          warmvast_render_hero_aside().
+ *   usps?: array,          'home' only -- the floating USP bar's 4 [icon,title,sub] rows.
+ * } $args
+ */
+function warmvast_the_hero( array $args ) {
+	$defaults = array(
+		'variant'      => 'bedrijf',
+		'breadcrumb'   => null,
+		'eyebrow'      => null,
+		'icon'         => null,
+		'title'        => '',
+		'title_sr_only' => false,
+		'lead'         => null,
+		'meta'         => null,
+		'actions'      => array(),
+		'phone'        => false,
+		'trust'        => array(),
+		'aside'        => null,
+		'usps'         => array(),
+	);
+	$args = wp_parse_args( $args, $defaults );
+
+	global $warmvast_hero_args;
+	$warmvast_hero_args = $args;
+	get_template_part( 'template-parts/hero' );
+}
+
+/**
+ * Render one hero action button. Deliberately its own renderer, not
+ * warmvast_cta() -- every hero-scale action across the site is --lg (the one
+ * exception, kwaliteit's old bare warmvast_cta() call, was an oversight, not
+ * a deliberate size, and is now consistent with the rest), and at least one
+ * (subsidie's "Zo ontzorgen wij u") carries no trailing icon, which
+ * warmvast_cta() has no way to omit. Building it directly here keeps that
+ * variation local to the hero instead of adding size/icon flags to the
+ * sitewide warmvast_cta() that every other caller would have to ignore.
+ *
+ * @param array{label:string,style?:string,url?:string,event?:string,icon?:bool} $action
+ */
+function warmvast_the_hero_action( array $action ) {
+	$icon = ! isset( $action['icon'] ) || $action['icon'];
+	printf(
+		'<a class="btn btn--%1$s btn--lg" href="%2$s" data-track="%3$s">%4$s%5$s</a>',
+		esc_attr( isset( $action['style'] ) ? $action['style'] : 'primary' ),
+		esc_url( isset( $action['url'] ) ? $action['url'] : '#warmvast-woningscan' ),
+		esc_attr( isset( $action['event'] ) ? $action['event'] : 'cta_click' ),
+		esc_html( isset( $action['label'] ) ? $action['label'] : '' ),
+		$icon ? warmvast_icon( 'arrow', 'wv-icon--end' ) : '' // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- warmvast_icon() escapes internally.
+	);
+}
+
+/**
+ * The hero aside: the scan form (home), a data card (maatregel/gemeente), or
+ * a one-off callback for anything genuinely page-specific. One switch, so a
+ * new hero never needs a new template to add a new aside kind.
+ *
+ * @param array{type:string} $aside
+ */
+function warmvast_render_hero_aside( array $aside ) {
+	if ( empty( $aside['type'] ) ) {
+		return;
+	}
+	switch ( $aside['type'] ) {
+		case 'scan':
+			get_template_part( 'template-parts/woningscan' );
+			break;
+		case 'data-card':
+			warmvast_the_data_card( $aside );
+			break;
+		case 'callback':
+			if ( ! empty( $aside['render'] ) && is_callable( $aside['render'] ) ) {
+				call_user_func( $aside['render'] );
+			}
+			break;
+	}
+}
+
+/**
+ * The data card: a tabular label/value surface, not a marketing card.
+ * Reused as the hero aside on both maatregel pages (ISDE tariffs) and
+ * gemeente pages (local facts) -- same component, different rows.
+ *
+ * @param array{
+ *   kicker?: string,
+ *   rows: array<int,array{label:string,value:string,headline?:bool}>,
+ *   note?: string,
+ * } $args
+ */
+function warmvast_the_data_card( array $args ) {
+	if ( empty( $args['rows'] ) ) {
+		return;
+	}
+	echo '<div class="data-card">';
+	if ( ! empty( $args['kicker'] ) ) {
+		echo '<p class="kicker data-card__kicker">' . esc_html( $args['kicker'] ) . '</p>';
+	}
+	echo '<dl class="data-card__rows">';
+	foreach ( $args['rows'] as $row ) {
+		$value_class = 'data-card__value' . ( ! empty( $row['headline'] ) ? ' data-card__value--headline' : '' );
+		printf(
+			'<div class="data-card__row"><dt class="data-card__label">%1$s</dt><dd class="%2$s">%3$s</dd></div>',
+			esc_html( $row['label'] ),
+			esc_attr( $value_class ),
+			esc_html( $row['value'] )
+		);
+	}
+	echo '</dl>';
+	if ( ! empty( $args['note'] ) ) {
+		echo '<p class="data-card__note">' . esc_html( $args['note'] ) . '</p>';
+	}
+	echo '</div>';
 }

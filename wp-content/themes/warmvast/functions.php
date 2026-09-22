@@ -14,9 +14,12 @@ define( 'WARMVAST_DIR', get_template_directory() );
 define( 'WARMVAST_URI', get_template_directory_uri() );
 
 require_once WARMVAST_DIR . '/inc/config.php';
+require_once WARMVAST_DIR . '/inc/reviews.php';
+require_once WARMVAST_DIR . '/inc/cache.php';
 require_once WARMVAST_DIR . '/inc/template-tags.php';
 require_once WARMVAST_DIR . '/inc/service-content.php';
 require_once WARMVAST_DIR . '/inc/gemeente-content.php';
+require_once WARMVAST_DIR . '/inc/admin.php';
 require_once WARMVAST_DIR . '/inc/woningscan.php';
 require_once WARMVAST_DIR . '/inc/lead.php';
 require_once WARMVAST_DIR . '/inc/article-visuals.php';
